@@ -501,9 +501,26 @@ function showGallery() {
   finishOpening();
 }
 
+// ----- The big "ELANA GERTEL" in the middle of the screen -----
+// The opening is placed for Figma's 1024-high screen. On any other screen height the whole page is
+// moved up or down during the opening, so the middle of the finished name is in the middle of the screen;
+// when the letters move on to the gallery, the page glides back to its own place.
+const GLIDE_BACK = 900;   // ms
+const NAME_MIDDLE = 512;  // Figma frame 76: the middle of the finished name (the middle of its 1024-high screen)
+function nameShift() {
+  const figmaPixel = flow.clientWidth / 1440;   // one Figma pixel, in screen pixels
+  return window.innerHeight / 2 - NAME_MIDDLE * figmaPixel;
+}
+
 // ----- Play the opening animation -----
 function playOpening() {
   flow.classList.add("is-animating"); // turns on the CSS transitions
+  flow.style.transform = `translateY(${nameShift()}px)`;   // the name will be in the middle of the screen
+  setTimeout(() => {
+    flow.style.transition = `transform ${GLIDE_BACK}ms ease-in-out`;
+    flow.style.transform = "";
+    setTimeout(() => { flow.style.transition = ""; }, GLIDE_BACK + 50);
+  }, START_PAUSE + STEP_STARTS[1]);
 
   // the shapes: every planned slide at its time (straight slides; a new one only when a shape turns)
   FLOW_TIMELINE.forEach(([time, moves]) => {
