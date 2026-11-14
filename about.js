@@ -319,31 +319,28 @@ function draw() {
 }
 
 
-// ----- At the end: hovering a letter of VISION makes it ooze into its organic letter, like the project titles -----
-// (the same as lab.js: every shape's outline slides, point by point, onto the letter's organic outline,
-// melting together on the way like slime; the organic letters are Figma's Frame 199, in about-words.js: ABOUT_ORGANIC)
+// ----- At the end: hovering a letter of VISION "squashes" it (reference: Paul Cocksedge's Squash mirrors) -----
+// The letter keeps its own square pieces, but they turn soft and puffed up: each piece shrinks a little and
+// gets round corners, touching pieces melt into each other with a narrow waist (like a squashed 8), and a
+// soft light glows along their inside edges, like a convex mirror. Then they keep breathing slowly:
+// swelling and shrinking (so the waists open and close), drifting a little, their edges rippling, and the
+// mouse gently presses them away. It starts with the hover and stays soft; with the mouse on it, it moves
+// more, on its own it is calm. Scrolling back makes it sharp again.
 const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const MORPH_POINTS = 120;                // points on each outline
-const MORPH_TIME = REDUCED ? 1 : 1100;   // ms for a whole letter to change
-const OOZE_SPREAD = 0.3;                 // how much later the far points start (part of the time)
-const GOO = 7;                           // how soft the shapes melt together halfway
-const TO_THIRD_TIME = REDUCED ? 1 : 1600;  // ms to flow on from the first liquid version into the third shape (Frame 202)
-const CALM = REDUCED ? 0 : 0.35;         // how lively the liquid is on its own (1 = while the mouse is on it)
-const SWELL = 0.3;                       // how much bigger it swells, at its liveliest (it never gets smaller than its shape)
-const DROP_SIZE = 1.2;                   // the third shapes' height, compared with the sharp letter's
-const WAVE = 7;                          // how big the slow waves round its edge are (about units), at its liveliest
-const LIVE_GOO = 6;                      // how much its drops melt into each other, at its liveliest
-const PUSH = 26;                         // how far the mouse pushes the liquid away
-const PUSH_REACH = 90;                   // how close the mouse has to be to push it
-const ROAM = 42;                         // how far each blob swims from its place on its own (about units)
-const ROAM_EVERY = [1.6, 4.2];           // seconds before a blob decides to swim somewhere new (shortest, longest)
-const SPRING = 5;                        // how strongly a blob is pulled to where it wants to be (soft = slow and smooth)
-const DAMPING = 0.72;                    // below 1: it overshoots a little and wobbles to rest
-const STRETCH = 0.0035;                  // how much a blob stretches in the direction it swims
-const CURIOUS_REACH = 160;               // how close the mouse has to be for the blobs to notice it
-const ORGANIC_SIZE = 0.93;               // the organic letters' size (so they are as tall, for their letter, as on the titles)
+const SQUASH_TIME = REDUCED ? 1 : 900;   // ms to turn soft (and back)
+const CALM = REDUCED ? 0 : 0.35;         // how lively it is on its own (1 = while the mouse is on it)
+const SOFT = 6.5;                        // how round and melted the pieces get (about units)
+const SHRINK = 0.17;                     // how much each piece shrinks around its middle (so each square pillow and its waists show)
+const BREATH = 0.05;                     // how much it swells and shrinks while breathing
+const DRIFT = 3;                         // how far a piece drifts, slowly (about units)
+const RIPPLE = 2.2;                      // how big the slow ripples on the edges are (about units)
+const RIM = 6;                           // how wide the light along the inside edge is
+const RIM_LIGHT = "#e2e2e2";             // the colour of that light (reference: soft grey)
+const PUSH = 12;                         // how far the mouse presses the pieces away
+const PUSH_REACH = 80;                   // how close the mouse has to be to press
 
-const morphSvg = document.createElementNS(SVG_NS, "svg");   // the drawing of the reshaping, over the shapes
+const morphSvg = document.createElementNS(SVG_NS, "svg");   // the drawing of the soft pieces, over the shapes
 morphSvg.setAttribute("class", "about-morph");
 morphSvg.setAttribute("aria-hidden", "true");
 stage.appendChild(morphSvg);
@@ -364,29 +361,11 @@ function outlinePoints(d, dx, dy) {
   path.remove();
   return points;
 }
-function turning(points) {
-  let area = 0;
-  points.forEach((p, i) => { const q = points[(i + 1) % points.length]; area += p[0] * q[1] - q[0] * p[1]; });
-  return Math.sign(area);
-}
-// Line up the organic points with the shape's points (same direction, nearest start), so points travel little
-function lineUp(from, to) {
-  if (turning(from) !== turning(to)) to = [...to].reverse();
-  let best = 0, bestCost = Infinity;
-  for (let shift = 0; shift < to.length; shift++) {
-    let cost = 0;
-    for (let i = 0; i < from.length; i++) {
-      const q = to[(i + shift) % to.length];
-      cost += (from[i][0] - q[0]) ** 2 + (from[i][1] - q[1]) ** 2;
-    }
-    if (cost < bestCost) { bestCost = cost; best = shift; }
-  }
-  return from.map((_, i) => to[(i + best) % to.length]);
-}
 const pathFrom = (points) => "M" + points.map((p) => p[0].toFixed(2) + " " + p[1].toFixed(2)).join("L") + "Z";
-// thick and gooey: a slow start and a soft stop
+// soft start and soft stop
 const ooze = (p) => (p <= 0 ? 0 : p >= 1 ? 1 : p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2);
 const middleOf = (pts) => [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
+const svgEl = (name, attrs) => { const el = document.createElementNS(SVG_NS, name); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); return el; };
 
 // VISION's letters (each letter's place and width in the word, Figma Frame 173 in about units: the I is half as wide),
 // with the shapes that stand in each one at the end of the page
@@ -397,139 +376,73 @@ const visionLetters = VISION_LETTERS.map(([ch, lx, lw], n) => {
     const [x, y] = shapePosition(sh, TOTAL_MOVE);
     return x + TOTAL_MOVE >= left - 1 && x + TOTAL_MOVE < right - 1 && Math.abs(y - WORD_Y) < 140;
   });
-  const box = { x0: left - TOTAL_MOVE, x1: right - TOTAL_MOVE, y0: WORD_Y, y1: WORD_Y + 135.86 };
-  const organic = ABOUT_ORGANIC[n];
-  const parts = organic.d.split(/(?=M)/).map((part) => part.trim());
-  // the organic letter sits right on its sharp letter: the middle of its outline on the middle of the letter
-  // (Figma's VISION letters are about 11% taller than their letters, the project titles' only about 3%:
-  //  ORGANIC_SIZE makes them the same proportion as the other titles, so they don't hang down)
-  const raw = outlinePoints(parts[0], 0, 0);
-  const ox = (Math.min(...raw.map((p) => p[0])) + Math.max(...raw.map((p) => p[0]))) / 2;
-  const oy = (Math.min(...raw.map((p) => p[1])) + Math.max(...raw.map((p) => p[1]))) / 2;
-  const cxL = (box.x0 + box.x1) / 2, cyL = (box.y0 + box.y1) / 2;
-  const place = (pts) => pts.map(([x, y]) => [cxL + (x - ox) * ORGANIC_SIZE, cyL + (y - oy) * ORGANIC_SIZE]);
-  const outer = place(raw);
-  // its own goo: soften the shapes, then cut them sharp again, so touching parts flow into each other
-  const filterId = "about-goo-" + n;
-  const filter = document.createElementNS(SVG_NS, "filter");
-  filter.setAttribute("id", filterId);
-  filter.setAttribute("x", "-30%"); filter.setAttribute("y", "-30%");
-  filter.setAttribute("width", "160%"); filter.setAttribute("height", "160%");
-  const blur = document.createElementNS(SVG_NS, "feGaussianBlur");
-  blur.setAttribute("in", "SourceGraphic");
-  blur.setAttribute("stdDeviation", "0");
-  const sharpen = document.createElementNS(SVG_NS, "feColorMatrix");
-  sharpen.setAttribute("type", "matrix");
-  sharpen.setAttribute("values", "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -11");
-  filter.append(blur, sharpen);
+  // its own filter: soften the pieces and cut them sharp again (so close pieces melt together with a waist),
+  // then add the light along the inside edge (the shape minus a blurred copy of itself = a soft inner rim)
+  const filterId = "about-squash-" + n;
+  const filter = svgEl("filter", { id: filterId, x: "-30%", y: "-30%", width: "160%", height: "160%", "color-interpolation-filters": "sRGB" });
+  const blur = svgEl("feGaussianBlur", { in: "SourceGraphic", stdDeviation: "0", result: "soft" });
+  const sharpen = svgEl("feColorMatrix", { in: "soft", type: "matrix", values: "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -11", result: "shape" });
+  // (the light starts a hair inside the edge, so the outline itself stays crisp and black on the white page)
+  const inside = svgEl("feMorphology", { in: "shape", operator: "erode", radius: "1.3", result: "inside" });
+  const rimBlur = svgEl("feGaussianBlur", { in: "inside", stdDeviation: "0", result: "inner" });
+  const edge = svgEl("feComposite", { in: "inside", in2: "inner", operator: "arithmetic", k1: "0", k2: "1", k3: "-1", k4: "0", result: "edge" });
+  const light = svgEl("feFlood", { "flood-color": RIM_LIGHT, "flood-opacity": "0", result: "light" });
+  const rim = svgEl("feComposite", { in: "light", in2: "edge", operator: "in", result: "rim" });
+  const merge = svgEl("feMerge", {});
+  merge.append(svgEl("feMergeNode", { in: "shape" }), svgEl("feMergeNode", { in: "rim" }));
+  filter.append(blur, sharpen, inside, rimBlur, edge, light, rim, merge);
   morphDefs.appendChild(filter);
   const group = document.createElementNS(SVG_NS, "g");
   morphSvg.appendChild(group);
-  // the second liquid version (Frame 202): one or more drops, together centred on the letter like the first
-  const dropsRaw = ABOUT_ORGANIC_2[n].map(([x, y, d]) => outlinePoints(d, x, y));
-  const all2 = dropsRaw.flat();
-  const ox2 = (Math.min(...all2.map((p) => p[0])) + Math.max(...all2.map((p) => p[0]))) / 2;
-  const oy2 = (Math.min(...all2.map((p) => p[1])) + Math.max(...all2.map((p) => p[1]))) / 2;
-  // ...and bigger: taller than the sharp letter (DROP_SIZE times its height), so flowing into it the word grows
-  const h2 = Math.max(...all2.map((p) => p[1])) - Math.min(...all2.map((p) => p[1]));
-  const k2 = (DROP_SIZE * (box.y1 - box.y0)) / h2;
-  const drops2 = dropsRaw.map((pts) => pts.map(([x, y]) => [cxL + (x - ox2) * k2, cyL + (y - oy2) * k2]));
-  const L = { outer, group, blur, filterId, t: 0, target: 0, w: 0, energy: 0, hovered: false, from: middleOf(outer), shapes: [], holes: [] };
+  const L = { n, group, blur, rimBlur, light, filterId, t: 0, target: 0, energy: 0, hovered: false, outer: [], shapes: [] };
   own.forEach((sh) => {
     const [x, y] = shapePosition(sh, TOTAL_MOVE);
     const from = outlinePoints(ABOUT_SHAPES[sh.shape][2], x, y);
     const path = document.createElementNS(SVG_NS, "path");
     path.style.visibility = "hidden";
     group.appendChild(path);
-    // in the second version each piece flows into the drop nearest to it (so a letter can split into drops)
-    const c = middleOf(from);
-    const drop = drops2.reduce((best, d) => (Math.hypot(middleOf(d)[0] - c[0], middleOf(d)[1] - c[1]) < Math.hypot(middleOf(best)[0] - c[0], middleOf(best)[1] - c[1]) ? d : best));
-    L.shapes.push({ el: sh.el, path, from, to: lineUp(from, outer), to2: lineUp(from, drop), mid2: middleOf(drop), phase: L.shapes.length * 1.7 + n,
-                   // its own mind: where it is swimming to, where it is, how fast, and whether it likes the mouse
-                   goal: [0, 0], pos: [0, 0], vel: [0, 0], nextThought: 0, curious: Math.random() < 0.5 ? 1 : -1 });
-  });
-  parts.slice(1).forEach((part) => {   // the holes (O), drawn in the background colour on top
-    const points = place(outlinePoints(part, 0, 0));
-    const path = document.createElementNS(SVG_NS, "path");
-    path.setAttribute("class", "about-morph-hole");
-    path.style.visibility = "hidden";
-    morphSvg.appendChild(path);
-    L.holes.push({ path, points, middle: middleOf(points) });
+    L.shapes.push({ el: sh.el, path, from, mid: middleOf(from), phase: L.shapes.length * 1.7 + n * 2.3 });
   });
   return L;
 });
 
-// how much later each point starts: the further from where the mouse touched, the later
-function delays(L) {
-  const all = L.shapes.flatMap((sh) => sh.from);
-  const far = Math.max(...all.map((p) => Math.hypot(p[0] - L.from[0], p[1] - L.from[1])), 1);
-  L.shapes.forEach((sh) => { sh.delay = sh.from.map((p) => OOZE_SPREAD * Math.hypot(p[0] - L.from[0], p[1] - L.from[1]) / far); });
-}
-// Each blob lives on its own: now and then it picks a new spot near its place and swims there on a soft
-// spring (gliding, overshooting a little, settling). Curious blobs lean towards the mouse, shy ones lean away.
-function think(L, sh, time, dt) {
-  if (time >= sh.nextThought) {
-    const a = Math.random() * Math.PI * 2, r = ROAM * Math.sqrt(Math.random());
-    sh.goal = [Math.cos(a) * r, Math.sin(a) * r * 0.7];
-    sh.nextThought = time + ROAM_EVERY[0] + Math.random() * (ROAM_EVERY[1] - ROAM_EVERY[0]);
-  }
-  const reach = L.w * (0.4 + 0.6 * L.energy);           // calmer on its own, bolder while the mouse is near
-  let gx = sh.goal[0] * reach, gy = sh.goal[1] * reach;
-  if (L.hovered && pointer) {
-    const dx = pointer[0] - (sh.mid2[0] + sh.pos[0]), dy = pointer[1] - (sh.mid2[1] + sh.pos[1]), d = Math.hypot(dx, dy) || 1;
-    if (d < CURIOUS_REACH) { const f = ROAM * 0.8 * (1 - d / CURIOUS_REACH) * sh.curious; gx += (dx / d) * f; gy += (dy / d) * f; }
-  }
-  const k = SPRING, c = 2 * Math.sqrt(k) * DAMPING;
-  sh.vel[0] += (k * (gx - sh.pos[0]) - c * sh.vel[0]) * dt;
-  sh.vel[1] += (k * (gy - sh.pos[1]) - c * sh.vel[1]) * dt;
-  sh.pos[0] += sh.vel[0] * dt; sh.pos[1] += sh.vel[1] * dt;
-}
-function drawLetter(L, time, dt) {
+function drawLetter(L, time) {
   const showing = L.t > 0;
-  // the melting: none at the start and the end, strongest halfway; and while it lives as liquid, a little,
-  // more when the mouse is on it (so its drops flow into each other)
-  const goo = Math.max(GOO * Math.sin(Math.PI * L.t) ** 0.8, LIVE_GOO * L.w * L.energy);
-  if (goo > 0.05) { L.blur.setAttribute("stdDeviation", goo.toFixed(2)); L.group.setAttribute("filter", `url(#${L.filterId})`); }
-  else L.group.removeAttribute("filter");
-  // how it swells: slowly bigger and smaller, more when the mouse is on it
-  const swell = 1 + L.w * L.energy * SWELL * (1 + 0.5 * Math.sin(time * 0.7 + L.from[0] * 0.01));   // always bigger, never smaller
+  const s = ooze(L.t);            // how soft it is (0 = its sharp pieces, 1 = squashed)
+  const live = s * (0.35 + 0.65 * L.energy);   // how much it moves
+  // the filter: melting and the inner light come with the softness, and breathe a little
+  const soft = SOFT * s * (1 + 0.15 * live * Math.sin(time * 0.9 + L.n));
+  if (soft > 0.05) {
+    L.blur.setAttribute("stdDeviation", soft.toFixed(2));
+    L.rimBlur.setAttribute("stdDeviation", (RIM * s).toFixed(2));
+    L.light.setAttribute("flood-opacity", (0.9 * s).toFixed(3));
+    L.group.setAttribute("filter", `url(#${L.filterId})`);
+  } else L.group.removeAttribute("filter");
   L.shapes.forEach((sh) => {
-    sh.el.style.visibility = showing ? "hidden" : "";   // the real shape hides while reshaping
+    sh.el.style.visibility = showing ? "hidden" : "";   // the real shape hides while it is soft
     sh.path.style.visibility = showing ? "visible" : "hidden";
     if (!showing) return;
-    think(L, sh, time, dt);
-    const speed = Math.hypot(sh.vel[0], sh.vel[1]), st = Math.min(0.3, speed * STRETCH);
-    const vx = speed ? sh.vel[0] / speed : 0, vy = speed ? sh.vel[1] / speed : 0;
-    sh.path.setAttribute("d", pathFrom(sh.from.map((p, i) => {
-      const e = ooze(clamp01(L.t * (1 + OOZE_SPREAD) - sh.delay[i]));
-      // its liquid shape: from the first liquid version into the third shape (Frame 202)
-      let tx = sh.to[i][0] + (sh.to2[i][0] - sh.to[i][0]) * L.w, ty = sh.to[i][1] + (sh.to2[i][1] - sh.to[i][1]) * L.w;
-      const live = L.w * e;   // only the liquid moves
-      if (live > 0) {
-        // it keeps moving: swelling, and slow waves running round its edge
-        const dx = tx - sh.mid2[0], dy = ty - sh.mid2[1], r = Math.hypot(dx, dy) || 1, a = Math.atan2(dy, dx);
-        const wave = WAVE * L.energy * (Math.sin(time * 1.1 + a * 3 + sh.phase) + 0.5 * Math.sin(time * 0.7 - a * 2 + sh.phase));
-        const grow = (swell - 1) * r + wave;
-        tx += (dx / r) * grow * live; ty += (dy / r) * grow * live;
-        // and the mouse pushes the liquid away where it touches it
-        if (L.hovered && pointer) {
-          const mx = tx - pointer[0], my = ty - pointer[1], d = Math.hypot(mx, my) || 1;
-          if (d < PUSH_REACH) { const f = PUSH * (1 - d / PUSH_REACH) ** 2 * L.energy * live; tx += (mx / d) * f; ty += (my / d) * f; }
-        }
-        // it swims: carried along to where it wants to be, and stretched a little the way it is going
-        const along = (tx - sh.mid2[0]) * vx + (ty - sh.mid2[1]) * vy;
-        tx += (sh.pos[0] + vx * along * st) * live; ty += (sh.pos[1] + vy * along * st) * live;
+    // breathing: each piece swells and shrinks around its middle at its own slow pace (the waists open and close)
+    const k = 1 - s * SHRINK + live * BREATH * Math.sin(time * 0.8 + sh.phase);
+    // drifting a little, slowly
+    const ox = live * DRIFT * Math.sin(time * 0.5 + sh.phase), oy = live * DRIFT * Math.cos(time * 0.6 + sh.phase * 1.3);
+    const [cx, cy] = sh.mid;
+    sh.path.setAttribute("d", pathFrom(sh.from.map(([px, py]) => {
+      let x = cx + (px - cx) * k + ox, y = cy + (py - cy) * k + oy;
+      // slow ripples along the edge
+      const dx = x - cx, dy = y - cy, r = Math.hypot(dx, dy) || 1, a = Math.atan2(dy, dx);
+      const ripple = live * RIPPLE * Math.sin(time * 1.2 + a * 2 + sh.phase);
+      x += (dx / r) * ripple; y += (dy / r) * ripple;
+      // the mouse presses it away, gently
+      if (L.hovered && pointer) {
+        const mx = x - pointer[0], my = y - pointer[1], d = Math.hypot(mx, my) || 1;
+        if (d < PUSH_REACH) { const f = PUSH * (1 - d / PUSH_REACH) ** 2 * L.energy * s; x += (mx / d) * f; y += (my / d) * f; }
       }
-      return [p[0] + (tx - p[0]) * e, p[1] + (ty - p[1]) * e];
+      return [x, y];
     })));
   });
-  L.holes.forEach(({ path, points, middle }) => {
-    const e = ooze(clamp01(L.t * (1 + OOZE_SPREAD) - OOZE_SPREAD * 0.6)) * (1 - L.w);   // the third shape has no hole: it closes
-    path.style.visibility = showing && e > 0.01 ? "visible" : "hidden";
-    path.setAttribute("d", pathFrom(points.map((p) => [middle[0] + (p[0] - middle[0]) * e, middle[1] + (p[1] - middle[1]) * e])));
-  });
 }
-// one animation loop for the whole word: it runs as long as any letter is liquid
+// one animation loop for the whole word: it runs as long as any letter is soft
 let morphLast = null, morphRunning = false;
 function morphFrame(now) {
   const dt = morphLast === null ? 0 : Math.min(0.05, (now - morphLast) / 1000);
@@ -537,15 +450,12 @@ function morphFrame(now) {
   let busy = false;
   visionLetters.forEach((L) => {
     if (L.t === 0 && L.target === 0) return;
-    const step = (dt * 1000) / MORPH_TIME;
+    const step = (dt * 1000) / SQUASH_TIME;
     L.t = L.target > L.t ? Math.min(L.target, L.t + step) : Math.max(L.target, L.t - step);
-    if (L.target === 1 && L.t === 1) L.w = Math.min(1, L.w + dt * 1000 / TO_THIRD_TIME);   // on into the third shape
-    if (L.target === 0) L.w = Math.max(0, L.w - step * 1.5);
     // how lively it is: calm on its own, much more while the mouse is on it
     const lively = L.target === 0 ? 0 : L.hovered ? 1 : CALM;
-    L.energy += (lively - L.energy) * Math.min(1, dt * (lively > L.energy ? 2 : 0.8));
-    if (L.t === 0) L.shapes.forEach((sh) => { sh.pos = [0, 0]; sh.vel = [0, 0]; });   // sharp again: it forgets where it swam
-    drawLetter(L, now / 1000, dt);
+    L.energy += (lively - L.energy) * Math.min(1, dt * (lively > L.energy ? 1.5 : 0.6));
+    drawLetter(L, now / 1000);
     busy = true;
   });
   if (busy) requestAnimationFrame(morphFrame);
@@ -555,6 +465,7 @@ function goTo(L, value) {
   L.target = value;
   if (!morphRunning) { morphRunning = true; requestAnimationFrame(morphFrame); }
 }
+function delays() {}   // (the old ooze started where the mouse came in; the squash is even all over)
 
 // Phones: a tap also sends "mouse" events; they are ignored right after a finger touched the screen (mobile.js)
 const byFinger = () => typeof window.touchedJustNow === "function" && window.touchedJustNow();
