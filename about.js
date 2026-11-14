@@ -12,7 +12,7 @@
 //      from the left edge.
 //   4. A small text ("I am a...") shows up once the word before it is written out AND it has come close to
 //      the middle of the screen, like a typewriter: first only its bar shows, blinking; then the scrolling types
-//      the letters one by one (stop scrolling and it stops, and the bar blinks). The first one ("!..", right
+//      the letters one by one (stop scrolling and it stops, and the bar blinks). The first one ("come scroll with me :)..", right
 //      after HI) has its bar from the start.
 //   5. The word after a small text only starts to build a moment after that small text has appeared.
 // The words and small texts lie on the strip exactly as in Frame 184, with HI starting where Figma "Desktop - 5" shows it.
@@ -46,7 +46,7 @@ const LETTER_WIDTH = 7.4;      // about how wide one letter of a small text is (
 const WORD_AFTER_TEXT = 40;    // how far the page moves after a small text has appeared, before the next word starts
 const TEXTS = ABOUT_TEXTS.map((t) => ({
   ...t,
-  y: WORD_Y,
+  y: t.bottom ? WORD_Y + 135.86 - 13.2 * 1.16 : WORD_Y,   // on the top line, or with its bottom on the words' bottom line
   stripX: START_X + t.x,
   after: ABOUT_WORDS.reduce((last, w, k) => (w.x < t.x ? k : last), 0),
 }));
@@ -56,7 +56,7 @@ const TYPE_EARLY = 105;        // about units: the typing starts while the text 
 TEXTS.forEach((t) => { t.atMiddle = t.stripX + (t.text.length * LETTER_WIDTH) / 2 - SCREEN_MIDDLE - (t.early ?? TYPE_EARLY); });   // (a text can have its own: early)
 // "my name is.." (after HI, which is there from the start) appears like the others: once it nears the middle
 TEXTS.forEach((t) => { if (t.after === 0) t.appear = t.atMiddle; });
-TEXTS[0].appear = 0;   // "!.." types itself as soon as the page opens
+TEXTS[0].appear = 0;   // "come scroll with me :).." is there from the start (it types itself, see autoType)
 // A text with "whenHI" appears once HI has moved that part of the way from where it starts to the small
 // ELANA on the left edge (its right edge: x 65 + 108.49 on the screen, in about units)
 const ELANA_RIGHT = (65 + 108.49) / ABOUT_SCALE;
@@ -599,8 +599,24 @@ function typingHold(i, moved) {
   if (t.appear === undefined || t.hold === false) return 0;   // ("!.." moves with HI all the time)
   return Math.min(Math.max(moved - t.appear, 0), typingLength(i));
 }
+// A text with "auto" types itself by time (not by the scrolling) as soon as the page opens:
+// its bar blinks a moment, then the letters come one by one, then the bar blinks on
+const AUTO_FIRST = 700, AUTO_LETTER = 55;   // ms
+TEXTS.forEach((t, i) => {
+  if (!t.auto) return;
+  let n = 0;
+  setTimeout(function next() {
+    n++;
+    textEls[i].typed.textContent = t.text.slice(0, n);
+    textEls[i].classList.add("is-typing");
+    if (n < t.text.length) setTimeout(next, AUTO_LETTER);
+    else textEls[i].classList.remove("is-typing");
+  }, AUTO_FIRST);
+});
+
 function typeTo(i, moved) {
   const el = textEls[i], t = TEXTS[i];
+  if (t.auto) { el.classList.add("is-shown"); return; }   // typed by time (above)
   const shown = t.appear !== undefined && moved >= t.appear;
   el.classList.toggle("is-shown", shown);
   const n = !shown ? 0 : Math.max(0, Math.min(t.text.length, Math.floor((moved - t.appear - BAR_FIRST) / (t.perLetter ?? PER_LETTER)) + 1));

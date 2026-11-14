@@ -39,8 +39,9 @@ const ABOUT_WORDS = [
 // "|" at the end), where they start in Frame 184 (x, in about units = Figma pixels / 0.9092).
 // Their top is level with the top of the words.
 const ABOUT_TEXTS = [
-  { text: "!..", x: 219.79, hold: false },   // hold: false = it moves with HI, also while it is typed
-  { text: "my name is..", x: 539.13, whenHI: 0.25, perLetter: 5 },   // whenHI: it appears once HI is a quarter of the way from where it starts to ELANA
+  // bottom: true = its bottom on the words' bottom line (Figma "Desktop - 5"); the others sit on the top line
+  { text: "come scroll with me :)..", x: 219.79, hold: false, bottom: true, auto: true },   // hold: false = it moves with HI; auto: it types itself when the page opens
+  { text: "my name is..", x: 539.13, whenHI: 0.25, perLetter: 5, bottom: true },   // whenHI: it appears once HI is a quarter of the way from where it starts to ELANA
   { text: "and I am a...", x: 1761.78 },
   { text: "and creator of...", x: 4162.6, perLetter: 3, early: 60 },   // centred between DESIGNER and VISION once typed
                                                      // (it stands still while typed, 63 = 15 + 16 × 3, so it starts that much left)
