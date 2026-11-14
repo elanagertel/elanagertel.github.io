@@ -338,11 +338,9 @@ const BREATH = 0.05;                     // how much it swells and shrinks while
 const DRIFT = 3;                         // how far a piece drifts, slowly (about units)
 const RIPPLE = 2.2;                      // how big the slow ripples on the edges are (about units)
 const RIM = 6;                           // how wide the light along the inside edge is
-// the light comes in layers of grey, one inside the other, that start right when the hover starts:
-// [how wide (part of RIM), how strong, when it starts (part of the change)]
-const RIM_LAYERS = [[0.4, 0.45, 0], [0.75, 0.45, 0.08], [1.2, 0.45, 0.16]];
-const RIM_GROW = 0.3;                    // how long each layer takes to grow in (part of the change)
-const RIM_LIGHT = "#e2e2e2";             // the colour of that light (reference: soft grey)
+// the light comes in layers of grey, one inside the other: [how wide (part of RIM), how strong]
+const RIM_LAYERS = [[0.35, 0.2], [0.6, 0.18], [0.9, 0.15]];
+const RIM_LIGHT = [226, 226, 226];       // the colour of that light (reference: soft grey #e2e2e2)
 const PUSH = 12;                         // how far the mouse presses the pieces away
 const PUSH_REACH = 80;                   // how close the mouse has to be to press
 const SPREAD = 0.8;                      // the change spreads from where the mouse came in, piece after piece (0 = all at once)
@@ -405,15 +403,15 @@ const visionLetters = VISION_LETTERS.map(([ch, lx, lw], n) => {
   const inside = svgEl("feMorphology", { in: "piece", operator: "erode", radius: "3", result: "inside" });
   rimFilter.append(round, roundSharp, inside);
   const merge = svgEl("feMerge", {});
-  // each grey layer: the inside minus a blurred copy of it (a band along the edge), filled with the light
-  const rimLayers = RIM_LAYERS.map((layer, i) => {
-    const rimBlur = svgEl("feGaussianBlur", { in: "inside", stdDeviation: "0", result: "inner" + i });
+  // each grey layer: the inside minus a blurred copy of it (a band along the edge), in the piece's own colour
+  // (each piece's colour goes from black to the grey light as that piece itself oozes, see drawLetter)
+  RIM_LAYERS.forEach(([wide, strong], i) => {
+    const rimBlur = svgEl("feGaussianBlur", { in: "inside", stdDeviation: (RIM * wide).toFixed(2), result: "inner" + i });
     const edge = svgEl("feComposite", { in: "inside", in2: "inner" + i, operator: "arithmetic", k1: "0", k2: "1", k3: "-1", k4: "0", result: "edge" + i });
-    const light = svgEl("feFlood", { "flood-color": RIM_LIGHT, "flood-opacity": "0", result: "light" + i });
-    const rim = svgEl("feComposite", { in: "light" + i, in2: "edge" + i, operator: "in", result: "rim" + i });
-    rimFilter.append(rimBlur, edge, light, rim);
+    const band = svgEl("feComposite", { in: "SourceGraphic", in2: "edge" + i, operator: "in", result: "band" + i });
+    const rim = svgEl("feColorMatrix", { in: "band" + i, type: "matrix", values: `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${strong} 0`, result: "rim" + i });
+    rimFilter.append(rimBlur, edge, band, rim);
     merge.append(svgEl("feMergeNode", { in: "rim" + i }));
-    return { rimBlur, light, layer };
   });
   rimFilter.append(merge);
   morphDefs.appendChild(rimFilter);
@@ -422,7 +420,7 @@ const visionLetters = VISION_LETTERS.map(([ch, lx, lw], n) => {
   const rimGroup = document.createElementNS(SVG_NS, "g");   // the grey layers, over the black
   rimGroup.setAttribute("filter", `url(#${rimFilterId})`);
   morphSvg.appendChild(rimGroup);
-  const L = { n, group, rimGroup, round, blur, rimLayers, filterId, t: 0, target: 0, energy: 0, hovered: false, lastTouch: 0, outer: [], shapes: [] };
+  const L = { n, group, rimGroup, round, blur, filterId, t: 0, target: 0, energy: 0, hovered: false, lastTouch: 0, outer: [], shapes: [] };
   own.forEach((sh) => {
     const [x, y] = shapePosition(sh, TOTAL_MOVE);
     const from = outlinePoints(ABOUT_SHAPES[sh.shape][2], x, y);
@@ -458,13 +456,6 @@ function drawLetter(L, time) {
   if (L.t > 0) {
     L.blur.setAttribute("stdDeviation", soft.toFixed(2));
     L.round.setAttribute("stdDeviation", (3 * s).toFixed(2));   // the grey squares get round corners as it softens
-    // the grey layers grow in one after the other from the first moment of the hover (and fade the same way back)
-    L.rimLayers.forEach(({ rimBlur, light, layer: [wide, strong, start] }) => {
-      const p = Math.min(1, Math.max(0, (L.t - start) / RIM_GROW));
-      const g = 1 - (1 - p) ** 2;   // quick at first, then settling
-      rimBlur.setAttribute("stdDeviation", (RIM * wide * g).toFixed(2));
-      light.setAttribute("flood-opacity", (strong * g).toFixed(3));
-    });
     L.group.setAttribute("filter", `url(#${L.filterId})`);
   } else L.group.removeAttribute("filter");
   L.shapes.forEach((sh) => {
@@ -473,6 +464,8 @@ function drawLetter(L, time) {
     sh.rimPath.style.visibility = showing ? "visible" : "hidden";
     if (!showing) return;
     const ps = ooze(pieceTime(L, sh));                 // this piece's own softness
+    // its grey light comes with its softness, at the same moment and speed (black = no light)
+    sh.rimPath.style.fill = `rgb(${RIM_LIGHT.map((c) => Math.round(c * ps)).join(",")})`;
     const flow = Math.sin(Math.PI * pieceTime(L, sh));  // this piece is oozing right now (0 before and after)
     // breathing: each piece swells and shrinks around its middle at its own slow pace (the waists open and close)
     const k = 1 - ps * SHRINK + live * BREATH * Math.sin(time * 0.8 + sh.phase);
