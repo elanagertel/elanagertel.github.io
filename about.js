@@ -330,6 +330,8 @@ const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const MORPH_POINTS = 120;                // points on each outline
 const SQUASH_TIME = REDUCED ? 1 : 900;   // ms to turn soft (and back)
 const CALM = REDUCED ? 0 : 0.35;         // how lively it is on its own (1 = while the mouse is on it)
+const REST_AFTER = 4000;                 // ms without the mouse before a letter goes back to its square pieces
+const REST_TIME = REDUCED ? 1 : 1800;    // ms to slowly turn back into the sharp pieces
 const SOFT = 6.5;                        // how round and melted the pieces get (about units)
 const SHRINK = 0.17;                     // how much each piece shrinks around its middle (so each square pillow and its waists show)
 const BREATH = 0.05;                     // how much it swells and shrinks while breathing
@@ -394,7 +396,7 @@ const visionLetters = VISION_LETTERS.map(([ch, lx, lw], n) => {
   morphDefs.appendChild(filter);
   const group = document.createElementNS(SVG_NS, "g");
   morphSvg.appendChild(group);
-  const L = { n, group, blur, rimBlur, light, filterId, t: 0, target: 0, energy: 0, hovered: false, outer: [], shapes: [] };
+  const L = { n, group, blur, rimBlur, light, filterId, t: 0, target: 0, energy: 0, hovered: false, lastTouch: 0, outer: [], shapes: [] };
   own.forEach((sh) => {
     const [x, y] = shapePosition(sh, TOTAL_MOVE);
     const from = outlinePoints(ABOUT_SHAPES[sh.shape][2], x, y);
@@ -450,7 +452,9 @@ function morphFrame(now) {
   let busy = false;
   visionLetters.forEach((L) => {
     if (L.t === 0 && L.target === 0) return;
-    const step = (dt * 1000) / SQUASH_TIME;
+    // left alone for a while: it slowly goes back to its original square pieces
+    if (L.target === 1 && !L.hovered && now - L.lastTouch > REST_AFTER) L.target = 0;
+    const step = (dt * 1000) / (L.target > L.t ? SQUASH_TIME : REST_TIME);
     L.t = L.target > L.t ? Math.min(L.target, L.t + step) : Math.max(L.target, L.t - step);
     // how lively it is: calm on its own, much more while the mouse is on it
     const lively = L.target === 0 ? 0 : L.hovered ? 1 : CALM;
@@ -489,6 +493,7 @@ visionLetters.forEach((L) => {
   L.el = el;
   function touchLetter(event) {
     L.hovered = true;
+    L.lastTouch = performance.now();
     if (L.t === 0) {
       // the ooze starts where the mouse came in
       const b = el.getBoundingClientRect();
@@ -496,11 +501,11 @@ visionLetters.forEach((L) => {
                 L.area.y0 + ((event.clientY - b.top) / b.height) * (L.area.y1 - L.area.y0)];
       delays(L);
     }
-    goTo(L, 1);   // once touched it turns liquid and stays liquid (it does not go back when the mouse leaves)
+    goTo(L, 1);   // once touched it turns soft; it goes back a few seconds after the mouse leaves
   }
   // (a tap on a phone also sends mouseenter/mouseleave: then they do nothing, the tap is handled below)
   el.addEventListener("mouseenter", (event) => { if (!byFinger()) touchLetter(event); });
-  el.addEventListener("mouseleave", () => { if (!byFinger()) L.hovered = false; });
+  el.addEventListener("mouseleave", () => { if (!byFinger()) { L.hovered = false; L.lastTouch = performance.now(); } });
   // Phones: a tap turns the letter liquid (from where the finger touched it), and for a moment it is as
   // lively as under the mouse, moving away from the finger
   let calmTimer = null;
@@ -510,7 +515,7 @@ visionLetters.forEach((L) => {
     pointer = [(event.clientX - b.left) / u, WORD_MID + (event.clientY - b.top - b.height / 2) / u];
     touchLetter(event);
     clearTimeout(calmTimer);
-    calmTimer = setTimeout(() => { L.hovered = false; }, TAP_LIVELY_TIME);
+    calmTimer = setTimeout(() => { L.hovered = false; L.lastTouch = performance.now(); }, TAP_LIVELY_TIME);
   });
 });
 
