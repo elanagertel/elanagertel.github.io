@@ -392,33 +392,47 @@ const visionLetters = VISION_LETTERS.map(([ch, lx, lw], n) => {
   const filter = svgEl("filter", { id: filterId, x: "-30%", y: "-30%", width: "160%", height: "160%", "color-interpolation-filters": "sRGB" });
   const blur = svgEl("feGaussianBlur", { in: "SourceGraphic", stdDeviation: "0", result: "soft" });
   const sharpen = svgEl("feColorMatrix", { in: "soft", type: "matrix", values: "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -11", result: "shape" });
-  // (the light starts a hair inside the edge, so the outline itself stays crisp and black on the white page)
-  const inside = svgEl("feMorphology", { in: "shape", operator: "erode", radius: "1.3", result: "inside" });
-  filter.append(blur, sharpen, inside);
+  filter.append(blur, sharpen);
+  morphDefs.appendChild(filter);
+  // The grey light has its own filter, drawn on top: it works on each square piece by itself (the pieces
+  // are a bit smaller than the melted black shape, so each square pillow gets its own grey inside it).
+  // It rounds the piece's corners a little (without melting pieces together), then makes the layers.
+  const rimFilterId = "about-squash-rim-" + n;
+  const rimFilter = svgEl("filter", { id: rimFilterId, x: "-30%", y: "-30%", width: "160%", height: "160%", "color-interpolation-filters": "sRGB" });
+  const round = svgEl("feGaussianBlur", { in: "SourceGraphic", stdDeviation: "0", result: "round" });
+  const roundSharp = svgEl("feColorMatrix", { in: "round", type: "matrix", values: "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -11", result: "piece" });
+  // (the light starts a hair inside the edge, so the outline itself stays crisp)
+  const inside = svgEl("feMorphology", { in: "piece", operator: "erode", radius: "3", result: "inside" });
+  rimFilter.append(round, roundSharp, inside);
   const merge = svgEl("feMerge", {});
-  merge.append(svgEl("feMergeNode", { in: "shape" }));
   // each grey layer: the inside minus a blurred copy of it (a band along the edge), filled with the light
   const rimLayers = RIM_LAYERS.map((layer, i) => {
     const rimBlur = svgEl("feGaussianBlur", { in: "inside", stdDeviation: "0", result: "inner" + i });
     const edge = svgEl("feComposite", { in: "inside", in2: "inner" + i, operator: "arithmetic", k1: "0", k2: "1", k3: "-1", k4: "0", result: "edge" + i });
     const light = svgEl("feFlood", { "flood-color": RIM_LIGHT, "flood-opacity": "0", result: "light" + i });
     const rim = svgEl("feComposite", { in: "light" + i, in2: "edge" + i, operator: "in", result: "rim" + i });
-    filter.append(rimBlur, edge, light, rim);
+    rimFilter.append(rimBlur, edge, light, rim);
     merge.append(svgEl("feMergeNode", { in: "rim" + i }));
     return { rimBlur, light, layer };
   });
-  filter.append(merge);
-  morphDefs.appendChild(filter);
+  rimFilter.append(merge);
+  morphDefs.appendChild(rimFilter);
   const group = document.createElementNS(SVG_NS, "g");
   morphSvg.appendChild(group);
-  const L = { n, group, blur, rimLayers, filterId, t: 0, target: 0, energy: 0, hovered: false, lastTouch: 0, outer: [], shapes: [] };
+  const rimGroup = document.createElementNS(SVG_NS, "g");   // the grey layers, over the black
+  rimGroup.setAttribute("filter", `url(#${rimFilterId})`);
+  morphSvg.appendChild(rimGroup);
+  const L = { n, group, rimGroup, round, blur, rimLayers, filterId, t: 0, target: 0, energy: 0, hovered: false, lastTouch: 0, outer: [], shapes: [] };
   own.forEach((sh) => {
     const [x, y] = shapePosition(sh, TOTAL_MOVE);
     const from = outlinePoints(ABOUT_SHAPES[sh.shape][2], x, y);
     const path = document.createElementNS(SVG_NS, "path");
     path.style.visibility = "hidden";
     group.appendChild(path);
-    L.shapes.push({ el: sh.el, path, from, mid: middleOf(from), phase: L.shapes.length * 1.7 + n * 2.3 });
+    const rimPath = document.createElementNS(SVG_NS, "path");   // the same piece again, for its grey layers
+    rimPath.style.visibility = "hidden";
+    rimGroup.appendChild(rimPath);
+    L.shapes.push({ el: sh.el, path, rimPath, from, mid: middleOf(from), phase: L.shapes.length * 1.7 + n * 2.3 });
   });
   return L;
 });
@@ -443,6 +457,7 @@ function drawLetter(L, time) {
   const soft = SOFT * (s + GOO * flowing) * (1 + 0.15 * live * Math.sin(time * 0.9 + L.n));
   if (L.t > 0) {
     L.blur.setAttribute("stdDeviation", soft.toFixed(2));
+    L.round.setAttribute("stdDeviation", (3 * s).toFixed(2));   // the grey squares get round corners as it softens
     // the grey layers grow in one after the other from the first moment of the hover (and fade the same way back)
     L.rimLayers.forEach(({ rimBlur, light, layer: [wide, strong, start] }) => {
       const p = Math.min(1, Math.max(0, (L.t - start) / RIM_GROW));
@@ -455,6 +470,7 @@ function drawLetter(L, time) {
   L.shapes.forEach((sh) => {
     sh.el.style.visibility = showing ? "hidden" : "";   // the real shape hides while it is soft
     sh.path.style.visibility = showing ? "visible" : "hidden";
+    sh.rimPath.style.visibility = showing ? "visible" : "hidden";
     if (!showing) return;
     const ps = ooze(pieceTime(L, sh));                 // this piece's own softness
     const flow = Math.sin(Math.PI * pieceTime(L, sh));  // this piece is oozing right now (0 before and after)
@@ -463,7 +479,7 @@ function drawLetter(L, time) {
     // drifting a little, slowly
     const ox = live * DRIFT * Math.sin(time * 0.5 + sh.phase), oy = live * DRIFT * Math.cos(time * 0.6 + sh.phase * 1.3);
     const [cx, cy] = sh.mid;
-    sh.path.setAttribute("d", pathFrom(sh.from.map(([px, py]) => {
+    sh.path.setAttribute("d", sh.rimD = pathFrom(sh.from.map(([px, py]) => {
       let x = cx + (px - cx) * k + ox, y = cy + (py - cy) * k + oy;
       // slow ripples along the edge
       const dx = x - cx, dy = y - cy, r = Math.hypot(dx, dy) || 1, a = Math.atan2(dy, dx);
@@ -479,6 +495,7 @@ function drawLetter(L, time) {
       }
       return [x, y];
     })));
+    sh.rimPath.setAttribute("d", sh.rimD);   // its grey layers follow it
   });
 }
 // one animation loop for the whole word: it runs as long as any letter is soft
