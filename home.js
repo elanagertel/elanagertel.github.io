@@ -12,7 +12,7 @@
 const HOME_SCALE = 0.9351;
 
 // Timing (milliseconds) — must match the planning scripts
-const START_PAUSE = 800;    // the scattered shapes stay still for 0.8s, like in Figma
+const START_PAUSE = 300;    // a moment of empty screen before the shapes slide in from the edges
 const LAST_SLIDE = 550;     // extra time after the last planned move, before hovering turns on
 const STEP_PAUSE = 800;     // pause once "ELANA GERTEL" is complete
 
@@ -502,30 +502,49 @@ function showGallery() {
 }
 
 // ----- The big "ELANA GERTEL" in the middle of the screen -----
-// The opening is placed for Figma's 1024-high screen. On any other screen height the whole page is
-// moved up or down during the opening, so the middle of the finished name is in the middle of the screen;
-// when the letters move on to the gallery, the page glides back to its own place.
-const GLIDE_BACK = 900;   // ms
+// The opening is planned for Figma's 1024-high screen. On any other screen height the shapes' up-and-down
+// places on the way into the name are all moved by the same amount (nameShift), so the finished name is in
+// the middle of the screen. Every shape then makes its own up-or-down slide on the way to the gallery
+// (FLOW_TIMELINE, step 2), which takes it to its exact place: no extra movement anywhere.
 const NAME_MIDDLE = 512;  // Figma frame 76: the middle of the finished name (the middle of its 1024-high screen)
 function nameShift() {
-  const figmaPixel = flow.clientWidth / 1440;   // one Figma pixel, in screen pixels
-  return window.innerHeight / 2 - NAME_MIDDLE * figmaPixel;
+  const homeUnit = flow.clientWidth / 1440 * HOME_SCALE;   // one home unit, in screen pixels
+  return (window.innerHeight / 2 - NAME_MIDDLE * flow.clientWidth / 1440) / homeUnit;   // in home units
 }
 
 // ----- Play the opening animation -----
+// The screen starts empty: every shape waits beyond the edge of the screen, on the line of its first slide,
+// and that slide brings it straight in (through where it used to wait, without stopping) and on into the name.
 function playOpening() {
-  flow.classList.add("is-animating"); // turns on the CSS transitions
-  flow.style.transform = `translateY(${nameShift()}px)`;   // the name will be in the middle of the screen
-  setTimeout(() => {
-    flow.style.transition = `transform ${GLIDE_BACK}ms ease-in-out`;
-    flow.style.transform = "";
-    setTimeout(() => { flow.style.transition = ""; }, GLIDE_BACK + 50);
-  }, START_PAUSE + STEP_STARTS[1]);
+  const homeUnit = flow.clientWidth / 1440 * HOME_SCALE;
+  const shift = nameShift();
+  const screenRight = 1440 / HOME_SCALE, screenBottom = window.innerHeight / homeUnit;
+  const OUTSIDE = 110;   // home units beyond the edge (more than a shape)
+  const stepTwo = STEP_STARTS[1];
+  // each shape's first slide on the way into the name
+  const firstSlide = FLOW_PIECES.map(() => null);
+  FLOW_TIMELINE.forEach(([time, moves]) => {
+    if (time >= stepTwo) return;
+    moves.forEach(([i, axis, value]) => { if (!firstSlide[i]) firstSlide[i] = { axis, value }; });
+  });
+  pieceElements.forEach((el, i) => {
+    const [x, y] = FLOW_PIECES[i].path[0];
+    const first = firstSlide[i];
+    let start = [x, y + shift];
+    if (first && first.axis === 0) start[0] = first.value > x ? -OUTSIDE : screenRight + OUTSIDE * 0.2;
+    else if (first) start[1] = first.value + shift > y + shift ? -OUTSIDE : screenBottom + OUTSIDE * 0.2;
+    place(el, start);
+  });
+  void flow.offsetWidth;   // draw them outside before the slides start
 
-  // the shapes: every planned slide at its time (straight slides; a new one only when a shape turns)
+  flow.classList.add("is-animating"); // turns on the CSS transitions
+
+  // the shapes: every planned slide at its time (straight slides; a new one only when a shape turns).
+  // On the way into the name the up-and-down places are moved by `shift`; on the way to the gallery not.
   FLOW_TIMELINE.forEach(([time, moves]) => {
     setTimeout(() => {
-      moves.forEach(([i, axis, value, duration]) => slide(pieceElements[i], axis, value, duration));
+      moves.forEach(([i, axis, value, duration]) =>
+        slide(pieceElements[i], axis, axis === 1 && time < stepTwo ? value + shift : value, duration));
     }, START_PAUSE + time);
   });
 
