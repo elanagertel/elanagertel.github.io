@@ -328,10 +328,10 @@ function draw() {
 // more, on its own it is calm. Scrolling back makes it sharp again.
 const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const MORPH_POINTS = 120;                // points on each outline
-const SQUASH_TIME = REDUCED ? 1 : 900;   // ms to turn soft (and back)
+const SQUASH_TIME = REDUCED ? 1 : 1700;  // ms to ooze from the square pieces into the soft ones
 const CALM = REDUCED ? 0 : 0.35;         // how lively it is on its own (1 = while the mouse is on it)
 const REST_AFTER = 4000;                 // ms without the mouse before a letter goes back to its square pieces
-const REST_TIME = REDUCED ? 1 : 1800;    // ms to slowly turn back into the sharp pieces
+const REST_TIME = REDUCED ? 1 : 2200;    // ms to slowly ooze back into the sharp pieces
 const SOFT = 6.5;                        // how round and melted the pieces get (about units)
 const SHRINK = 0.17;                     // how much each piece shrinks around its middle (so each square pillow and its waists show)
 const BREATH = 0.05;                     // how much it swells and shrinks while breathing
@@ -341,6 +341,10 @@ const RIM = 6;                           // how wide the light along the inside 
 const RIM_LIGHT = "#e2e2e2";             // the colour of that light (reference: soft grey)
 const PUSH = 12;                         // how far the mouse presses the pieces away
 const PUSH_REACH = 80;                   // how close the mouse has to be to press
+const SPREAD = 0.8;                      // the change spreads from where the mouse came in, piece after piece (0 = all at once)
+const LUMP = 5;                          // while oozing: how much the edges bulge and wobble (about units)
+const DRIP = 9;                          // while oozing: how far the bottoms sag down, like thick liquid (about units)
+const GOO = 0.7;                         // while oozing: extra melting, so pieces stretch liquid bridges to each other
 
 const morphSvg = document.createElementNS(SVG_NS, "svg");   // the drawing of the soft pieces, over the shapes
 morphSvg.setAttribute("class", "about-morph");
@@ -408,12 +412,24 @@ const visionLetters = VISION_LETTERS.map(([ch, lx, lw], n) => {
   return L;
 });
 
+// Each piece changes at its own moment: first the pieces near where the mouse came in, the rest follow,
+// like liquid spreading. pieceTime() is that piece's own progress (0 = sharp, 1 = soft).
+const pieceTime = (L, sh) => Math.min(1, Math.max(0, L.t * (1 + SPREAD) - SPREAD * (sh.reach || 0)));
+// remembers where the change starts and how far each piece is from there (0 = nearest, 1 = farthest)
+function spreadFrom(L, point) {
+  const far = Math.max(...L.shapes.map((sh) => Math.hypot(sh.mid[0] - point[0], sh.mid[1] - point[1]))) || 1;
+  L.shapes.forEach((sh) => { sh.reach = Math.hypot(sh.mid[0] - point[0], sh.mid[1] - point[1]) / far; });
+}
+
 function drawLetter(L, time) {
   const showing = L.t > 0;
   const s = ooze(L.t);            // how soft it is (0 = its sharp pieces, 1 = squashed)
   const live = s * (0.35 + 0.65 * L.energy);   // how much it moves
-  // the filter: melting and the inner light come with the softness, and breathe a little
-  const soft = SOFT * s * (1 + 0.15 * live * Math.sin(time * 0.9 + L.n));
+  // how much it is in the middle of oozing (0 when it rests sharp or rests soft)
+  const flowing = L.shapes.reduce((a, sh) => a + Math.sin(Math.PI * pieceTime(L, sh)), 0) / (L.shapes.length || 1);
+  // the filter: melting and the inner light come with the softness, and breathe a little;
+  // while oozing it melts a bit more, so the pieces pull liquid bridges between them
+  const soft = SOFT * (s + GOO * flowing) * (1 + 0.15 * live * Math.sin(time * 0.9 + L.n));
   if (soft > 0.05) {
     L.blur.setAttribute("stdDeviation", soft.toFixed(2));
     L.rimBlur.setAttribute("stdDeviation", (RIM * s).toFixed(2));
@@ -424,8 +440,10 @@ function drawLetter(L, time) {
     sh.el.style.visibility = showing ? "hidden" : "";   // the real shape hides while it is soft
     sh.path.style.visibility = showing ? "visible" : "hidden";
     if (!showing) return;
+    const ps = ooze(pieceTime(L, sh));                 // this piece's own softness
+    const flow = Math.sin(Math.PI * pieceTime(L, sh));  // this piece is oozing right now (0 before and after)
     // breathing: each piece swells and shrinks around its middle at its own slow pace (the waists open and close)
-    const k = 1 - s * SHRINK + live * BREATH * Math.sin(time * 0.8 + sh.phase);
+    const k = 1 - ps * SHRINK + live * BREATH * Math.sin(time * 0.8 + sh.phase);
     // drifting a little, slowly
     const ox = live * DRIFT * Math.sin(time * 0.5 + sh.phase), oy = live * DRIFT * Math.cos(time * 0.6 + sh.phase * 1.3);
     const [cx, cy] = sh.mid;
@@ -434,7 +452,10 @@ function drawLetter(L, time) {
       // slow ripples along the edge
       const dx = x - cx, dy = y - cy, r = Math.hypot(dx, dy) || 1, a = Math.atan2(dy, dx);
       const ripple = live * RIPPLE * Math.sin(time * 1.2 + a * 2 + sh.phase);
-      x += (dx / r) * ripple; y += (dy / r) * ripple;
+      // while oozing: the edges bulge in moving lumps, and the bottom sags down like thick liquid
+      const lump = flow * LUMP * (Math.sin(a * 3 + time * 3.2 + sh.phase) * 0.6 + Math.sin(a * 5 - time * 2.1 + sh.phase * 2) * 0.4);
+      x += (dx / r) * (ripple + lump); y += (dy / r) * (ripple + lump);
+      y += flow * DRIP * Math.max(0, dy / r) ** 3;
       // the mouse presses it away, gently
       if (L.hovered && pointer) {
         const mx = x - pointer[0], my = y - pointer[1], d = Math.hypot(mx, my) || 1;
@@ -453,6 +474,7 @@ function morphFrame(now) {
   visionLetters.forEach((L) => {
     if (L.t === 0 && L.target === 0) return;
     // left alone for a while: it slowly goes back to its original square pieces
+    // (going back, the farthest pieces turn sharp first and it ends where the mouse came in)
     if (L.target === 1 && !L.hovered && now - L.lastTouch > REST_AFTER) L.target = 0;
     const step = (dt * 1000) / (L.target > L.t ? SQUASH_TIME : REST_TIME);
     L.t = L.target > L.t ? Math.min(L.target, L.t + step) : Math.max(L.target, L.t - step);
@@ -499,7 +521,7 @@ visionLetters.forEach((L) => {
       const b = el.getBoundingClientRect();
       L.from = [L.area.x0 + ((event.clientX - b.left) / b.width) * (L.area.x1 - L.area.x0),
                 L.area.y0 + ((event.clientY - b.top) / b.height) * (L.area.y1 - L.area.y0)];
-      delays(L);
+      spreadFrom(L, L.from);
     }
     goTo(L, 1);   // once touched it turns soft; it goes back a few seconds after the mouse leaves
   }
