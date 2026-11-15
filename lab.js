@@ -56,6 +56,21 @@ const titleBottom = Math.max(...TITLE_PIECES.map(([number, width, x, y]) => {
 }));
 document.getElementById("lab").style.setProperty("--title-mid", (titleTop + titleBottom) / 2);
 
+// ----- The texts under the title scroll out first: everything else waits until they have left -----
+// --intro-out: how far you scroll until the lowest of them has left the top of the screen (plus a
+// short pause). The CSS starts everything after the first screen that much lower (see styles.css).
+// (They stay in the same place on the page whatever --intro-out is, so they can be measured any time.)
+const INTRO_PAUSE = 30;   // px of scrolling between the texts leaving and the next thing coming
+function placeIntroOut() {
+  const intros = [...document.querySelectorAll(".lab-intro")];
+  if (!intros.length) return;
+  const bottom = Math.max(...intros.map((el) => el.getBoundingClientRect().bottom + window.scrollY));
+  document.getElementById("lab").style.setProperty("--intro-out", Math.round(bottom + INTRO_PAUSE) + "px");
+}
+placeIntroOut();
+document.fonts.ready.then(placeIntroOut);
+window.addEventListener("resize", placeIntroOut);
+
 // ----- The white title only shows over the black end -----
 // While you scroll, everything of it above the top of the black end is cut off,
 // so the title turns white exactly where the black end passes behind it.
