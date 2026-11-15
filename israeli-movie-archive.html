@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Comme:wght@400&family=Crimson+Text:ital,wght@0,400;1,400&display=swap">
-  <link rel="stylesheet" href="styles.css?v=20261115a">
+  <link rel="stylesheet" href="styles.css?v=20261115b">
   <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts) -->
   <link rel="expect" href="#page-ready" blocking="render">
 </head>
@@ -64,13 +64,22 @@
              autoplay muted loop playsinline aria-label="Israeli Movie Archive: the index screen over beach footage"></video>
     </div>
 
-    <!-- The story box: white text on the black, like the paragraphs on the other project pages.
-         While the video stays in the middle of the screen, it comes up from the bottom, sticks there
-         for a while (like the paragraphs on the other pages), and then scrolls up and out of the top.
-         Only then does the video leave, and only then do the closing texts come in (timing: .archive in styles.css).
-         THE TEXT WILL BE GIVEN LATER: replace the placeholder, then set --a-text-h in styles.css to its height. -->
-    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-text); --next: var(--a-text-next); --w: 170">
-      <p class="lab-text">[The project text will come here.]</p>
+    <!-- The story (Figma: the text in Frame 93, x 65, 167 wide, Averia Serif Libre 12), in four paragraphs:
+         white text on the black, like the paragraphs on the other project pages.
+         While the video stays in the middle of the screen, each paragraph comes up from the bottom, sticks
+         there for a while, and is pushed up and out of the top as the next one comes up.
+         Only then does the video leave, and only then do the closing texts come in (timing: .archive in styles.css). -->
+    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-p1); --next: var(--a-p2); --w: 167">
+      <p class="lab-text">In an Index course at Bezalel, I redesigned the Jerusalem Cinematheque's Israeli Film Archive. It's built for leisure, sorted by genres and holidays, but people come to archives to research history.</p>
+    </div>
+    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-p2); --next: var(--a-p3); --w: 167">
+      <p class="lab-text">Searching for Mea Shearim footage from specific years, I couldn't reach them. Friends said they too came for specific periods, so years became the backbone.</p>
+    </div>
+    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-p3); --next: var(--a-p4); --w: 167">
+      <p class="lab-text">The homepage is a grid: one row per decade. Years as a simple sort option made too large a mass. The film stays central, like looking through a time traveler's lens, with quiet white typography and hierarchy built from blinking and opacity.</p>
+    </div>
+    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-p4); --next: var(--a-text-next); --w: 167">
+      <p class="lab-text">My lecturer said it feels like being a living witness to past years. Next time, I'd add index filtering inside each year.</p>
     </div>
 
     <!-- The black end of the page: the project details (Figma still has the cactus text here) -->

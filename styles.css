@@ -1512,14 +1512,19 @@ body.lab-page {
   /* 2. The video starts coming in once the black fills the screen (after one screen of scrolling),
      40 later like in Figma */
   --a-video: calc(var(--end) + 100vh + 40 * var(--u));
-  /* 3. The story box comes up from the bottom of the screen once the video has stopped in the middle
-     (plus 40). --a-text-h: its height (Figma pixels): set it when the real text is in.
-     It sticks at the bottom of the screen for --a-text-hold of scrolling, then scrolls up and out. */
+  /* 3. The story's first paragraph comes up from the bottom of the screen once the video has stopped
+     in the middle (plus 40). Each paragraph sticks at the bottom of the screen for --a-text-hold of
+     scrolling, then the next one comes up and pushes it up and out.
+     --a-p1 … --a-p4: where each paragraph's place starts; each place is the paragraph's height
+     (Figma pixels: 9, 7, 10 and 5 lines of 17.76, as they wrap on the page) plus the hold. */
   --a-text: calc(var(--a-video) + 50vh + (585 / 2 + 40) * var(--u));
-  --a-text-h: 20;
   --a-text-hold: 50vh;
-  --a-text-next: calc(var(--a-text) + var(--a-text-h) * var(--u) + var(--a-text-hold));
-  /* 4. The video lets go (its middle in the middle of the screen) once the story box has left the top,
+  --a-p1: var(--a-text);
+  --a-p2: calc(var(--a-p1) + 159.84 * var(--u) + var(--a-text-hold));
+  --a-p3: calc(var(--a-p2) + 124.32 * var(--u) + var(--a-text-hold));
+  --a-p4: calc(var(--a-p3) + 177.6 * var(--u) + var(--a-text-hold));
+  --a-text-next: calc(var(--a-p4) + 88.8 * var(--u) + var(--a-text-hold));
+  /* 4. The video lets go (its middle in the middle of the screen) once the last paragraph has left the top,
      plus a short pause (250) */
   --stack-end: calc(var(--a-text-next) + 250 * var(--u) + 50vh);
   /* 5. The page ends once the video has left the screen, plus a short pause (the shared rule):
