@@ -53,11 +53,18 @@
     t.typed.textContent = out.slice(0, t.shown);
   }
 
-  // Types a group of texts together
-  function typeGroup(group) {
-    group.forEach((t) => { t.el.classList.remove("is-waiting"); });
+  // Types a group of texts together.
+  // wait: ms the bars blink before the first letter; already: letters that are typed right away
+  // (the first screen's texts started typing on the home page, while the title was being built)
+  function typeGroup(group, wait = FIRST_WAIT, already = 0, onStart) {
+    group.forEach((t) => {
+      t.el.classList.remove("is-waiting");
+      t.shown = Math.min(t.full.length, already);
+      t.typed.textContent = t.withBreaks.slice(0, t.shown);
+    });
     setTimeout(() => {
-      group.forEach((t) => t.el.classList.add("is-typing"));
+      if (onStart) onStart();
+      group.forEach((t) => t.el.classList.add(t.shown < t.full.length ? "is-typing" : "is-done"));
       const timer = setInterval(() => {
         let busy = false;
         group.forEach((t) => {
@@ -70,8 +77,49 @@
         });
         if (!busy) clearInterval(timer);
       }, PER_LETTER);
-    }, FIRST_WAIT);
+    }, wait);
   }
+
+  // ----- Home page: the first screen's texts start typing while the project's title is being built -----
+  // home.js calls this with the project page's texts (and where they stand); they are drawn in the same
+  // place as on the project page. save() is called just before the project page opens: it remembers
+  // when the first letter was typed, so the project page goes on typing from the same letter.
+  const STARTED_KEY = "introTypingStarted";
+  window.typeIntroPreview = function (texts, page) {
+    const box = document.createElement("div");
+    box.className = "lab-intro-preview";
+    box.setAttribute("aria-hidden", "true");
+    texts.forEach(({ className, x, text }) => {
+      const p = document.createElement("p");
+      p.className = className;
+      p.style.setProperty("--x", x);
+      p.textContent = text;
+      box.appendChild(p);
+    });
+    document.body.appendChild(box);
+    const group = [...box.children].map(prepare);
+    let started = null;
+    document.fonts.ready.then(() => {
+      group.forEach(measure);
+      typeGroup(group, FIRST_WAIT, 0, () => { started = Date.now(); });
+    });
+    return {
+      save() {
+        if (started === null) return;
+        try { sessionStorage.setItem(STARTED_KEY, JSON.stringify({ page, started })); } catch (e) {}
+      },
+    };
+  };
+  // On the project page: when (if at all) its first-screen texts already started typing on the home page
+  function startedOnHome() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(STARTED_KEY) || "null");
+      sessionStorage.removeItem(STARTED_KEY);
+      if (!saved || saved.page !== location.pathname || Date.now() - saved.started > 15000) return null;
+      return saved.started;
+    } catch (e) { return null; }
+  }
+  const homeStart = startedOnHome();
 
   // A story paragraph types on its own, quickly, with a tiny stop after each sentence
   const STORY_STEP = 10;       // ms between two steps
@@ -102,7 +150,9 @@
 
   document.fonts.ready.then(() => {
     all.forEach(measure);
-    if (intro.length) typeGroup(intro);   // the first screen: right away
+    // the first screen: right away, or going on from where it got to on the home page
+    if (intro.length && homeStart !== null) typeGroup(intro, 0, Math.floor((Date.now() - homeStart) / PER_LETTER));
+    else if (intro.length) typeGroup(intro);
     // the black end: once its texts are on the screen
     if (info.length) {
       const watch = new IntersectionObserver((entries) => {

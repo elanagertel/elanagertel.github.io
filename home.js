@@ -423,6 +423,7 @@ function goToProject(event, i) {
 // built where it is on the project page.
 // size: the title is built with the home shapes, a little bigger than the project page's title, so
 // once it is built it shrinks to that size around the middle of the screen, and then the page opens
+const INTRO_EARLY = 1500;   // ms before the title is built that the texts under it appear (their bars blink a moment, then they type)
 function playToTitle(plan, link, shift, size = 1) {
   // the shapes that come in from the edges (they start shifted too, so their way in stays the same)
   const newPieces = plan.newPieces.map((piece) => {
@@ -464,6 +465,19 @@ function playToTitle(plan, link, shift, size = 1) {
       });
     }, time);
   });
+  // the project page's texts under the title start typing before the title is fully built
+  // (type-texts.js draws them where they are on the project page; the project page then goes on typing them)
+  let preview = null;
+  if (typeof window.typeIntroPreview === "function" && window.matchMedia("(hover: hover)").matches) {
+    fetch(link).then((answer) => answer.text()).then((html) => {
+      const page = new DOMParser().parseFromString(html, "text/html");
+      const texts = [...page.querySelectorAll(".lab-intro")].map((p) => ({
+        className: p.className, x: p.style.getPropertyValue("--x"), text: p.textContent.trim() }));
+      if (!texts.length) return;
+      const show = () => { if (!preview) preview = window.typeIntroPreview(texts, new URL(link).pathname); };
+      setTimeout(show, Math.max(0, plan.total - INTRO_EARLY));
+    }).catch(() => {});
+  }
   const SHRINK = 300;   // ms
   setTimeout(() => {
     const box = flow.getBoundingClientRect();
@@ -471,7 +485,7 @@ function playToTitle(plan, link, shift, size = 1) {
     flow.style.transition = `transform ${SHRINK}ms ease-in-out`;
     flow.style.transform = `scale(${size})`;
   }, plan.total + 150);
-  setTimeout(() => { window.location.href = link; }, plan.total + 150 + (size === 1 ? 0 : SHRINK + 50));
+  setTimeout(() => { if (preview) preview.save(); window.location.href = link; }, plan.total + 150 + (size === 1 ? 0 : SHRINK + 50));
 }
 
 // (phones: the first tap on a picture only shows it, see "tapping a picture" above; the second opens it)

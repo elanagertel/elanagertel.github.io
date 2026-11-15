@@ -2012,3 +2012,13 @@ body.lab-page {
     top: calc(var(--footer-h) - 120px + 4em);
   }
 }
+
+/* Home page: while a project's title is being built, its first-screen texts appear and start typing
+   (type-texts.js), in the same place as on the project page (.lab-intro). The box covers the screen. */
+.lab-intro-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  mix-blend-mode: exclusion;   /* on the box (its own layer), so the white texts show black on white and white on the black shapes */
+}
