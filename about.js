@@ -592,14 +592,28 @@ function typeTo(i, moved) {
   if (t.auto) { el.classList.add("is-shown"); return; }   // typed by time (above)
   const shown = t.appear !== undefined && moved >= t.appear;
   el.classList.toggle("is-shown", shown);
-  const n = !shown ? 0 : Math.max(0, Math.min(t.text.length, Math.floor((moved - t.appear - BAR_FIRST) / (t.perLetter ?? PER_LETTER)) + 1));
-  if (el.typed.textContent.length !== n) {
-    el.typed.textContent = t.text.slice(0, n);
-    // while letters are being typed the bar stands still; a moment after the last change it blinks again
-    el.classList.add("is-typing");
-    clearTimeout(el.blinkTimer);
+  // how many letters the scrolling has reached
+  el.want = !shown ? 0 : Math.max(0, Math.min(t.text.length, Math.floor((moved - t.appear - BAR_FIRST) / (t.perLetter ?? PER_LETTER)) + 1));
+  if (!el.stepping && el.typed.textContent.length !== el.want) stepLetters(el, t);
+}
+// The letters follow the scrolling one at a time, never faster than a person types (like "come scroll
+// with me"): scrolling quickly, they keep typing at that pace until they catch up. Scrolling back
+// takes them away a little faster.
+const CATCH_UP_LETTER = 55, CATCH_UP_ERASE = 25;   // ms for each letter
+function stepLetters(el, t) {
+  const n = el.typed.textContent.length;
+  if (n === el.want) {
+    el.stepping = false;
+    // a moment after the last letter the bar blinks again
     el.blinkTimer = setTimeout(() => el.classList.remove("is-typing"), 250);
+    return;
   }
+  el.stepping = true;
+  el.typed.textContent = t.text.slice(0, n + (el.want > n ? 1 : -1));
+  // while letters are being typed the bar stands still
+  el.classList.add("is-typing");
+  clearTimeout(el.blinkTimer);
+  setTimeout(() => stepLetters(el, t), el.want > n ? CATCH_UP_LETTER : CATCH_UP_ERASE);
 }
 
 // ----- The end: VISION stays in the middle, but the small texts keep moving with the scrolling until
