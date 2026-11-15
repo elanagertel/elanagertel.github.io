@@ -977,10 +977,8 @@ body.lab-page {
   position: absolute;
   left: 0;
   top: 0;
-  /* (--intro-out: see .lab below; the first screen starts at the very top of the page all the same) */
-  margin-top: calc(-1 * var(--intro-out, 0px));
   width: 100%;
-  height: calc(var(--end) + var(--intro-out, 0px)); /* down to the black end */
+  height: var(--end); /* down to the black end */
 }
 
 /* It sticks so that the title's middle (--title-mid, Figma y; lab.js measures it) is in the middle
@@ -1024,7 +1022,7 @@ body.lab-page {
 }
 
 /* Where each picture is in Figma (its visible part) and how big it is */
-.lab-track-1 { z-index: 1; left: calc(437.2 * var(--u)); top: 100vh; --w: 566.4; --h: 799; }
+.lab-track-1 { z-index: 1; left: calc(437.2 * var(--u)); top: calc(100vh + var(--intro-out, 0px)); --w: 566.4; --h: 799; }
 /* The other pictures start where the page's chain of places says (see .memory) */
 .lab-track-2 { z-index: 2; left: calc(437 * var(--u)); top: var(--m-cover); --w: 566; --h: 800.6; }
 .lab-track-3 { z-index: 3; left: calc(296 * var(--u)); top: var(--m-video-1); --w: 850; --h: 623; }
@@ -1258,7 +1256,7 @@ body.lab-page {
 .lab-invert .lab-first-track {
   top: calc(50vh - var(--title-mid) * var(--u));   /* where the first screen sticks (see .lab-first) */
   /* down to the end of the page, 1px more, so rounding of the page height never nudges the title */
-  height: calc(100% + 1px - 50vh + var(--title-mid) * var(--u) + var(--intro-out, 0px));
+  height: calc(100% + 1px - 50vh + var(--title-mid) * var(--u));
 }
 
 .lab-invert .lab-first {
@@ -1312,7 +1310,7 @@ body.lab-page {
      THE RULE: after a paragraph, the next thing only comes in once the paragraph has reached its sticky
      place at the bottom of the screen: at least the paragraph's height + 19.91 after it.
      (Figma's distances already allow for that; max() keeps the rule if the distances ever get smaller.) */
-  --m-text-1:  calc(2103 * var(--u));                              /* the first picture is at 100vh */
+  --m-text-1:  calc(2103 * var(--u) + var(--intro-out, 0px));    /* the first picture is at 100vh (+ --intro-out) */
   --m-cover:   calc(var(--m-text-1)  + max(973.4, 239 + 19.91) * var(--u));
   --m-video-1: calc(var(--m-cover)   + 834.6 * var(--u));
   --m-text-2:  calc(var(--m-video-1) + 912 * var(--u));
@@ -1348,8 +1346,8 @@ body.lab-page {
      THE RULE: after a paragraph, the next thing only comes in once the paragraph has reached its sticky
      place at the bottom of the screen: at least the paragraph's height + 19.91 after it.
      (Figma's distances already allow for that; max() keeps the rule if the distances ever get smaller.) */
-  --c-cover:   calc(100vh - 231 * var(--u));
-  --c-text-1:  calc(100vh + 945 * var(--u));
+  --c-cover:   calc(100vh - 231 * var(--u) + var(--intro-out, 0px));
+  --c-text-1:  calc(100vh + 945 * var(--u) + var(--intro-out, 0px));
   --c-fold-1:  calc(var(--c-text-1) + max(908.59, 279 + 19.91) * var(--u));
   --c-fold-2:  calc(var(--c-fold-1) + 922 * var(--u));
   --c-fold-x:  calc(var(--c-fold-2) + 911.41 * var(--u));        /* "the forgotten fold" */
@@ -1510,7 +1508,7 @@ body.lab-page {
   --title-top: 303.73;
   --pile-h: 585;   /* the video */
   /* 1. The black starts right under the first screen, so it comes up as soon as you scroll */
-  --end: 100vh;
+  --end: calc(100vh + var(--intro-out, 0px));   /* (after the texts on the first screen have scrolled out) */
   /* 2. The video starts coming in once the black fills the screen (after one screen of scrolling),
      40 later like in Figma */
   --a-video: calc(var(--end) + 100vh + 40 * var(--u));
@@ -1556,7 +1554,7 @@ body.lab-page {
 .sense {
   /* No pictures yet: the black end starts right under the first screen.
      (When pictures are added, set --stack-end instead and delete this line: the shared rule does the rest.) */
-  --end: 100vh;
+  --end: calc(100vh + var(--intro-out, 0px));   /* (after the texts on the first screen have scrolled out) */
   --title-h: 126.23;   /* every piece on the site is one size: 63.11 per cell */
   --title-top: 448.75;
 }
@@ -1955,7 +1953,7 @@ body.lab-page {
 
   /* the first screen lets go of the middle of the screen --phone-end-extra before the end of the page */
   .lab-invert .lab-first-track {
-    height: calc(100% + 1px - 50vh + var(--title-mid) * var(--u) - var(--phone-end-extra) + var(--intro-out, 0px));
+    height: calc(100% + 1px - 50vh + var(--title-mid) * var(--u) - var(--phone-end-extra));
   }
 
   /* the first screen reaches down past the title, so the white title is never cut off at its bottom */
@@ -2032,12 +2030,5 @@ body.lab-page {
 
 /* ----- Project pages: the typed texts on the first screen scroll out first, then the rest comes -----
    --intro-out (lab.js measures it): how far you scroll until the texts under the title have left the top
-   of the screen. Everything after the first screen starts that much lower on the page; the first screen
-   and the texts themselves stay where they are. */
-.lab {
-  margin-top: var(--intro-out, 0px);
-}
-
-.lab .lab-intro {
-  translate: 0 calc(-1 * var(--intro-out, 0px));
-}
+   of the screen. Each page's first place (and so its whole chain of places) starts that much later:
+   .memory (--m-text-1 and the first picture), .cactus (--c-cover, --c-text-1), .archive and .sense (--end). */
