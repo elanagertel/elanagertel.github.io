@@ -423,7 +423,7 @@ function goToProject(event, i) {
 // built where it is on the project page.
 // size: the title is built with the home shapes, a little bigger than the project page's title, so
 // once it is built it shrinks to that size around the middle of the screen, and then the page opens
-const INTRO_EARLY = 1500;   // ms before the title is built that the texts under it appear (their bars blink a moment, then they type)
+const INTRO_EARLY = 3200;   // ms before the title is built that the texts under it appear (their bars blink a moment, then they type)
 function playToTitle(plan, link, shift, size = 1) {
   // the shapes that come in from the edges (they start shifted too, so their way in stays the same)
   const newPieces = plan.newPieces.map((piece) => {
