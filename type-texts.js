@@ -1,7 +1,7 @@
 // The project pages' short texts type themselves out (once; they are never erased):
 // - the four on the first screen (.lab-intro) a moment after the page opens; they then scroll up and out
 //   with the page,
-// - the four on the black end (.lab-info) once they come onto the screen.
+// - the four on the black end (.lab-info) right away, as soon as they start coming onto the screen.
 // - the last story paragraph (on the last fold; the others just scroll in, stick and scroll out): once it
 //   has come fully onto the screen; while it comes up only its bar shows, blinking. It types very fast (with a tiny stop
 //   after each sentence) and then scrolls up and out with the page as before.
@@ -153,11 +153,11 @@
     // the first screen: right away, or going on from where it got to on the home page
     if (intro.length && homeStart !== null) typeGroup(intro, 0, Math.floor((Date.now() - homeStart) / PER_LETTER));
     else if (intro.length) typeGroup(intro);
-    // the black end: once its texts are on the screen
+    // the black end (the last fold): as soon as its texts start coming onto the screen, with no pause
     if (info.length) {
       const watch = new IntersectionObserver((entries) => {
-        if (entries.some((e) => e.isIntersecting)) { watch.disconnect(); typeGroup(info); }
-      }, { threshold: 1 });
+        if (entries.some((e) => e.isIntersecting)) { watch.disconnect(); typeGroup(info, 0); }
+      }, { threshold: 0 });
       info.forEach((t) => watch.observe(t.el));
     }
   });

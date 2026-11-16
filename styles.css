@@ -2032,3 +2032,14 @@ body.lab-page {
    --intro-out (lab.js measures it): how far you scroll until the texts under the title have left the top
    of the screen. Each page's first place (and so its whole chain of places) starts that much later:
    .memory (--m-text-1 and the first picture), .cactus (--c-cover, --c-text-1), .archive and .sense (--end). */
+
+/* Going from page to page: the browser keeps showing the old page until the new one is ready
+   (no white flash in between), then swaps them at once (the slides are done by page-change.js) */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}

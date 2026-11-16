@@ -512,7 +512,10 @@ function finishOpening() {
 function showGallery() {
   pieceElements.forEach((piece, i) => place(piece, FLOW_PIECES[i].path[2]));
   glideItemsTo(2);
-  finishOpening();
+  // coming back from a project page: the shapes and pictures slide in from the edges (page-change.js)
+  const flowThings = [...flow.querySelectorAll(".flow-piece, .flow-photo, .flow-name, .flow-year")];
+  if (window.pageChange && window.pageChange.cameBack()) window.pageChange.slideIn(flowThings, finishOpening);
+  else finishOpening();
 }
 
 // ----- The big "ELANA GERTEL" in the middle of the screen -----
