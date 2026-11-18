@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Comme:wght@400&family=Crimson+Text:ital,wght@0,400;1,400&display=swap">
-  <link rel="stylesheet" href="styles.css?v=20261116e">
+  <link rel="stylesheet" href="styles.css?v=20261118i">
   <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts),
        so coming from the home page the title is simply there, without blinking -->
   <link rel="expect" href="#page-ready" blocking="render">
@@ -34,26 +34,33 @@
       </div>
     </div>
 
-    <!-- Under the title on the first screen (Figma: four texts at y 875, Averia Serif Libre 12, black).
-         They scroll away with the page. (For now the same texts as The Israeli Cactus, until Figma has this project's own.) -->
-    <p class="lab-intro" style="--x: 65">Brief</p>
-    <p class="lab-intro lab-info-wide" style="--x: 196">choose a plant and research it.</p>
-    <p class="lab-intro" style="--x: 591">Solution</p>
-    <p class="lab-intro lab-info-wide" style="--x: 726">An illustrated book centered on cactus forms and symbols in Israel, combining botanical artwork with Hebrew text.</p>
+    <!-- Under the title on the first screen (Figma: "MacBook Pro 16' - 83", Helvetica 15.5). --y: the
+         Figma y in a 1024-high screen, --w: the width. They type themselves out (type-texts.js) and
+         scroll away with the page. -->
+    <p class="lab-intro lab-intro-bold lab-intro-italic" style="--x: 65; --y: 876; --w: 145">The Memory Lab&nbsp; /</p>
+    <p class="lab-intro" style="--x: 329; --y: 846; --w: 118">2025</p>
+    <p class="lab-intro" style="--x: 328; --y: 880; --w: 188">Bezalel -
+Academy of Art and Design
+Science Illustration -
+Amit Trainin</p>
+    <p class="lab-intro lab-intro-bold" style="--x: 591; --y: 876; --w: 113">Illustrated Art
+InDesign</p>
+    <p class="lab-intro" style="--x: 985; --y: 734; --w: 351">This will be the the brief</p>
+    <p class="lab-intro lab-intro-bold" style="--x: 984; --y: 876; --w: 351">This will be the solution</p>
 
-    <!-- Fixed on the screen on every page, also while scrolling (Figma: Frame 193, Frame 188 and "contact Me"):
-         the small name on the left and right edges, in the middle of the screen. Hovering a half
-         types its link under it: "home" under ELANA (back to the home page gallery, no intro)
-         and "about me" under GERTEL. "contact me" sits at the top left; hovering it types out the contact details (contact.js). -->
-    <a class="flow-edge flow-edge-left" href="index.html?gallery">
-      <img class="flow-logo" src="images/logo-elana-small.svg" alt="Elana">
-      <span class="flow-edge-text">home<span class="flow-edge-cursor">|</span></span>
-    </a>
-    <a class="flow-edge flow-edge-right" href="about.html">
-      <img class="flow-logo" src="images/logo-gertel-small.svg" alt="Gertel">
-      <span class="flow-edge-text">about me<span class="flow-edge-cursor">|</span></span>
-    </a>
-    <p class="flow-small-text flow-contact">contact me</p>
+    <!-- The bar at the top, on every page, fixed while scrolling (Figma: "MacBook Pro 16' - 83", y 19).
+         Hovering "Contact me" types out the contact details next to it (contact.js). -->
+    <nav class="site-nav" aria-label="Site">
+      <p class="site-nav-item flow-contact" style="--x: 65">Contact me&nbsp; /</p>
+      <a class="site-nav-item site-nav-about" style="--x: 592" href="about.html">About Me  /</a>
+      <a class="site-nav-item site-nav-home" style="--x: 855" href="index.html?gallery">Home  /</a>
+      <a class="site-nav-item site-nav-name" href="index.html">ELANA GERTEL</a>
+    </nav>
+
+    <!-- The fold you are looking at, out of how many pictures the project has (Figma: "0" and "/  11",
+         on both sides in the middle of the screen). 0 = the title; fold-count.js counts the pictures. -->
+    <p class="fold-count fold-count-now" aria-hidden="true">0</p>
+    <p class="fold-count fold-count-total" aria-hidden="true">/  0</p>
 
     <!-- The pictures and videos: each one slides up from the bottom of the screen, stops in the
          middle of the screen, and the next one slides up over it (Figma: sticky layers) -->
@@ -94,16 +101,8 @@
         People were impressed by how simple the metaphors were next to such complex science. The project was featured in a university exhibition, shown on the big screen and hung in the school. Next time, I'd make the necklace animation clear without my explanation, maybe with a little text.</p>
     </div>
 
-    <!-- The black end of the page: the project details -->
+    <!-- The black end of the page: the white title lies on it (the details are under the title on the first screen) -->
     <footer class="lab-footer">
-      <!-- The project details (Figma: four texts on the black, Averia Serif Libre 12, white).
-           For now the same as The Israeli Cactus, until Figma has this project's own. -->
-      <p class="lab-footer-text lab-info" style="--x: 65">2023</p>
-      <p class="lab-footer-text lab-info lab-info-wide" style="--x: 196">Bezalel Academy of Art and Design
-Science Illustration - Amit Trainin</p>
-      <p class="lab-footer-text lab-info" style="--x: 591">Technique</p>
-      <p class="lab-footer-text lab-info lab-info-wide" style="--x: 726">Illustrated art
-Indesign Typography</p>
     </footer>
   </main>
 
@@ -113,8 +112,9 @@ Indesign Typography</p>
   <script src="lab-organic.js?v=20261113e"></script>
   <script src="lab.js?v=20261115a"></script>
   <div id="page-ready"></div>
-  <script src="contact.js?v=20261114a"></script>
-  <script src="page-change.js?v=20261116a"></script>
-  <script src="type-texts.js?v=20261115b"></script>
+  <script src="contact.js?v=20261118a"></script>
+  <script src="fold-count.js?v=20261118a"></script>
+  <script src="page-change.js?v=20261118a"></script>
+  <script src="type-texts.js?v=20261118a"></script>
 </body>
 </html>

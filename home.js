@@ -22,21 +22,22 @@ const STEP_STARTS = [0, FLOW_STEP_ENDS[0] + STEP_PAUSE];
 // ----- Project pictures and names -----
 // at: [x, y] in frames 77, 76, 75 (home units). null = not on the page yet (it slides in from the edge later).
 // Pictures: "kind" picks the picture and how it is cropped (see .photo-… in styles.css).
-// caption / year: shown under / above the picture while it is hovered (Figma: Component 2).
+// number / caption: the project's number ("1  /", left of the picture, always shown in the gallery) and
+// its name (under it, shown while the picture is hovered) (Figma: frame "MacBook Pro 16' - 80"). The number also shows in the counter.
 const ITEMS = [
   // pictures
-  { type: "photo", kind: "house",   alt: "Double Families", caption: "Double Families", year: "2023", at: [[1705.7, 761.42], [1705.7, 761.42], [1046.76, 631.73]] },
-  { type: "photo", kind: "cactus",  alt: "The Israeli Cactus", caption: "The Israeli Cactus", year: "2023", at: [[-434.18, 937.87], [-434.18, 937.87], [350.27, 635.81]],
+  { type: "photo", kind: "house",   alt: "Double Families", number: 5, caption: "The Double\nFamily", at: [[1705.7, 761.42], [1705.7, 761.42], [1046.76, 631.73]] },
+  { type: "photo", kind: "cactus",  alt: "The Israeli Cactus", number: 4, caption: "The Israeli\nCactus", at: [[-434.18, 937.87], [-434.18, 937.87], [350.27, 635.81]],
     link: "israeli-cactus.html", toTitle: "cactus" },   // opens the project page (moves: to-cactus-moves.js)
-  { type: "photo", kind: "mind",    alt: "The Memory Lab",  caption: "The Memory Lab", year: "2023", at: [[-391.4, 425.62], [-238.76, 389.96], [344.53, 327.42]],
+  { type: "photo", kind: "mind",    alt: "The Memory Lab",  number: 1, caption: "The Memory\nLab", at: [[-391.4, 425.62], [-238.76, 389.96], [344.53, 327.42]],
     link: "memory-lab.html", toTitle: "lab" },          // "mind": opens the project page (moves: to-lab-moves.js)
-  { type: "photo", kind: "sense",   alt: "Sense",           caption: "Sense", year: "2023", at: [[1764.52, -18.18], [1764.52, -18.18], [1052.93, 19.25]],
+  { type: "photo", kind: "sense",   alt: "Sense",           number: 2, caption: "Sense\nShopping", at: [[1764.52, -18.18], [1764.52, -18.18], [1052.93, 19.25]],
     link: "sense.html", toTitle: "sense" },                // opens the project page (moves: to-sense-moves.js)
-  { type: "photo", kind: "archive", alt: "",                at: [[1578.44, 1454.39], [1578.44, 1454.39], [1335.19, 1247.51]] },
-  { type: "photo", kind: "archive", alt: "Israeli Movie Archive", at: [[-349.7, 1797.67], [-349.7, 1797.67], [1335.19, 172.75]],
+  { type: "photo", kind: "archive", alt: "",                number: 3, caption: "The Israeli\nMovie Archive", at: [[1578.44, 1454.39], [1578.44, 1454.39], [1335.19, 1247.51]] },
+  { type: "photo", kind: "archive", alt: "Israeli Movie Archive", number: 3, caption: "The Israeli\nMovie Archive", at: [[-349.7, 1797.67], [-349.7, 1797.67], [1335.19, 172.75]],
     link: "israeli-movie-archive.html", toTitle: "archive" },   // opens the project page (moves: to-archive-moves.js)
-  { type: "photo", kind: "water-b", alt: "The Memory Lab",  caption: "The Memory Lab", at: [null, null, [344.78, 1091.6]] },
-  { type: "photo", kind: "house",   alt: "Double Families", caption: "Double Families", year: "2023", at: [null, null, [689.81, 1613.67]] },
+  { type: "photo", kind: "water-b", alt: "The Memory Lab",  number: 1, caption: "The Memory\nLab", at: [null, null, [344.78, 1091.6]] },
+  { type: "photo", kind: "house",   alt: "Double Families", number: 5, caption: "The Double\nFamily", at: [null, null, [689.81, 1613.67]] },
 
   // project names (width in Figma pixels; text centred inside it). They show in the opening only:
   // in the gallery each picture shows its own caption while hovered (see "caption" above)
@@ -125,6 +126,13 @@ async function drawShape(svg, file) {
 
 FLOW_PIECES.forEach((piece, i) => drawShape(pieceElements[i], piece.file));
 
+// ----- The counter on the sides (Figma: "0" and "/  07"): how many projects there are, and the
+// number of the project picture under the mouse (0 when none) -----
+const twoDigits = (n) => String(n).padStart(2, "0");
+const foldNow = document.querySelector(".fold-count-now");
+const foldTotal = document.querySelector(".fold-count-total");
+if (foldTotal) foldTotal.textContent = "/  " + twoDigits(new Set(ITEMS.map((item) => item.number).filter(Boolean)).size);
+
 // ----- Create the pictures, names and years -----
 const itemElements = ITEMS.map((item) => {
   let el;
@@ -140,8 +148,8 @@ const itemElements = ITEMS.map((item) => {
     img.alt = item.alt;
     crop.append(img);   // always sharp (no blur)
     el.appendChild(crop);
-    // the caption and year, hidden until the picture is hovered
-    [["flow-photo-caption", item.caption], ["flow-photo-year", item.year]].forEach(([name, text]) => {
+    // the number (shown in the gallery) and the name (hidden until the picture is hovered)
+    [["flow-photo-caption", item.caption], ["flow-photo-number", item.number && item.number + "  /"]].forEach(([name, text]) => {
       if (!text) return;
       const label = document.createElement("span");
       label.className = name;
@@ -279,18 +287,33 @@ function glideHome(plan, done) {
   setTimeout(done, RETURN_TIME);
 }
 
+// A picture's name fades in while the shapes scatter (fully there once they are fully scattered),
+// and fades out the same way while they glide back
+let hoveredPhoto = null;   // the picture the mouse asked for last
+let namedPhoto = null;     // the picture whose name is showing
+function showName(photo, on, time) {
+  if (!photo) return;
+  photo.style.setProperty("--name-fade", time + "ms");
+  // in: slow at first, full only at the very end (when the shapes stop); out: the same, backwards
+  photo.style.setProperty("--name-ease", on ? "cubic-bezier(0.7, 0, 1, 1)" : "cubic-bezier(0, 0, 0.3, 1)");
+  photo.classList.toggle("is-named", on);
+  namedPhoto = on ? photo : null;
+}
+
 // Bring the gallery to what the mouse asks for, one effect at a time
 function updateHover() {
   if (busy || leaving || !flow.classList.contains("is-done")) return;
   if (showing !== null && showing !== wanted) {
     busy = true;
     const backHome = () => { busy = false; showing = null; updateHover(); };
-    if (typeof showing === "string") glideHome(planFor(showing), backHome);   // after a picture
+    if (typeof showing === "string") { showName(namedPhoto, false, RETURN_TIME); glideHome(planFor(showing), backHome); }   // after a picture
     else playPlan(planFor(showing), false, backHome);
   } else if (showing === null && wanted !== null) {
     busy = true;
     showing = wanted;
-    playPlan(planFor(showing), true, () => { busy = false; updateHover(); });
+    const plan = planFor(showing);
+    if (typeof showing === "string") showName(hoveredPhoto, true, plan.total);
+    playPlan(plan, true, () => { busy = false; updateHover(); });
   }
 }
 
@@ -303,12 +326,14 @@ const byFinger = () => typeof window.touchedJustNow === "function" && window.tou
 const photoShow = {};      // each picture's show(on) (below), so a tap can use it too
 
 // Every picture scatters the shapes (also when reached with the keyboard), turns sharp,
-// and shows its caption and year
+// and shows its number and name (and its number in the counter)
 ITEMS.forEach((item, i) => {
   if (item.type !== "photo") return;
   const el = itemElements[i];
   function show(on) {
     el.classList.toggle("is-colored", on);
+    if (on) hoveredPhoto = el;
+    if (foldNow) foldNow.textContent = on && item.number ? String(item.number) : "0";
     // each picture scatters the shapes its own way ("mind" like Figma)
     const key = typeof PHOTO_SCATTERS !== "undefined" && PHOTO_SCATTERS[i] ? "scatter-" + i : "scatter";
     on ? hoverOn(key) : hoverOff(key);
@@ -322,7 +347,7 @@ ITEMS.forEach((item, i) => {
 });
 
 // ----- Phones: tapping a picture -----
-// The first tap does what hovering does (the shapes scatter, the caption and year show);
+// The first tap does what hovering does (the shapes scatter, the number and name show);
 // a second tap on the same picture opens its project (see goToProject below).
 // A tap anywhere else puts everything back.
 let tappedPhoto = null;    // the picture shown by a tap (its number in ITEMS), or null
@@ -528,7 +553,7 @@ function playToTitle(plan, link, shift, size = 1) {
     fetch(link).then((answer) => answer.text()).then((html) => {
       const page = new DOMParser().parseFromString(html, "text/html");
       const texts = [...page.querySelectorAll(".lab-intro")].map((p) => ({
-        className: p.className, x: p.style.getPropertyValue("--x"), text: p.textContent.trim() }));
+        className: p.className, style: p.getAttribute("style") || "", text: p.textContent.trim() }));
       if (!texts.length) return;
       const show = () => { if (!preview) preview = window.typeIntroPreview(texts, new URL(link).pathname); };
       setTimeout(show, Math.max(0, plan.total - INTRO_EARLY));

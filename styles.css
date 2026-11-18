@@ -8,7 +8,11 @@
   --font-body: "Simpler Pro", Arial, sans-serif;
   --font-small: "TheBasics", Arial, sans-serif;               /* not used at the moment */
   --font-serif-italic: "Crimson Text", Georgia, serif;        /* project names and years, small texts */
-  --font-edge: "Averia Serif Libre", Georgia, serif;         /* the names' hover texts and contact Me */
+  --font-edge: "Averia Serif Libre", Georgia, serif;         /* the contact details and the texts on the black end */
+  --font-nav: Helvetica, "Helvetica Neue", Arial, sans-serif; /* the bar at the top, the fold counter, the texts under the title */
+  --color-nav-text: #211b1e;                                  /* their colour (Figma) */
+  /* ...drawn in its opposite with "exclusion", so it shows #211b1e on white and light on black */
+  --color-nav-blend: #dee4e1;
 
   /* The Figma frames are 1440 × 1024. The stage keeps this shape on every screen,
      as big as fits: full width, unless the screen is too short for that. */
@@ -547,7 +551,7 @@ body.home-page {
 }
 
 /* The big names and years are never shown: the pictures come in without titles, and each
-   picture shows its own small caption and year while it is hovered (.flow-photo-caption, .flow-photo-year).
+   picture shows its own number and name while it is hovered (.flow-photo-number, .flow-photo-caption).
    They stay in the page (hidden) because the planned moves still slide them. */
 .flow-name,
 .flow-year {
@@ -614,48 +618,53 @@ a.flow-photo:focus-visible {
 
 /* ----- Pictures: always sharp, in colour (no blur) ----- */
 
-/* ----- Caption under the picture and year above its right edge, shown while hovered -----
-   Figma (Component 2, hovered "mind"): caption Crimson Text 19.4px, centred, 7px under the picture;
-   year Crimson Text italic 11.8px, white + exclusion, right-aligned, 7px above the picture */
+/* Each picture's number to its left (always, in the gallery) and its name under it (while it is hovered)
+   (Figma: frame "MacBook Pro 16' - 80"),
+   Helvetica 15.5 (here 15.5 / 0.9351 home units, so exactly 15.5 Figma pixels of the screen).
+   Name: under the picture's left edge, 16 below it. Number ("1  /", oblique): 40 left of the picture,
+   level with its bottom. Both in #211b1e with "exclusion" (light where they pass over a black shape). */
 .flow-photo-caption,
-.flow-photo-year {
+.flow-photo-number {
   position: absolute;
-  font-family: var(--font-serif-italic);
+  z-index: 3;
+  font-family: var(--font-nav);
+  font-size: max(10px, calc(16.58 * var(--u)));
   font-weight: 400;
-  white-space: nowrap;
+  line-height: 1.24;
+  white-space: pre;
+  color: var(--color-nav-blend);
+  mix-blend-mode: exclusion;
   pointer-events: none;
   opacity: 0;
   transition: opacity 400ms ease;
-  /* thin, regular letters like in Figma (on a Mac the browser otherwise draws small text a bit bolder) */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 .flow-photo-caption {
-  z-index: 1;
-  left: 50%;
-  top: calc(100% + 7 * var(--u));
-  transform: translateX(-50%);
-  font-size: max(10px, calc(19.41 * var(--u)));
-  line-height: 0.92;
-  color: var(--color-text);
+  left: 0;
+  top: calc(100% + 17.11 * var(--u));   /* 16 Figma pixels under the picture */
 }
 
-.flow-photo-year {
-  z-index: 3;
-  right: 0;
-  bottom: calc(100% + 7 * var(--u));
-  font-size: max(7px, calc(11.83 * var(--u)));
+.flow-photo-number {
+  left: calc(-42.78 * var(--u));         /* 40 Figma pixels left of the picture */
+  top: calc(100% - 17.11 * var(--u));    /* its top 16 Figma pixels above the picture's bottom */
   font-style: italic;
-  line-height: 1.16;
-  letter-spacing: 0.06em;
-  color: #ffffff;
-  mix-blend-mode: exclusion;
 }
 
-.flow.is-done .flow-photo.is-colored .flow-photo-caption,
-.flow.is-done .flow-photo.is-colored .flow-photo-year {
+/* the numbers are always there in the gallery; a name shows only while its picture is hovered (.is-named, home.js) */
+.flow.is-done .flow-photo-number,
+.flow.is-done .flow-photo.is-named .flow-photo-caption {
   opacity: 1;
+}
+
+/* The name fades in while the shapes scatter, as long as they take (home.js sets --name-fade),
+   and fades out the same way while they glide back */
+.flow-photo-caption {
+  transition: opacity var(--name-fade, 400ms) var(--name-ease, ease);
+}
+
+/* ...but while a picture is hovered, only its own number stays: the others fade away */
+.flow.is-done:has(.flow-photo.is-colored) .flow-photo:not(.is-colored) .flow-photo-number {
+  opacity: 0;
 }
 
 /* The picture windows: Figma sizes (Component 2) / 0.9351, in home units */
@@ -798,37 +807,92 @@ a.flow-photo:focus-visible {
 
 /* ----- Fixed on the screen on every page, also while scrolling (Figma: x and y in a 1440 × 1024 screen) ----- */
 
-/* "contact me": Averia Serif Libre bold 12px, at the top left (Figma: Frame 204 at x 65, y 14).
-   Hovering it types out the contact details next to it (contact.js; Figma: Frame 207) */
-.flow-contact {
+/* The bar at the top (Figma: "MacBook Pro 16' - 83"): Helvetica 15.5, at y 19 of the 1440 × 1024 screen.
+   "Contact me  /" (16.5) at x 65, "About Me  /" at x 592, "Home  /" at x 855, and "ELANA GERTEL" (italic)
+   on the right margin (65). It stays at the top while you scroll. Hovering "Contact me" types out the
+   contact details next to it (contact.js; Figma: Frame 218). */
+.site-nav {
   --u: calc(100vw / 1440);   /* one Figma pixel of the screen (not the page's own scale, e.g. on About) */
   position: fixed;
   z-index: 9;
-  left: calc(65 * var(--u));
-  top: calc(14 * var(--u));
+  inset: 0 0 auto 0;
+  height: 0;                 /* takes no room: only its texts are placed */
+  mix-blend-mode: exclusion; /* dark on white, light where it passes over black */
+}
+
+.site-nav-item {
+  position: absolute;
+  left: calc(var(--x) * var(--u));
+  top: calc(19 * var(--u));
   margin: 0;
-  font-family: var(--font-edge);
-  font-weight: 700;
-  font-style: normal;
-  letter-spacing: 0.08em; /* 0.96px */
+  font-family: var(--font-nav);
+  font-size: max(10px, calc(15.5 * var(--u)));
+  font-weight: 400;
+  line-height: 1.24;
+  white-space: pre;          /* keeps the two spaces before the "/" */
+  color: var(--color-nav-blend);
+  text-decoration: none;
+}
+
+.site-nav-about {
+  top: calc(20 * var(--u));  /* (Figma: one pixel lower) */
+}
+
+.site-nav-name {
+  left: auto;
+  right: calc(65 * var(--u));
+  font-style: italic;
+}
+
+/* "Contact me  /" is a little bigger (16.5) */
+.flow-contact {
+  font-size: max(10px, calc(16.506 * var(--u)));
   cursor: default;
 }
 
+/* The fold counter on project pages (Figma: "0" at x 65 and "/  11" ending on the right margin, y 558 of
+   1024: 46 below the middle of the screen), Helvetica oblique 15.5. fold-count.js sets the numbers. */
+.fold-count {
+  --u: calc(100vw / 1440);
+  position: fixed;
+  z-index: 9;
+  top: calc(50vh + 46 * var(--u));
+  margin: 0;
+  font-family: var(--font-nav);
+  font-size: max(10px, calc(15.5 * var(--u)));
+  font-style: italic;
+  line-height: 1.24;
+  white-space: pre;
+  color: var(--color-nav-blend);
+  mix-blend-mode: exclusion;
+}
+
+.fold-count-now {
+  left: calc(65 * var(--u));
+}
+
+.fold-count-total {
+  right: calc(65 * var(--u));
+}
+
+.fold-count[hidden] {
+  display: none;
+}
 
 /* While contact.js types or erases a line of the details, its bar stands still */
 .flow-contact-line.is-typing .flow-edge-cursor {
   animation: none;
 }
 
-/* The contact details (Figma: Frame 207, Variant2): three lines in the same bold font, starting 131 to the
-   right of "contact me" (x 196, the grid's 2nd column), at its height. Each line is a link with its own
+/* The contact details (Figma: Frame 218, Variant2): three lines starting 131 to the
+   right of "Contact me" (x 196, the grid's 2nd column), at its height. Each line is a link with its own
    blinking bar (contact.js) */
 .flow-contact-lines {
   --u: calc(100vw / 1440);
   position: fixed;
   z-index: 9;
   left: calc(196 * var(--u));
-  top: calc(14 * var(--u));
+  top: calc(19 * var(--u));   /* level with "Contact me" */
   display: flex;
   flex-direction: column;
   mix-blend-mode: exclusion; /* the whole box blends (white: black on white, white on black) */
@@ -843,65 +907,18 @@ a.flow-photo:focus-visible {
   visibility: hidden;
 }
 
+/* Each line (Figma: Frame 218, Variant2): Helvetica 16.5 like "Contact me", line height 124%,
+   e.g. "@elanagertel  /  instagram" (pre: keeps the two spaces around the "/") */
 .flow-contact-line {
-  font-family: var(--font-edge);
-  font-weight: 700;
+  font-family: var(--font-nav);
+  font-size: max(10px, calc(16.506 * var(--u)));
+  font-weight: 400;
   font-style: normal;
-  letter-spacing: 0.08em; /* 0.96px */
+  line-height: 1.24;
+  letter-spacing: 0;
+  white-space: pre;
+  color: var(--color-nav-blend);
   mix-blend-mode: normal;   /* the box blends, not each line */
-}
-
-/* The small names on the left and right edges, in the middle of the screen (Figma: Frame 193 at
-   x 65 and Frame 188 at x 1256, both on the layout grid's 65 margins; y 450 of 1024, on the grid's 4th row),
-   each with its text centred under it.
-   Each one is a link with a small text under it, hidden until the name is hovered */
-.flow-edge {
-  --u: calc(100vw / 1440);   /* one Figma pixel of the screen (not the page's own scale, e.g. on About) */
-  position: fixed;
-  z-index: 9;
-  top: calc(50vh - var(--edge-above-middle, 62) * var(--u)); /* 512 - 450: on the layout grid's 4th row (Figma) */
-  display: flex;
-  flex-direction: column;
-  align-items: center;       /* the small text is centred under the name (Figma) */
-  gap: calc(9 * var(--u));
-  text-decoration: none;
-  mix-blend-mode: exclusion; /* white shapes and text: black on white, white on black */
-}
-
-.flow-edge-left {
-  left: calc(65 * var(--u));
-}
-
-.flow-edge-right {
-  right: calc(65 * var(--u)); /* on the layout grid's right margin (65), like ELANA on the left (Figma: Frame 188 at 1256) */
-}
-
-.flow-logo {
-  display: block;
-  height: auto;
-}
-
-.flow-edge-left .flow-logo  { width: calc(108.49 * var(--u)); }
-.flow-edge-right .flow-logo { width: calc(130 * var(--u)); }
-
-/* "home|" and "about me|" (Averia Serif Libre bold 12px). In Figma a white box covers the text and
-   shrinks away to the right on hover: here the text is cut off from the right instead (clip-path),
-   and on hover it is uncovered from left to right, like typing */
-.flow-edge-text {
-  font-family: var(--font-edge);
-  font-size: max(8px, calc(12 * var(--u)));
-  font-weight: 700;
-  line-height: 1.16;
-  letter-spacing: 0.08em; /* 0.96px */
-  white-space: nowrap;
-  color: #ffffff;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.4s ease-out;
-}
-
-.flow-edge:hover .flow-edge-text,
-.flow-edge:focus-visible .flow-edge-text {
-  clip-path: inset(0 0 0 0);
 }
 
 /* The bar at the end blinks like a typing cursor (Figma: the text switches between "home|" and "home") */
@@ -935,9 +952,6 @@ a.flow-photo:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .flow-edge-cursor { animation: none; }
 }
-
-/* (The home frames in Figma have the names 6 lower and contact Me 12 lower; the site keeps them in exactly
-   the same place on every page, so they never jump when you go from one page to another.) */
 
 /* ===================================================================
    Project pages: memory-lab.html ("The Memory Lab", Figma frame 65 + Frame 93)
@@ -1114,11 +1128,27 @@ body.lab-page {
   white-space: pre-line;
 }
 
+/* The texts under the title (Figma: "MacBook Pro 16' - 83"): Helvetica 15.5, line height 124%.
+   --y: the Figma y in the 1024-high screen (measured from the bottom of the screen), --w: the width
+   (in em, so a bigger font on a phone keeps the same line breaks) */
 .lab-intro {
   z-index: 1;                          /* over the title (0), under the book pictures that slide up (they come later) */
-  top: calc(100vh - 149 * var(--u));   /* 1024 - 875 */
-  color: #ffffff;
-  mix-blend-mode: exclusion;           /* black on white, white where it passes over the black title */
+  top: calc(100vh - (1024 - var(--y, 875)) * var(--u));
+  width: calc(var(--w, 246) / 15.5 * 1em);
+  font-family: var(--font-nav);
+  font-size: max(9px, calc(15.5 * var(--u)));
+  line-height: 1.24;
+  letter-spacing: 0;
+  color: var(--color-nav-blend);
+  mix-blend-mode: exclusion;           /* dark on white, light where it passes over the black title */
+}
+
+.lab-intro-bold {
+  font-weight: 700;
+}
+
+.lab-intro-italic {
+  font-style: italic;
 }
 
 .lab-info {
@@ -1422,12 +1452,13 @@ body.lab-page {
   bottom: calc(19.91 * var(--u));   /* the same distance from the bottom as it used to have from the top */
   width: calc(var(--w) * var(--u));
   margin: 0;
-  font-family: var(--font-edge);
-  font-size: max(9px, calc(12 * var(--u)));
+  /* (Figma, the new project frames: Helvetica 15.5, line height 124%, #211b1e) */
+  font-family: var(--font-nav);
+  font-size: max(9px, calc(15.5 * var(--u)));
   font-weight: 400;
-  line-height: 1.48;
-  letter-spacing: 0.08em;
-  color: #ffffff;
+  line-height: 1.24;
+  letter-spacing: 0;
+  color: var(--color-nav-blend);   /* with the track's "exclusion": #211b1e on white, light over the pictures */
 }
 
 /* ----- Pictures beside a paragraph (Figma: a column of pictures, 204 wide, 56 apart) -----
@@ -1830,62 +1861,41 @@ body.lab-page {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* ----- On every page: "contact me" and the small names on the edges ----- */
-  /* a little bigger, so they are readable; some invisible room around them for a finger
-     (padding with the same negative margin: they stay exactly where they were) */
-  .flow-contact,
-  .flow-contact-line,
-  .flow-edge-text {
-    font-size: max(var(--phone-small-text), calc(12 * var(--u)));
-  }
-
-  .flow-contact {
+  /* ----- On every page: the bar at the top ----- */
+  /* some invisible room around its words for a finger (padding with the same negative margin:
+     they stay exactly where they were) */
+  .site-nav-item {
     padding: 8px;
     margin: -8px;
   }
 
-  /* the details start after "contact me" (it is wider now), each line a little taller to tap */
-  .flow-contact-lines {
-    left: max(calc(196 * var(--u)), calc(65 * var(--u) + 100px));
-    top: calc(14 * var(--u) - 4px);
-  }
-
+  /* the contact details: readable, starting after "Contact me  /" (it is wider now), each line a little taller to tap */
   .flow-contact-line {
+    font-size: max(var(--phone-small-text), calc(16.506 * var(--u)));
     padding: 4px 0;
   }
 
-  .flow-edge {
-    padding: 8px;
-    margin: -8px;
+  .flow-contact-lines {
+    left: max(calc(196 * var(--u)), calc(65 * var(--u) + 90px));
+    top: calc(19 * var(--u) - 4px);
   }
 
-  .flow-edge-left .flow-logo  { width: max(calc(108.49 * var(--u)), var(--phone-logo-elana)); }
-  .flow-edge-right .flow-logo { width: max(calc(130 * var(--u)), var(--phone-logo-elana) * 130 / 108.49); }
-
-  /* A finger has no hover: the first tap shows "home|" / "about me|" (mobile.js adds .is-open),
-     the second tap opens the link */
-  .flow-edge:hover .flow-edge-text {
-    clip-path: inset(0 100% 0 0);
-  }
-
-  .flow-edge.is-open .flow-edge-text {
-    clip-path: inset(0 0 0 0);
-  }
-
-  /* ----- Home page: the captions and years over the pictures (shown after a tap) ----- */
-  .flow-photo-caption {
-    font-size: max(var(--phone-caption-text), calc(19.41 * var(--u)));
-  }
-
-  .flow-photo-year {
-    font-size: max(9px, calc(11.83 * var(--u)));
+  /* ----- Home page: the number and name of a picture (shown after a tap) ----- */
+  .flow-photo-caption,
+  .flow-photo-number {
+    font-size: max(var(--phone-small-text), calc(16.58 * var(--u)));
   }
 
   /* ----- Project pages ----- */
   /* The short texts: readable, and as much wider as they are bigger, so they break into the same rows */
-  .lab-intro,
   .lab-info {
     font-size: max(var(--phone-small-text), calc(12 * var(--u)));
+  }
+
+  .lab-intro {
+    font-size: max(var(--phone-small-text), calc(15.5 * var(--u)));
+    /* never past the right margin */
+    width: min(calc(var(--w, 246) / 15.5 * 1em), calc((1440 - 65 - var(--x)) * var(--u)));
   }
 
   .lab-info-wide {
@@ -1894,23 +1904,19 @@ body.lab-page {
   }
 
   /* On a short, wide screen the title takes most of the height: the texts on the first screen
-     go just under the title instead of over it */
+     go just under the title instead of over it, keeping their places one under the other
+     (the brief at y 734 first; the others (y - 734) further down, in em, as the letters are bigger) */
   .lab-intro {
-    top: max(calc(100vh - 149 * var(--u)),
-             calc(50vh + (var(--title-top) + var(--title-h) - var(--title-mid)) * var(--u) + 12px));
-  }
-
-  /* The second wide text on the first screen (the "Solution" text) may use the room up to the right
-     margin, so it takes fewer rows and stays on the first screen */
-  .lab-intro.lab-info-wide ~ .lab-intro.lab-info-wide {
-    width: max(calc(246em / 12), calc((1440 - 65 - var(--x)) * var(--u)));
+    top: max(calc(100vh - (1024 - var(--y, 875)) * var(--u)),
+             calc(50vh + (var(--title-top) + var(--title-h) - var(--title-mid)) * var(--u) + 12px
+                  + (var(--y, 875) - 734) / 15.5 * 1em));
   }
 
   /* The story paragraphs: readable, and wider (twice as wide as their bigger letters need), so they
      take fewer rows and stay low on the screen, under the small name on the left edge */
   .lab-text {
-    font-size: max(var(--phone-story-text), calc(12 * var(--u)));
-    width: max(calc(var(--w) * var(--u)), calc(var(--w) * 2em / 12));
+    font-size: max(var(--phone-story-text), calc(15.5 * var(--u)));
+    width: max(calc(var(--w) * var(--u)), calc(var(--w) * 2em / 15.5));
   }
 
   /* Pictures and videos: never taller than the screen. A picture that would be taller is drawn
@@ -1982,30 +1988,17 @@ body.lab-page {
   }
 }
 
-/* ----- Phones held upright (under the rotate screen, e.g. while it is turning): the screen is narrow, so the project's four short
-   texts go in two rows (label, then its text), instead of four columns that would run into each other.
-   Row 1: "Brief" and its text; row 2: "Solution" (the texts after the first wide one) and its text.
-   The same for the four texts on the black end ("2023" / "Technique"). ----- */
+/* ----- Phones held upright (under the rotate screen, e.g. while it is turning): the screen is narrow, so the
+   four short texts on the black end go in two rows (label, then its text), instead of four columns that
+   would run into each other. Row 1: "2023" and its text; row 2: "Technique" and its text. ----- */
 @media (hover: none) and (pointer: coarse) and (orientation: portrait) {
-  .lab-intro,
   .lab-info {
     left: calc(65 * var(--u));
   }
 
-  .lab-intro.lab-info-wide,
-  .lab-info.lab-info-wide,
-  .lab-intro.lab-info-wide ~ .lab-intro.lab-info-wide {
+  .lab-info.lab-info-wide {
     left: calc(65 * var(--u) + 80px);
     width: calc(100vw - 2 * 65 * var(--u) - 80px);
-  }
-
-  /* on the first screen: just under the title (there is room there; the story starts at the bottom) */
-  .lab-intro {
-    top: calc(50vh + var(--title-bottom-below-middle) + 24px);
-  }
-
-  .lab-info-wide ~ .lab-intro {
-    top: calc(50vh + var(--title-bottom-below-middle) + 24px + 3em);
   }
 
   /* on the black end: near its bottom */

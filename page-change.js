@@ -1,9 +1,9 @@
 // ===== Going to the home page or to the About page: things slide out, the new ones slide in =====
-// Clicking "home" (under ELANA on the left edge) or "about me" (under GERTEL on the right edge) makes
+// Clicking "Home", "ELANA GERTEL" or "About Me" in the bar at the top makes
 // everything on the screen (the shapes, the texts, the pictures) slide out through the nearest edge of
 // the screen, straight left, right, up or down (like the shapes always move on the site). Then the new
 // page opens, and its shapes and pictures slide in from the nearest edge to their places.
-// The small names on the edges and "contact me" are on every page, so they stay where they are.
+// The bar at the top is on every page, so it stays where it is.
 // The home page: home.js calls window.pageChange.slideIn() when the gallery is shown.
 // The About page: its shapes slide in right away (this file is loaded after about.js).
 (function () {
@@ -78,7 +78,7 @@
     window.pageChange.slideIn([...document.querySelectorAll(THINGS.about)]);
   }
 
-  // Clicking "home" or "about me": everything on the screen slides out first, then the page opens
+  // Clicking a link in the bar: everything on the screen slides out first, then the page opens
   function slideOutTo(link, page) {
     if (!link || page === PAGE) return;   // (the link to the page you are on: nothing changes)
     link.addEventListener("click", (event) => {
@@ -91,6 +91,7 @@
       setTimeout(() => { window.location.href = link.href; }, SLIDE + SPREAD + 50);
     });
   }
-  slideOutTo(document.querySelector(".flow-edge-left"), "home");
-  slideOutTo(document.querySelector(".flow-edge-right"), "about");
+  slideOutTo(document.querySelector(".site-nav-home"), "home");
+  slideOutTo(document.querySelector(".site-nav-name"), "home");
+  slideOutTo(document.querySelector(".site-nav-about"), "about");
 })();

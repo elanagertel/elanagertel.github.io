@@ -1,5 +1,5 @@
-// "contact me" (top left, on every page).
-// - Hovering it types out the contact details next to it (Figma: Frame 207, Variant2): all three lines at
+// "Contact me  /" (in the bar at the top, on every page).
+// - Hovering it types out the contact details next to it (Figma: Frame 218, Variant2): all three lines at
 //   once, each with its own bar; a line's bar goes away once that line is typed.
 // - Leaving the area (the words and the details) for a few moments erases them the same way, from the end,
 //   letter by letter. Coming back before that keeps them open.
@@ -11,8 +11,8 @@
 
   // ----- The contact details (Figma: 131 to the right of "contact me", on the grid's 2nd column) -----
   const LINES = [
-    ["@elanagertel (instagram)", "https://www.instagram.com/elanagertel/"],
-    ["+972-54-262-7915 (whatsapp)", "https://wa.me/972542627915"],
+    ["@elanagertel  /  instagram", "https://www.instagram.com/elanagertel/"],
+    ["+972-54-262-7915  /  whatsapp", "https://wa.me/972542627915"],
     ["gertel.elana@gmail.com", "mailto:gertel.elana@gmail.com"],
   ];
   const list = document.createElement("div");

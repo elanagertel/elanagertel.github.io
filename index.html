@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Crimson+Text:ital,wght@0,400;1,400;1,600&display=swap">
-  <link rel="stylesheet" href="styles.css?v=20261116e">
+  <link rel="stylesheet" href="styles.css?v=20261118i">
 </head>
 <body class="home-page">
   <!-- Home page, built from the Figma flow that starts at frame "MacBook Pro 16' - 74":
@@ -19,19 +19,19 @@
     <h1 class="visually-hidden">Elana Gertel — Portfolio</h1>
   </main>
 
-  <!-- Fixed on the screen on every page, also while scrolling (Figma: Frame 193, Frame 188 and "contact Me"):
-       the small name on the left and right edges, in the middle of the screen. Hovering a half
-       types its link under it: "home" under ELANA (back to the home page gallery, no intro)
-       and "about me" under GERTEL. "contact me" sits at the top left; hovering it types out the contact details (contact.js). -->
-  <a class="flow-edge flow-edge-left" href="index.html?gallery">
-    <img class="flow-logo" src="images/logo-elana-small.svg" alt="Elana">
-    <span class="flow-edge-text">home<span class="flow-edge-cursor">|</span></span>
-  </a>
-  <a class="flow-edge flow-edge-right" href="about.html">
-    <img class="flow-logo" src="images/logo-gertel-small.svg" alt="Gertel">
-    <span class="flow-edge-text">about me<span class="flow-edge-cursor">|</span></span>
-  </a>
-  <p class="flow-small-text flow-contact">contact me</p>
+  <!-- The bar at the top, on every page, fixed while scrolling (Figma: "MacBook Pro 16' - 83", y 19).
+       Hovering "Contact me" types out the contact details next to it (contact.js). -->
+  <nav class="site-nav" aria-label="Site">
+    <p class="site-nav-item flow-contact" style="--x: 65">Contact me  /</p>
+    <a class="site-nav-item site-nav-about" style="--x: 592" href="about.html">About Me  /</a>
+    <a class="site-nav-item site-nav-home" style="--x: 855" href="index.html?gallery">Home  /</a>
+    <a class="site-nav-item site-nav-name" href="index.html">ELANA GERTEL</a>
+  </nav>
+
+  <!-- How many projects there are, and the number of the picture under the mouse (Figma: "0" and "/  07",
+       on both sides in the middle of the screen). home.js sets the numbers. -->
+  <p class="fold-count fold-count-now" aria-hidden="true">0</p>
+  <p class="fold-count fold-count-total" aria-hidden="true">/  0</p>
 
   <!-- The planned puzzle moves first, then the code that plays them -->
   <!-- ?v=… : change the number after an update, so browsers load the new files instead of old saved copies -->
@@ -43,9 +43,9 @@
   <script src="to-cactus-moves.js?v=20261117b"></script>
   <script src="to-sense-moves.js?v=20261117b"></script>
   <script src="to-archive-moves.js?v=20261117b"></script>
-  <script src="page-change.js?v=20261116a"></script>
-  <script src="home.js?v=20261117e"></script>
-  <script src="contact.js?v=20261114a"></script>
-  <script src="type-texts.js?v=20261115b"></script>
+  <script src="page-change.js?v=20261118a"></script>
+  <script src="home.js?v=20261118f"></script>
+  <script src="contact.js?v=20261118a"></script>
+  <script src="type-texts.js?v=20261118a"></script>
 </body>
 </html>

@@ -89,10 +89,10 @@
     const box = document.createElement("div");
     box.className = "lab-intro-preview";
     box.setAttribute("aria-hidden", "true");
-    texts.forEach(({ className, x, text }) => {
+    texts.forEach(({ className, style, text }) => {
       const p = document.createElement("p");
       p.className = className;
-      p.style.setProperty("--x", x);
+      p.setAttribute("style", style);   // where it stands: --x, --y and its width --w
       p.textContent = text;
       box.appendChild(p);
     });
