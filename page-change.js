@@ -6,6 +6,7 @@
 // The bar at the top is on every page, so it stays where it is.
 // The home page: home.js calls window.pageChange.slideIn() when the gallery is shown.
 // The About page: its shapes slide in right away (this file is loaded after about.js).
+// A project page reached with an arrow: its title slides in the same way (this file is loaded after lab.js).
 (function () {
   const SLIDE = 650;        // ms for one thing to slide out or in
   const SPREAD = 300;       // ms between the first and the last thing starting (from left to right)
@@ -19,7 +20,7 @@
     : document.body.classList.contains("lab-page") ? "project" : "home";
   const THINGS = {
     home: ".flow-piece, .flow-photo, .flow-name, .flow-year",
-    project: ".lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text",
+    project: ".lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text, .project-arrow",
     about: ".about-piece, .about-photo, .about-text, .about-bio",
   };
 
@@ -65,11 +66,17 @@
     // The things on the screen slide in from the nearest edge; done() once they are in
     slideIn(elements, done) {
       const shown = elements.filter(onScreen);
-      shown.forEach((el) => slide(el, wayOut(el), [0, 0], delayOf(el)));
-      setTimeout(() => {
-        shown.forEach((el) => { el.style.transition = ""; el.style.translate = ""; });
-        if (done) done();
-      }, SLIDE + SPREAD + 50);
+      // first put them outside the screen at once (so the page never shows them in place first)...
+      const starts = shown.map((el) => [el, wayOut(el), delayOf(el)]);
+      starts.forEach(([el, from]) => { el.style.transition = "none"; el.style.translate = `${from[0]}px ${from[1]}px`; });
+      // ...then, once the page is really on the screen, let them slide in
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        starts.forEach(([el, from, delay]) => slide(el, from, [0, 0], delay));
+        setTimeout(() => {
+          shown.forEach((el) => { el.style.transition = ""; el.style.translate = ""; });
+          if (done) done();
+        }, SLIDE + SPREAD + 50);
+      }));
     },
   };
 
@@ -78,9 +85,15 @@
     window.pageChange.slideIn([...document.querySelectorAll(THINGS.about)]);
   }
 
+  // A project page opened with an arrow (from another project): the old title left in pieces through the
+  // nearest edges; the new title comes in the same way, reversed: each piece slides in from its nearest edge
+  if (PAGE === "project" && window.pageChange.cameBack()) {
+    window.pageChange.slideIn([...document.querySelectorAll(THINGS.project)]);
+  }
+
   // Clicking a link in the bar: everything on the screen slides out first, then the page opens
-  function slideOutTo(link, page) {
-    if (!link || page === PAGE) return;   // (the link to the page you are on: nothing changes)
+  function slideOutTo(link, page, always = false) {
+    if (!link || (page === PAGE && !always)) return;   // (the link to the page you are on: nothing changes)
     link.addEventListener("click", (event) => {
       // (on a phone the first tap only shows the link's name: mobile.js stops that tap)
       if (event.defaultPrevented || REDUCED) return;
@@ -94,4 +107,6 @@
   slideOutTo(document.querySelector(".site-nav-home"), "home");
   slideOutTo(document.querySelector(".site-nav-name"), "home");
   slideOutTo(document.querySelector(".site-nav-about"), "about");
+  // the arrows on a project page: to the previous / next project (they slide out the same way)
+  document.querySelectorAll(".project-arrow").forEach((arrow) => slideOutTo(arrow, "project", true));
 })();

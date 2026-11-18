@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Comme:wght@400&family=Crimson+Text:ital,wght@0,400;1,400&display=swap">
-  <link rel="stylesheet" href="styles.css?v=20261120d">
+  <link rel="stylesheet" href="styles.css?v=20261121b">
   <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts),
        so coming from the home page the title is simply there, without blinking -->
   <link rel="expect" href="#page-ready" blocking="render">
@@ -57,10 +57,16 @@ InDesign</p>
       <a class="site-nav-item site-nav-name" href="index.html">ELANA GERTEL</a>
     </nav>
 
-    <!-- The fold you are looking at, out of how many pictures the project has (Figma: "0" and "/  11",
-         on both sides in the middle of the screen). 0 = the title; fold-count.js counts the pictures. -->
+    <!-- The counter on both sides in the middle of the screen (Figma: "3" and "/  07"). On the first screen:
+         this project's number out of all the projects (like on the home page); once the pictures come, the
+         picture you are looking at out of how many there are. The numbers roll in and out (fold-count.js). -->
     <p class="fold-count fold-count-now" aria-hidden="true">0</p>
     <p class="fold-count fold-count-total" aria-hidden="true">/  0</p>
+
+    <!-- On the first screen: arrows to the previous and the next project (Figma: Frame 219 and Frame 55,
+         two triangles each). fold-count.js sets where they lead. -->
+    <a class="project-arrow project-arrow-prev" aria-label="Previous project"><img src="images/project-arrow.svg" alt=""></a>
+    <a class="project-arrow project-arrow-next" aria-label="Next project"><img src="images/project-arrow.svg" alt=""></a>
 
     <!-- The pictures and videos: each one slides up from the bottom of the screen, stops in the
          middle of the screen, and the next one slides up over it (Figma: sticky layers) -->
@@ -111,10 +117,12 @@ InDesign</p>
   <script src="pieces.js?v=20261108h"></script>
   <script src="lab-organic.js?v=20261113e"></script>
   <script src="lab.js?v=20261115a"></script>
-  <div id="page-ready"></div>
   <script src="contact.js?v=20261118a"></script>
-  <script src="fold-count.js?v=20261118a"></script>
-  <script src="page-change.js?v=20261118a"></script>
+  <script src="fold-count.js?v=20261121a"></script>
+  <script src="page-change.js?v=20261121c"></script>
   <script src="type-texts.js?v=20261118a"></script>
+  <!-- The page shows only from here on (see "page-ready" at the top): after every script, so the texts
+       under the title are already waiting to be typed and the counter has its number (nothing blinks) -->
+  <div id="page-ready"></div>
 </body>
 </html>

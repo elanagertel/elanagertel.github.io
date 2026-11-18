@@ -546,6 +546,20 @@ function playToTitle(plan, link, shift, size = 1) {
       });
     }, time);
   });
+  // the project page's arrows (to the previous / next project) slide in from the sides while the title is
+  // built, and land with it, exactly where they are on the project page
+  const arrows = document.createElement("div");
+  arrows.className = "project-arrows-preview";
+  arrows.setAttribute("aria-hidden", "true");
+  ["prev", "next"].forEach((side) => {
+    const arrow = document.createElement("span");
+    arrow.className = "project-arrow project-arrow-" + side;
+    arrow.innerHTML = '<img src="images/project-arrow.svg" alt="">';
+    arrows.appendChild(arrow);
+  });
+  document.body.appendChild(arrows);
+  setTimeout(() => arrows.classList.add("is-in"), Math.max(0, plan.total - 550));
+
   // the project page's texts under the title start typing before the title is fully built
   // (type-texts.js draws them where they are on the project page; the project page then goes on typing them)
   let preview = null;
