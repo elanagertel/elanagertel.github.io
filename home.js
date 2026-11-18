@@ -423,7 +423,7 @@ function goToProject(event, i) {
 // built where it is on the project page.
 // size: the title is built with the home shapes, a little bigger than the project page's title, so
 // once it is built it shrinks to that size around the middle of the screen, and then the page opens
-const INTRO_EARLY = 3200;   // ms before the title is built that the texts under it appear (their bars blink a moment, then they type)
+const INTRO_EARLY = 1600;   // ms before the title is built that the texts under it appear (their bars blink a moment, then they type)
 function playToTitle(plan, link, shift, size = 1) {
   // the shapes that come in from the edges (they start shifted too, so their way in stays the same)
   const newPieces = plan.newPieces.map((piece) => {
@@ -445,13 +445,69 @@ function playToTitle(plan, link, shift, size = 1) {
   const moves = plan.moves.map((move) => [...move]);
   plan.bodies.forEach((things, body) => {
     const own = moves.filter((move) => move[1] === body).sort((a, b) => a[0] - b[0]);
-    if (!own.length || things[0][0] !== "p" || things[0][1] >= pieceElements.length) return;
+    if (things[0][0] !== "p" || things[0][1] >= pieceElements.length) return;
     const [x, y] = at(elementOf(things[0]));
     const end = [x + own.reduce((s, m) => s + m[2], 0), y + own.reduce((s, m) => s + m[3], 0)];
     const intoTitle = end[0] > -10 && end[0] < 1440 / HOME_SCALE && end[1] > -10 && end[1] < 1100 / HOME_SCALE;   // the others leave the page
     if (!intoTitle) return;
+    if (!own.length) { moves.push([0, body, 0, shift]); return; }   // already on its spot: only up or down with the title
     const upDown = own.filter((move) => move[2] === 0);
     (upDown.length ? upDown[upDown.length - 1] : own[own.length - 1])[3] += shift;
+  });
+
+  // The new shapes wait outside the screen until their first slide brings them in. On a tall screen
+  // some would wait inside it, so they are moved back along that slide's line until fully outside,
+  // and the slide is made that much longer (like the opening: in from beyond the edge, without stopping).
+  const unit = flow.getBoundingClientRect().width / 1440 * HOME_SCALE;   // one home unit, in screen pixels
+  const MARGIN = 8;   // screen pixels beyond the edge
+  plan.bodies.forEach((things, body) => {
+    if (things[0][0] !== "p" || things[0][1] < pieceElements.length) return;
+    const first = moves.filter((move) => move[1] === body).sort((a, b) => a[0] - b[0])[0];
+    if (!first) return;
+    const box = elementOf(things[0]).getBoundingClientRect();
+    let extra = 0;   // how far back (home units)
+    if (first[3] > 0) extra = (box.bottom + MARGIN) / unit;                        // comes down from the top
+    else if (first[3] < 0) extra = (window.innerHeight - box.top + MARGIN) / unit; // comes up from the bottom
+    else if (first[2] > 0) extra = (box.right + MARGIN) / unit;                    // comes in from the left
+    else if (first[2] < 0) extra = (window.innerWidth - box.left + MARGIN) / unit; // comes in from the right
+    if (extra <= 0) return;   // already outside
+    const axis = first[2] !== 0 ? 2 : 3, sign = Math.sign(first[axis]);
+    things.forEach((thing) => {
+      const el = elementOf(thing), [x, y] = at(el);
+      el.style.transitionDuration = "0ms";   // jump there (nobody sees it yet)
+      place(el, axis === 2 ? [x - sign * extra, y] : [x, y - sign * extra]);
+    });
+    first[axis] += sign * extra;
+  });
+
+  // The things that leave (shapes the title does not need, pictures, names, years) stop on a line
+  // that can be inside the screen (page scrolled down, or a tall screen). Their last slide is made
+  // longer until they are fully outside, so nothing is left lying in the frame.
+  plan.bodies.forEach((things, body) => {
+    if (things[0][0] === "p" && things[0][1] >= pieceElements.length) return;   // new shapes go into the title
+    const own = moves.filter((move) => move[1] === body).sort((a, b) => a[0] - b[0]);
+    if (!own.length) return;
+    const [x, y] = at(elementOf(things[0]));
+    const dx = own.reduce((s, m) => s + m[2], 0), dy = own.reduce((s, m) => s + m[3], 0);
+    // into the title or not: decided from the plan itself (before `shift` moved the title up or down)
+    const planned = plan.moves.filter((move) => move[1] === body);
+    const px = x + planned.reduce((s, m) => s + m[2], 0), py = y + planned.reduce((s, m) => s + m[3], 0);
+    const inTitle = px > -10 && px < 1440 / HOME_SCALE && py > -10 && py < 1100 / HOME_SCALE;
+    if (things[0][0] === "p" && inTitle) return;   // goes into the title
+    // where the body's box will be on the screen at the end
+    const boxes = things.map((thing) => elementOf(thing).getBoundingClientRect()).filter((b) => b.width > 0);
+    if (!boxes.length) return;
+    const end = { left: Math.min(...boxes.map((b) => b.left)) + dx * unit, right: Math.max(...boxes.map((b) => b.right)) + dx * unit,
+                  top: Math.min(...boxes.map((b) => b.top)) + dy * unit, bottom: Math.max(...boxes.map((b) => b.bottom)) + dy * unit };
+    const last = own[own.length - 1];
+    let extra = 0;   // how much further (home units)
+    if (last[3] > 0) extra = (window.innerHeight - end.top + MARGIN) / unit;   // leaves down
+    else if (last[3] < 0) extra = (end.bottom + MARGIN) / unit;               // leaves up
+    else if (last[2] > 0) extra = (window.innerWidth - end.left + MARGIN) / unit;  // leaves right
+    else if (last[2] < 0) extra = (end.right + MARGIN) / unit;                // leaves left
+    if (extra <= 0) return;   // already ends outside
+    const axis = last[2] !== 0 ? 2 : 3;
+    last[axis] += Math.sign(last[axis]) * extra;
   });
 
   // every slide: the whole body (a shape, or a picture with its name and year) moves together
@@ -478,14 +534,25 @@ function playToTitle(plan, link, shift, size = 1) {
       setTimeout(show, Math.max(0, plan.total - INTRO_EARLY));
     }).catch(() => {});
   }
+  // Once the plan is over: wait until every shape has really landed (with many shapes moving at once the
+  // browser can start a slide a little late), show the finished title for a moment, then open the page
   const SHRINK = 300;   // ms
-  setTimeout(() => {
-    const box = flow.getBoundingClientRect();
-    flow.style.transformOrigin = `${box.width / 2}px ${window.innerHeight / 2 - box.top}px`;
-    flow.style.transition = `transform ${SHRINK}ms ease-in-out`;
-    flow.style.transform = `scale(${size})`;
-  }, plan.total + 150);
-  setTimeout(() => { if (preview) preview.save(); window.location.href = link; }, plan.total + 150 + (size === 1 ? 0 : SHRINK + 50));
+  const HOLD = 250;     // ms the finished title stays before the project page opens
+  const stillMoving = () => document.getAnimations().some((a) =>
+    a instanceof CSSTransition && a.playState === "running" && flow.contains(a.effect.target));
+  const whenLanded = (then, waited = 0) => {
+    if (stillMoving() && waited < 1500) setTimeout(() => whenLanded(then, waited + 50), 50);
+    else then();
+  };
+  setTimeout(() => whenLanded(() => {
+    setTimeout(() => {
+      const box = flow.getBoundingClientRect();
+      flow.style.transformOrigin = `${box.width / 2}px ${window.innerHeight / 2 - box.top}px`;
+      flow.style.transition = `transform ${SHRINK}ms ease-in-out`;
+      flow.style.transform = `scale(${size})`;
+    }, HOLD);
+    setTimeout(() => { if (preview) preview.save(); window.location.href = link; }, HOLD + (size === 1 ? 0 : SHRINK + 50));
+  }), plan.total);
 }
 
 // (phones: the first tap on a picture only shows it, see "tapping a picture" above; the second opens it)
