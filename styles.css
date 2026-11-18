@@ -620,7 +620,7 @@ a.flow-photo:focus-visible {
 
 /* Each picture's number to its left (always, in the gallery) and its name under it (while it is hovered)
    (Figma: frame "MacBook Pro 16' - 80"),
-   Helvetica 15.5 (here 15.5 / 0.9351 home units, so exactly 15.5 Figma pixels of the screen).
+   Helvetica 12 (here 12 / 0.9351 home units, so exactly 12 Figma pixels of the screen).
    Name: under the picture's left edge, 16 below it. Number ("1  /", oblique): 40 left of the picture,
    level with its bottom. Both in #211b1e with "exclusion" (light where they pass over a black shape). */
 .flow-photo-caption,
@@ -628,7 +628,7 @@ a.flow-photo:focus-visible {
   position: absolute;
   z-index: 3;
   font-family: var(--font-nav);
-  font-size: max(10px, calc(16.58 * var(--u)));
+  font-size: max(8px, calc(12.83 * var(--u)));
   font-weight: 400;
   line-height: 1.24;
   white-space: pre;
@@ -816,8 +816,8 @@ a.flow-photo:focus-visible {
 
 /* ----- Fixed on the screen on every page, also while scrolling (Figma: x and y in a 1440 × 1024 screen) ----- */
 
-/* The bar at the top (Figma: "MacBook Pro 16' - 83"): Helvetica 15.5, at y 19 of the 1440 × 1024 screen.
-   "Contact me  /" (16.5) at x 65, "About Me  /" at x 592, "Home  /" at x 855, and "ELANA GERTEL" (italic)
+/* The bar at the top (Figma: "MacBook Pro 16' - 83"): Helvetica 12 (the name 15.5), at y 19 of the 1440 × 1024 screen.
+   "Contact me  /" at x 65, "About Me  /" at x 592, "Home  /" at x 855, and "ELANA GERTEL" (italic)
    on the right margin (65). It stays at the top while you scroll. Hovering "Contact me" types out the
    contact details next to it (contact.js; Figma: Frame 218). */
 .site-nav {
@@ -835,7 +835,7 @@ a.flow-photo:focus-visible {
   top: calc(19 * var(--u));
   margin: 0;
   font-family: var(--font-nav);
-  font-size: max(10px, calc(15.5 * var(--u)));
+  font-size: max(9px, calc(12 * var(--u)));
   font-weight: 400;
   line-height: 1.24;
   white-space: pre;          /* keeps the two spaces before the "/" */
@@ -850,12 +850,11 @@ a.flow-photo:focus-visible {
 .site-nav-name {
   left: auto;
   right: calc(65 * var(--u));
+  font-size: max(10px, calc(15.5 * var(--u)));   /* the name stays bigger (Figma: 15.5) */
   font-style: italic;
 }
 
-/* "Contact me  /" is a little bigger (16.5) */
 .flow-contact {
-  font-size: max(10px, calc(16.506 * var(--u)));
   cursor: default;
 }
 
@@ -894,6 +893,11 @@ a.flow-photo:focus-visible {
 
 .nav-waiting .fold-count-total:not(.is-in) {
   translate: calc(65 * var(--u) + 60px) 0;
+}
+
+/* on the home page the counter is smaller (Figma frame 80: 12) */
+.home-page .fold-count {
+  font-size: max(9px, calc(12 * var(--u)));
 }
 
 .fold-count-now {
@@ -936,11 +940,11 @@ a.flow-photo:focus-visible {
   visibility: hidden;
 }
 
-/* Each line (Figma: Frame 218, Variant2): Helvetica 16.5 like "Contact me", line height 124%,
+/* Each line (Figma: Frame 218, Variant2): Helvetica 12 like "Contact me", line height 124%,
    e.g. "@elanagertel  /  instagram" (pre: keeps the two spaces around the "/") */
 .flow-contact-line {
   font-family: var(--font-nav);
-  font-size: max(10px, calc(16.506 * var(--u)));
+  font-size: max(9px, calc(12 * var(--u)));
   font-weight: 400;
   font-style: normal;
   line-height: 1.24;
@@ -1157,15 +1161,15 @@ body.lab-page {
   white-space: pre-line;
 }
 
-/* The texts under the title (Figma: "MacBook Pro 16' - 83"): Helvetica 15.5, line height 124%.
+/* The texts under the title (Figma: "MacBook Pro 16' - 83"): Helvetica 12, line height 124%.
    --y: the Figma y in the 1024-high screen (measured from the bottom of the screen), --w: the width
    (in em, so a bigger font on a phone keeps the same line breaks) */
 .lab-intro {
   z-index: 1;                          /* over the title (0), under the book pictures that slide up (they come later) */
   top: calc(100vh - (1024 - var(--y, 875)) * var(--u));
-  width: calc(var(--w, 246) / 15.5 * 1em);
+  width: calc(var(--w, 246) / 12 * 1em);
   font-family: var(--font-nav);
-  font-size: max(9px, calc(15.5 * var(--u)));
+  font-size: max(8px, calc(12 * var(--u)));
   line-height: 1.24;
   letter-spacing: 0;
   color: var(--color-nav-blend);
@@ -1481,11 +1485,11 @@ body.lab-page {
   bottom: calc(19.91 * var(--u));   /* the same distance from the bottom as it used to have from the top */
   width: calc(var(--w) * var(--u));
   margin: 0;
-  /* (Figma, the new project frames: Helvetica 15.5, line height 124%, #211b1e) */
+  /* (Figma, the new project frames: Helvetica 12, line height 160%, #211b1e) */
   font-family: var(--font-nav);
-  font-size: max(9px, calc(15.5 * var(--u)));
+  font-size: max(8px, calc(12 * var(--u)));
   font-weight: 400;
-  line-height: 1.24;
+  line-height: 1.6;
   letter-spacing: 0;
   color: var(--color-nav-blend);   /* with the track's "exclusion": #211b1e on white, light over the pictures */
 }
@@ -1900,7 +1904,7 @@ body.lab-page {
 
   /* the contact details: readable, starting after "Contact me  /" (it is wider now), each line a little taller to tap */
   .flow-contact-line {
-    font-size: max(var(--phone-small-text), calc(16.506 * var(--u)));
+    font-size: max(var(--phone-small-text), calc(12 * var(--u)));
     padding: 4px 0;
   }
 
@@ -1912,7 +1916,7 @@ body.lab-page {
   /* ----- Home page: the number and name of a picture (shown after a tap) ----- */
   .flow-photo-caption,
   .flow-photo-number {
-    font-size: max(var(--phone-small-text), calc(16.58 * var(--u)));
+    font-size: max(var(--phone-small-text), calc(12.83 * var(--u)));
   }
 
   /* ----- Project pages ----- */
@@ -1922,9 +1926,9 @@ body.lab-page {
   }
 
   .lab-intro {
-    font-size: max(var(--phone-small-text), calc(15.5 * var(--u)));
+    font-size: max(var(--phone-small-text), calc(12 * var(--u)));
     /* never past the right margin */
-    width: min(calc(var(--w, 246) / 15.5 * 1em), calc((1440 - 65 - var(--x)) * var(--u)));
+    width: min(calc(var(--w, 246) / 12 * 1em), calc((1440 - 65 - var(--x)) * var(--u)));
   }
 
   .lab-info-wide {
@@ -1938,14 +1942,14 @@ body.lab-page {
   .lab-intro {
     top: max(calc(100vh - (1024 - var(--y, 875)) * var(--u)),
              calc(50vh + (var(--title-top) + var(--title-h) - var(--title-mid)) * var(--u) + 12px
-                  + (var(--y, 875) - 734) / 15.5 * 1em));
+                  + (var(--y, 875) - 734) / 12 * 1em));
   }
 
   /* The story paragraphs: readable, and wider (twice as wide as their bigger letters need), so they
      take fewer rows and stay low on the screen, under the small name on the left edge */
   .lab-text {
-    font-size: max(var(--phone-story-text), calc(15.5 * var(--u)));
-    width: max(calc(var(--w) * var(--u)), calc(var(--w) * 2em / 15.5));
+    font-size: max(var(--phone-story-text), calc(12 * var(--u)));
+    width: max(calc(var(--w) * var(--u)), calc(var(--w) * 2em / 12));
   }
 
   /* Pictures and videos: never taller than the screen. A picture that would be taller is drawn
