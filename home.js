@@ -622,20 +622,22 @@ function nameShift() {
   return (window.innerHeight / 2 - NAME_MIDDLE * flow.clientWidth / 1440) / homeUnit;   // in home units
 }
 
-// ----- The bar at the top and the counter in the opening -----
-// They wait outside the screen while the big name is built. When it breaks apart, each of them slides in
-// on its own, at the same moment as one of the letters' moves (not all together): the words of the bar
-// down from the top, the counter's two numbers in from the sides.
-const NAV_ORDER = [[".flow-contact", ".fold-count-total"], [".site-nav-name"], [".site-nav-about"], [".site-nav-home"], [".fold-count-now"]];
+// ----- Into the gallery in three clean movements -----
+// When the big name breaks apart, everything moves on the same three beats, one 0.55s slide right after
+// the other (planned that way in home-moves.js): the letters, the pictures with their numbers, and the bar
+// at the top with the counter.
+const BEAT = 550;   // ms: one slide
+
+// The bar at the top and the counter wait outside the screen while the big name is built; then they
+// slide in on the three beats (a few on each, not all together): the words of the bar down from the top,
+// the counter's two numbers in from the sides.
+const NAV_BEATS = [[".flow-contact", ".fold-count-total"], [".site-nav-about", ".site-nav-name"], [".site-nav-home", ".fold-count-now"]];
 function slideNavIn() {
-  const stepTwo = STEP_STARTS[1];
-  const letterTimes = [...new Set(FLOW_TIMELINE.map(([time]) => time).filter((time) => time >= stepTwo))].sort((a, b) => a - b);
-  NAV_ORDER.forEach((selectors, k) => {
-    const time = letterTimes[Math.min(k, letterTimes.length - 1)];
+  NAV_BEATS.forEach((selectors, k) => {
     setTimeout(() => selectors.forEach((sel) => {
       const el = document.querySelector(sel);
       if (el) el.classList.add("is-in");
-    }), START_PAUSE + time);
+    }), START_PAUSE + STEP_STARTS[1] + k * BEAT);
   });
 }
 
@@ -678,7 +680,7 @@ function playOpening() {
   // during the opening everything else waits outside the frame (frame 71 positions)
   setTimeout(() => glideItemsTo(1), START_PAUSE + STEP_STARTS[0]);
 
-  // then they slide in from the edges like puzzle pieces (planned in ITEM_TIMELINE)
+  // then they slide in from the edges like puzzle pieces (planned in ITEM_TIMELINE, on the three beats)
   setTimeout(getItemsReadyAtEdges, START_PAUSE + STEP_STARTS[1]);
   ITEM_TIMELINE.forEach(([time, i, axis, value, duration]) => {
     setTimeout(() => slide(itemElements[i], axis, value, duration), START_PAUSE + time);
