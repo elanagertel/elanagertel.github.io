@@ -595,6 +595,7 @@ ITEMS.forEach((item, i) => {
 
 // The opening is over: the gallery is ready for hovering
 function finishOpening() {
+  document.body.classList.remove("nav-waiting");   // (in case it is still waiting)
   flow.classList.remove("is-animating", "is-step-3");
   flow.classList.add("is-done");
   updateHover(); // in case the mouse is already on something
@@ -662,6 +663,8 @@ function playOpening() {
 
   // then they slide in from the edges like puzzle pieces (planned in ITEM_TIMELINE)
   setTimeout(getItemsReadyAtEdges, START_PAUSE + STEP_STARTS[1]);
+  // the bar at the top (and the counter) slide in as the big name breaks apart and the pictures come in
+  setTimeout(() => document.body.classList.remove("nav-waiting"), START_PAUSE + STEP_STARTS[1]);
   ITEM_TIMELINE.forEach(([time, i, axis, value, duration]) => {
     setTimeout(() => slide(itemElements[i], axis, value, duration), START_PAUSE + time);
   });
