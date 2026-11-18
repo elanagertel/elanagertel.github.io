@@ -667,6 +667,14 @@ a.flow-photo:focus-visible {
   opacity: 0;
 }
 
+/* Going to a project page: the numbers and names fade away at once (the pictures slide out without them,
+   so nothing is left in the frame) */
+.flow.is-done.is-leaving .flow-photo .flow-photo-number,
+.flow.is-done.is-leaving .flow-photo.flow-photo .flow-photo-caption {
+  --name-fade: 250ms;
+  opacity: 0;
+}
+
 /* The picture windows: Figma sizes (Component 2) / 0.9351, in home units */
 /* House picture (Double Families): window 139.39 × 138.47 in Figma */
 .photo-house {
