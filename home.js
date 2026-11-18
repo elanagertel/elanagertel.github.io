@@ -622,6 +622,23 @@ function nameShift() {
   return (window.innerHeight / 2 - NAME_MIDDLE * flow.clientWidth / 1440) / homeUnit;   // in home units
 }
 
+// ----- The bar at the top and the counter in the opening -----
+// They wait outside the screen while the big name is built. When it breaks apart, each of them slides in
+// on its own, at the same moment as one of the letters' moves (not all together): the words of the bar
+// down from the top, the counter's two numbers in from the sides.
+const NAV_ORDER = [[".flow-contact", ".fold-count-total"], [".site-nav-name"], [".site-nav-about"], [".site-nav-home"], [".fold-count-now"]];
+function slideNavIn() {
+  const stepTwo = STEP_STARTS[1];
+  const letterTimes = [...new Set(FLOW_TIMELINE.map(([time]) => time).filter((time) => time >= stepTwo))].sort((a, b) => a - b);
+  NAV_ORDER.forEach((selectors, k) => {
+    const time = letterTimes[Math.min(k, letterTimes.length - 1)];
+    setTimeout(() => selectors.forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (el) el.classList.add("is-in");
+    }), START_PAUSE + time);
+  });
+}
+
 // ----- Play the opening animation -----
 // The screen starts empty: every shape waits beyond the edge of the screen, on the line of its first slide,
 // and that slide brings it straight in (through where it used to wait, without stopping) and on into the name.
@@ -663,11 +680,10 @@ function playOpening() {
 
   // then they slide in from the edges like puzzle pieces (planned in ITEM_TIMELINE)
   setTimeout(getItemsReadyAtEdges, START_PAUSE + STEP_STARTS[1]);
-  // the bar at the top (and the counter) slide in as the big name breaks apart and the pictures come in
-  setTimeout(() => document.body.classList.remove("nav-waiting"), START_PAUSE + STEP_STARTS[1]);
   ITEM_TIMELINE.forEach(([time, i, axis, value, duration]) => {
     setTimeout(() => slide(itemElements[i], axis, value, duration), START_PAUSE + time);
   });
+  slideNavIn();
 
   const end = START_PAUSE + FLOW_STEP_ENDS[1] + LAST_SLIDE;
   setTimeout(finishOpening, end);

@@ -651,7 +651,8 @@ a.flow-photo:focus-visible {
 }
 
 /* the numbers are always there in the gallery; a name shows only while its picture is hovered (.is-named, home.js) */
-.flow.is-done .flow-photo-number,
+/* the numbers belong to their pictures: always shown, so they slide in (and out) with them */
+.flow .flow-photo-number,
 .flow.is-done .flow-photo.is-named .flow-photo-caption {
   opacity: 1;
 }
@@ -875,22 +876,23 @@ a.flow-photo:focus-visible {
   mix-blend-mode: exclusion;
 }
 
-/* Home page, during the opening: the bar waits above the screen and the counter beside it; they slide in
-   (like the pictures: 0.55s, slow start, soft stop) when the big name breaks apart (home.js) */
-.site-nav,
+/* Home page, during the opening: the words of the bar wait above the screen and the counter's numbers
+   beside it; each slides in on its own (like the pictures: 0.55s, slow start, soft stop) with one of the
+   letters' moves, when the big name breaks apart (home.js adds .is-in) */
+.site-nav-item,
 .fold-count {
   transition: translate 550ms cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-.nav-waiting .site-nav {
+.nav-waiting .site-nav-item:not(.is-in) {
   translate: 0 calc(-19 * var(--u) - 40px);
 }
 
-.nav-waiting .fold-count-now {
+.nav-waiting .fold-count-now:not(.is-in) {
   translate: calc(-65 * var(--u) - 60px) 0;
 }
 
-.nav-waiting .fold-count-total {
+.nav-waiting .fold-count-total:not(.is-in) {
   translate: calc(65 * var(--u) + 60px) 0;
 }
 
