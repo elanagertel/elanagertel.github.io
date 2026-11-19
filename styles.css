@@ -1,8 +1,9 @@
 /* ===== Design variables (from Figma) ===== */
 :root {
   /* Colors */
-  --color-background: #ffffff;
-  --color-text: #000000;
+  --color-background: #f8f9f4;   /* the page (Figma: the new frames) */
+  --color-text: #252525;         /* texts */
+  --color-shape: #252525;        /* the shapes (Figma: frames 81 and 83) */
 
   /* Fonts */
   --font-body: "Simpler Pro", Arial, sans-serif;
@@ -10,9 +11,10 @@
   --font-serif-italic: "Crimson Text", Georgia, serif;        /* project names and years, small texts */
   --font-edge: "Averia Serif Libre", Georgia, serif;         /* the contact details and the texts on the black end */
   --font-nav: Helvetica, "Helvetica Neue", Arial, sans-serif; /* the bar at the top, the fold counter, the texts under the title */
-  --color-nav-text: #211b1e;                                  /* their colour (Figma) */
-  /* ...drawn in its opposite with "exclusion", so it shows #211b1e on white and light on black */
-  --color-nav-blend: #dee4e1;
+  --color-nav-text: #252525;                                  /* their colour (Figma) */
+  /* ...drawn in this colour with "exclusion", so it shows #252525 on the page's #f8f9f4 and light on black
+     (the same is used for shapes drawn with "exclusion", like on About) */
+  --color-nav-blend: #dfdee3;
 
   /* The Figma frames are 1440 × 1024. The stage keeps this shape on every screen,
      as big as fits: full width, unless the screen is too short for that. */
@@ -504,8 +506,8 @@ body.home-page {
 /* A thin black outline (1 screen pixel wide at every page size) around each shape:
    touching shapes overlap by about half a pixel, so they look merged — no white line between them */
 .flow-piece path {
-  fill: #000000;
-  stroke: #000000;
+  fill: var(--color-shape);
+  stroke: var(--color-shape);
   stroke-width: 1px;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
@@ -816,7 +818,7 @@ a.flow-photo:focus-visible {
 
 /* ----- Fixed on the screen on every page, also while scrolling (Figma: x and y in a 1440 × 1024 screen) ----- */
 
-/* The bar at the top (Figma: "MacBook Pro 16' - 83"): Helvetica 12 (the name 15.5), at y 19 of the 1440 × 1024 screen.
+/* The bar at the top (Figma: "MacBook Pro 16' - 83"): Helvetica 12 (the name 17), at y 19 of the 1440 × 1024 screen.
    "Contact me  /" at x 65, "About Me  /" at x 592, "Home  /" at x 855, and "ELANA GERTEL" (italic)
    on the right margin (65). It stays at the top while you scroll. Hovering "Contact me" types out the
    contact details next to it (contact.js; Figma: Frame 218). */
@@ -850,7 +852,7 @@ a.flow-photo:focus-visible {
 .site-nav-name {
   left: auto;
   right: calc(65 * var(--u));
-  font-size: max(10px, calc(15.5 * var(--u)));   /* the name stays bigger (Figma: 15.5) */
+  font-size: max(11px, calc(17 * var(--u)));   /* the name is bigger (Figma: 17) */
   font-style: italic;
 }
 
@@ -895,9 +897,15 @@ a.flow-photo:focus-visible {
   translate: calc(65 * var(--u) + 60px) 0;
 }
 
-/* on the home page the counter is smaller (Figma frame 80: 12) */
+/* on the home page the counter is smaller (Figma frame 80: 12); while a project opens it grows to the
+   project page's size (15.5), so the page change shows no jump */
 .home-page .fold-count {
   font-size: max(9px, calc(12 * var(--u)));
+  transition: translate 550ms cubic-bezier(0.65, 0, 0.35, 1), font-size 550ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.home-page.is-opening-project .fold-count {
+  font-size: max(10px, calc(15.5 * var(--u)));
 }
 
 .fold-count-now {
@@ -923,14 +931,14 @@ a.flow-photo:focus-visible {
 }
 
 /* ----- Project pages: the arrows to the previous and the next project, on the first screen -----
-   (Figma: Frame 219 at x 66 and Frame 55 ending on the right margin, 62.25 × 124.5, their middle in the
-   middle of the screen). They scroll away with the first screen. The right one points right; the left
+   (Figma frame 83: a triangle 44 wide and 88 tall from y 451.5, the left one's tip at x 66, the right
+   one's tip at x 1374). They scroll away with the first screen. The right one points right; the left
    one is the same shape, mirrored. */
 .project-arrow {
   position: absolute;
   z-index: 2;
-  top: calc(50vh - 62.25 * var(--u));
-  width: calc(62.25 * var(--u));
+  top: calc(50vh - 60.5 * var(--u));   /* y 451.5 of 1024 */
+  width: calc(44.02 * var(--u));       /* 44 × 88 */
   cursor: pointer;
 }
 
@@ -946,7 +954,7 @@ a.flow-photo:focus-visible {
 }
 
 .project-arrow-next {
-  right: calc(65 * var(--u));
+  right: calc(66 * var(--u));
 }
 
 /* Home page: while a project's title is being built, its arrows slide in from the sides (home.js) to
@@ -964,11 +972,11 @@ a.flow-photo:focus-visible {
 }
 
 .project-arrows-preview .project-arrow-prev {
-  translate: calc(-128 * var(--u) - 20px) 0;
+  translate: calc(-110 * var(--u) - 20px) 0;
 }
 
 .project-arrows-preview .project-arrow-next {
-  translate: calc(128 * var(--u) + 20px) 0;
+  translate: calc(110 * var(--u) + 20px) 0;
 }
 
 .project-arrows-preview.is-in .project-arrow {
@@ -1237,7 +1245,10 @@ body.lab-page {
    (in em, so a bigger font on a phone keeps the same line breaks) */
 .lab-intro {
   z-index: 1;                          /* over the title (0), under the book pictures that slide up (they come later) */
-  top: calc(100vh - (1024 - var(--y, 875)) * var(--u));
+  /* where Figma has it, measured from the bottom of the screen; but on a shorter screen never up on the
+     title: each text keeps its Figma distance from the title's bottom (y 720.44 in Figma) */
+  top: max(calc(100vh - (1024 - var(--y, 875)) * var(--u)),
+           calc(50vh + (var(--title-below-mid, 0) + var(--y, 875) - 720.44) * var(--u)));
   width: calc(var(--w, 246) / 12 * 1em);
   font-family: var(--font-nav);
   font-size: max(8px, calc(12 * var(--u)));
@@ -1328,8 +1339,8 @@ body.lab-page {
 }
 
 .lab-morph path {
-  fill: #000000;
-  stroke: #000000;
+  fill: var(--color-shape);
+  stroke: var(--color-shape);
   stroke-width: 1px;
   vector-effect: non-scaling-stroke;
 }
@@ -1435,6 +1446,7 @@ body.lab-page {
    memory-lab.html — with its title turning white over the black end
    =================================================================== */
 .memory {
+  --title-below-mid: 208.2;   /* how far the title reaches below its middle (Figma pixels; the texts under it stay lower) */
   --title-top: 304.03;  /* every piece on the site is one size: 63.11 per cell */
   --title-h: 447.69;
   --pile-h: 801; /* the ELSC cover */
@@ -1475,6 +1487,7 @@ body.lab-page {
    never shows on the first screen.
    =================================================================== */
 .cactus {
+  --title-below-mid: 208.15;   /* how far the title reaches below its middle (Figma pixels; the texts under it stay lower) */
   /* THE CHAIN OF PLACES: where each spread, paragraph and picture column starts on the page, in the
      order of Figma (Frame 139). Each one is measured from the one before it, with Figma's distance.
      THE RULE: after a paragraph, the next thing only comes in once the paragraph has reached its sticky
@@ -1639,6 +1652,7 @@ body.lab-page {
    5. Only then the closing texts come up on the black.
    =================================================================== */
 .archive {
+  --title-below-mid: 208.16;   /* how far the title reaches below its middle (Figma pixels; the texts under it stay lower) */
   --title-h: 415.84;   /* every piece on the site is one size: 63.11 per cell */
   --title-top: 303.73;
   --pile-h: 585;   /* the video */
@@ -1687,6 +1701,7 @@ body.lab-page {
    Scrolling brings the black end up from below; where it passes, the title turns white.
    =================================================================== */
 .sense {
+  --title-below-mid: 63.35;   /* how far the title reaches below its middle (Figma pixels; the texts under it stay lower) */
   /* No pictures yet: the black end starts right under the first screen.
      (When pictures are added, set --stack-end instead and delete this line: the shared rule does the rest.) */
   --end: calc(100vh + var(--intro-out, 0px));   /* (after the texts on the first screen have scrolled out) */
@@ -1825,7 +1840,7 @@ body.lab-page {
 }
 
 .about-morph path {
-  fill: #000000;
+  fill: var(--color-shape);
 }
 
 .about-morph .about-morph-hole {
@@ -1851,21 +1866,21 @@ body.lab-page {
   width: calc(var(--w) * var(--u));
   height: calc(var(--h) * var(--u));
   overflow: visible;
-  fill: #ffffff;   /* white + the layer's exclusion = black on the white page */
+  fill: var(--color-nav-blend);   /* + the layer's exclusion = #252525 on the page */
   will-change: transform;
 }
 
 /* A thin outline (1 screen pixel) around each shape, like on the home page: touching shapes overlap
    a tiny bit, so no thin white line ever shows between them */
 .about-piece path {
-  stroke: #ffffff;
+  stroke: var(--color-nav-blend);
   stroke-width: 1.5px;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
 }
 
 .about-morph path {
-  stroke: #000000;
+  stroke: var(--color-shape);
   stroke-width: 1.5px;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
@@ -2009,11 +2024,10 @@ body.lab-page {
 
   /* On a short, wide screen the title takes most of the height: the texts on the first screen
      go just under the title instead of over it, keeping their places one under the other
-     (the brief at y 734 first; the others (y - 734) further down, in em, as the letters are bigger) */
+     (the highest of them, at y 846, first; the others (y - 846) further down, in em, as the letters are bigger) */
   .lab-intro {
     top: max(calc(100vh - (1024 - var(--y, 875)) * var(--u)),
-             calc(50vh + (var(--title-top) + var(--title-h) - var(--title-mid)) * var(--u) + 12px
-                  + (var(--y, 875) - 734) / 12 * 1em));
+             calc(50vh + var(--title-below-mid, 0) * var(--u) + 12px + (var(--y, 875) - 846) / 12 * 1em));
   }
 
   /* The story paragraphs: readable, and wider (twice as wide as their bigger letters need), so they

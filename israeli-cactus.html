@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Comme:wght@400&family=Crimson+Text:ital,wght@0,400;1,400&display=swap">
-  <link rel="stylesheet" href="styles.css?v=20261121b">
+  <link rel="stylesheet" href="styles.css?v=20261123a">
   <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts),
        so coming from the home page the title is simply there, without blinking -->
   <link rel="expect" href="#page-ready" blocking="render">
@@ -47,8 +47,8 @@ Science Illustration -
 Amit Trainin</p>
     <p class="lab-intro lab-intro-bold" style="--x: 591; --y: 876; --w: 113">Illustrated art
 Indesign Typography</p>
-    <p class="lab-intro" style="--x: 985; --y: 734; --w: 351">choose a plant and research it.</p>
-    <p class="lab-intro lab-intro-bold" style="--x: 984; --y: 876; --w: 351">An illustrated book centered on cactus forms and symbols in Israel, combining botanical artwork with Hebrew text.</p>
+    <p class="lab-intro" style="--x: 986; --y: 849; --w: 351">choose a plant and research it.</p>
+    <p class="lab-intro lab-intro-bold" style="--x: 986; --y: 876; --w: 351">An illustrated book centered on cactus forms and symbols in Israel, combining botanical artwork with Hebrew text.</p>
 
     <!-- The bar at the top, on every page, fixed while scrolling (Figma: "MacBook Pro 16' - 83", y 19).
          Hovering "Contact me" types out the contact details next to it (contact.js). -->
@@ -67,8 +67,8 @@ Indesign Typography</p>
 
     <!-- On the first screen: arrows to the previous and the next project (Figma: Frame 219 and Frame 55,
          two triangles each). fold-count.js sets where they lead. -->
-    <a class="project-arrow project-arrow-prev" aria-label="Previous project"><img src="images/project-arrow.svg" alt=""></a>
-    <a class="project-arrow project-arrow-next" aria-label="Next project"><img src="images/project-arrow.svg" alt=""></a>
+    <a class="project-arrow project-arrow-prev" aria-label="Previous project"><img src="images/project-arrow.svg?v=2" alt=""></a>
+    <a class="project-arrow project-arrow-next" aria-label="Next project"><img src="images/project-arrow.svg?v=2" alt=""></a>
 
     <!-- The book, spread by spread, in the order of Figma's Frame 139: each one slides up from the
          bottom of the screen, stops in the middle of the screen, and the next one slides up over it.
@@ -113,13 +113,13 @@ Indesign Typography</p>
          while you scroll, until the next one comes up and pushes it out. The last one scrolls straight out.
          --x, --w: left edge and width (Figma pixels); --top: where it starts (the chain of places in styles.css, .cactus)
          --next: where the next paragraph starts (the last one has the class "lab-text-last" instead) -->
-    <div class="lab-text-track" style="--x: 65; --top: var(--c-text-1); --w: 170; --next: var(--c-text-2)">
+    <div class="lab-text-track" style="--x: 19; --top: var(--c-text-1); --w: 202; --next: var(--c-text-2)">
       <p class="lab-text">In a scientific illustration course, we were given an assignment: choose a plant and research it. I chose the sabra. I feel like the most Israeli person in the world, Israel is the only home I have, but I don't get the title "tzabar", because I was born in America and came to Israel at the age of three. Early in my research I discovered that the sabra itself came from America. That's where the project's question was born: why did an immigrant plant, of all things, become the symbol of the rooted Israeli, and what actually makes someone a tzabar?</p>
     </div>
-    <div class="lab-text-track" style="--x: 65; --top: var(--c-text-2); --w: 170; --next: var(--c-text-3)">
+    <div class="lab-text-track" style="--x: 19; --top: var(--c-text-2); --w: 202; --next: var(--c-text-3)">
       <p class="lab-text">I researched the sabra both biologically and culturally. The sabra spreads quickly, puts down deep roots, grows upward, reproduces easily, and survives a harsh climate with little water. The more I learned about it, the more I understood that these traits describe the Israeli very precisely, just not the way we usually think. A tzabar isn't necessarily someone who was born here. A tzabar is someone who puts down roots here and survives the hardship. And suddenly I understood that I, of all people, am the most tzabar in the world.</p>
     </div>
-    <div class="lab-text-track" style="--x: 65; --top: var(--c-text-3); --w: 170; --next: var(--c-text-4)">
+    <div class="lab-text-track" style="--x: 19; --top: var(--c-text-3); --w: 202; --next: var(--c-text-4)">
       <p class="lab-text">Every design decision was meant to tell the same story. I chose the David font, because its shapes recall the cactus: a little spiky and a little rounded, large and impressive. I created the illustrations in colored pencil on a black background. The vivid color stands out, and the pencil gives a slightly dry feel, so hardship and vitality meet. Before that I tried other techniques: watercolor was too romantic and pastoral for a story of toil and hardship, pen was too clean and simple, and chalk was too dry and forced.</p>
     </div>
     <!-- The pictures on the right next to the paragraph above (Figma: Frame 140, a column 204 wide, gap 56).
@@ -133,7 +133,7 @@ Indesign Typography</p>
         <img src="images/cactus-side-4.png" alt="Close-up of ripe cactus fruit" style="aspect-ratio: 534 / 800" loading="lazy">
       </div>
     </div>
-    <div class="lab-text-track lab-text-last" style="--x: 65; --top: var(--c-text-4); --w: 170">
+    <div class="lab-text-track lab-text-last" style="--x: 19; --top: var(--c-text-4); --w: 202">
       <p class="lab-text">The final product is a booklet, not a bound book and not a poster, because I wanted a personal and intimate experience in which the reader moves forward slowly, page after page. The lecturer gave the project an award-worthy grade, but the readers' responses moved me most of all. Some said they reached the end with goosebumps, some identified with it, and some thought of their grandparents, who always felt like immigrants even though they were the truest tzabarim there are. If I did the project again, I would break the tidy grid of the illustrations a little and let them step outside the lines. That way they would be strong, less apologetic and less obedient, exactly like the sabra.</p>
     </div>
 
@@ -151,7 +151,7 @@ Indesign Typography</p>
   <script src="contact.js?v=20261118a"></script>
   <script src="fold-count.js?v=20261121a"></script>
   <script src="page-change.js?v=20261121c"></script>
-  <script src="type-texts.js?v=20261118a"></script>
+  <script src="type-texts.js?v=20261122b"></script>
   <!-- The page shows only from here on (see "page-ready" at the top): after every script, so the texts
        under the title are already waiting to be typed and the counter has its number (nothing blinks) -->
   <div id="page-ready"></div>

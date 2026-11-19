@@ -333,7 +333,8 @@ ITEMS.forEach((item, i) => {
   function show(on) {
     el.classList.toggle("is-colored", on);
     if (on) hoveredPhoto = el;
-    if (foldNow) foldNow.textContent = on && item.number ? String(item.number) : "0";
+    // (once a project is opening, its number stays: the project page starts with the same number)
+    if (foldNow && !leaving) foldNow.textContent = on && item.number ? String(item.number) : "0";
     // each picture scatters the shapes its own way ("mind" like Figma)
     const key = typeof PHOTO_SCATTERS !== "undefined" && PHOTO_SCATTERS[i] ? "scatter-" + i : "scatter";
     on ? hoverOn(key) : hoverOff(key);
@@ -430,6 +431,8 @@ function goToProject(event, i) {
   const u = flow.getBoundingClientRect().width / 1440 * HOME_SCALE;   // one home unit
   const shift = (window.innerHeight / 2 + window.scrollY) / u - plan.titleMid;
   flow.classList.add("is-leaving");
+  if (foldNow && ITEMS[i].number) foldNow.textContent = String(ITEMS[i].number);
+  document.body.classList.add("is-opening-project");   // the counter grows to the project page's size
   // the plan starts from the shapes this picture spreads out (the mouse is on it): make sure they are there
   const key = PHOTO_SCATTERS[i] ? "scatter-" + i : "scatter";
   const ready = () => {
@@ -554,7 +557,7 @@ function playToTitle(plan, link, shift, size = 1) {
   ["prev", "next"].forEach((side) => {
     const arrow = document.createElement("span");
     arrow.className = "project-arrow project-arrow-" + side;
-    arrow.innerHTML = '<img src="images/project-arrow.svg" alt="">';
+    arrow.innerHTML = '<img src="images/project-arrow.svg?v=2" alt="">';
     arrows.appendChild(arrow);
   });
   document.body.appendChild(arrows);
@@ -569,7 +572,11 @@ function playToTitle(plan, link, shift, size = 1) {
       const texts = [...page.querySelectorAll(".lab-intro")].map((p) => ({
         className: p.className, style: p.getAttribute("style") || "", text: p.textContent.trim() }));
       if (!texts.length) return;
-      const show = () => { if (!preview) preview = window.typeIntroPreview(texts, new URL(link).pathname); };
+      // the project's own class (e.g. "memory"): it tells the texts how tall the title is, so they stand
+      // exactly where they will on the project page
+      const main = page.querySelector("main");
+      const project = main ? [...main.classList].filter((c) => c !== "lab" && c !== "lab-invert").join(" ") : "";
+      const show = () => { if (!preview) preview = window.typeIntroPreview(texts, new URL(link).pathname, project); };
       setTimeout(show, Math.max(0, plan.total - INTRO_EARLY));
     }).catch(() => {});
   }

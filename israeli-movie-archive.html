@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Comme:wght@400&family=Crimson+Text:ital,wght@0,400;1,400&display=swap">
-  <link rel="stylesheet" href="styles.css?v=20261121b">
+  <link rel="stylesheet" href="styles.css?v=20261123a">
   <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts) -->
   <link rel="expect" href="#page-ready" blocking="render">
 </head>
@@ -46,8 +46,8 @@ Science Illustration -
 Amit Trainin</p>
     <p class="lab-intro lab-intro-bold" style="--x: 591; --y: 876; --w: 113">Illustrated art
 Indesign Typography</p>
-    <p class="lab-intro" style="--x: 985; --y: 734; --w: 351">choose a plant and research it.</p>
-    <p class="lab-intro lab-intro-bold" style="--x: 984; --y: 876; --w: 351">An illustrated book centered on cactus forms and symbols in Israel, combining botanical artwork with Hebrew text.</p>
+    <p class="lab-intro" style="--x: 986; --y: 849; --w: 351">choose a plant and research it.</p>
+    <p class="lab-intro lab-intro-bold" style="--x: 986; --y: 876; --w: 351">An illustrated book centered on cactus forms and symbols in Israel, combining botanical artwork with Hebrew text.</p>
 
     <!-- The bar at the top, on every page, fixed while scrolling (Figma: "MacBook Pro 16' - 83", y 19).
          Hovering "Contact me" types out the contact details next to it (contact.js). -->
@@ -66,8 +66,8 @@ Indesign Typography</p>
 
     <!-- On the first screen: arrows to the previous and the next project (Figma: Frame 219 and Frame 55,
          two triangles each). fold-count.js sets where they lead. -->
-    <a class="project-arrow project-arrow-prev" aria-label="Previous project"><img src="images/project-arrow.svg" alt=""></a>
-    <a class="project-arrow project-arrow-next" aria-label="Next project"><img src="images/project-arrow.svg" alt=""></a>
+    <a class="project-arrow project-arrow-prev" aria-label="Previous project"><img src="images/project-arrow.svg?v=2" alt=""></a>
+    <a class="project-arrow project-arrow-next" aria-label="Next project"><img src="images/project-arrow.svg?v=2" alt=""></a>
 
     <!-- The video (Figma: "הגשה קצרה אינדקס 1"): it slides up from the bottom of the screen and stops in
          the middle of the screen. It plays by itself, silent and on a loop. Until the file
@@ -82,16 +82,16 @@ Indesign Typography</p>
          While the video stays in the middle of the screen, each paragraph comes up from the bottom, sticks
          there for a while, and is pushed up and out of the top as the next one comes up.
          Only then does the video leave, and only then do the closing texts come in (timing: .archive in styles.css). -->
-    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-p1); --next: var(--a-p2); --w: 167">
+    <div class="lab-text-track archive-text" style="--x: 19; --top: var(--a-p1); --next: var(--a-p2); --w: 202">
       <p class="lab-text">In an Index course at Bezalel, I redesigned the Jerusalem Cinematheque's Israeli Film Archive. It's built for leisure, sorted by genres and holidays, but people come to archives to research history.</p>
     </div>
-    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-p2); --next: var(--a-p3); --w: 167">
+    <div class="lab-text-track archive-text" style="--x: 19; --top: var(--a-p2); --next: var(--a-p3); --w: 202">
       <p class="lab-text">Searching for Mea Shearim footage from specific years, I couldn't reach them. Friends said they too came for specific periods, so years became the backbone.</p>
     </div>
-    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-p3); --next: var(--a-p4); --w: 167">
+    <div class="lab-text-track archive-text" style="--x: 19; --top: var(--a-p3); --next: var(--a-p4); --w: 202">
       <p class="lab-text">The homepage is a grid: one row per decade. Years as a simple sort option made too large a mass. The film stays central, like looking through a time traveler's lens, with quiet white typography and hierarchy built from blinking and opacity.</p>
     </div>
-    <div class="lab-text-track archive-text" style="--x: 65; --top: var(--a-p4); --next: var(--a-text-next); --w: 167">
+    <div class="lab-text-track archive-text" style="--x: 19; --top: var(--a-p4); --next: var(--a-text-next); --w: 202">
       <p class="lab-text">My lecturer said it feels like being a living witness to past years. Next time, I'd add index filtering inside each year.</p>
     </div>
 
@@ -109,7 +109,7 @@ Indesign Typography</p>
   <script src="contact.js?v=20261118a"></script>
   <script src="fold-count.js?v=20261121a"></script>
   <script src="page-change.js?v=20261121c"></script>
-  <script src="type-texts.js?v=20261118a"></script>
+  <script src="type-texts.js?v=20261122b"></script>
   <!-- The page shows only from here on (see "page-ready" at the top): after every script, so the texts
        under the title are already waiting to be typed and the counter has its number (nothing blinks) -->
   <div id="page-ready"></div>

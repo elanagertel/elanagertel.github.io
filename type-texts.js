@@ -82,12 +82,13 @@
 
   // ----- Home page: the first screen's texts start typing while the project's title is being built -----
   // home.js calls this with the project page's texts (and where they stand); they are drawn in the same
-  // place as on the project page. save() is called just before the project page opens: it remembers
-  // when the first letter was typed, so the project page goes on typing from the same letter.
+  // place as on the project page. save() is called just before the project page opens: it remembers how
+  // many letters are typed by then, so the project page goes on typing from exactly that letter (the
+  // moment the new page takes to open does not make letters jump in).
   const STARTED_KEY = "introTypingStarted";
-  window.typeIntroPreview = function (texts, page) {
+  window.typeIntroPreview = function (texts, page, project = "") {
     const box = document.createElement("div");
-    box.className = "lab-intro-preview";
+    box.className = "lab-intro-preview " + project;   // the project's class: its title's size (styles.css)
     box.setAttribute("aria-hidden", "true");
     texts.forEach(({ className, style, text }) => {
       const p = document.createElement("p");
@@ -106,20 +107,22 @@
     return {
       save() {
         if (started === null) return;
-        try { sessionStorage.setItem(STARTED_KEY, JSON.stringify({ page, started })); } catch (e) {}
+        const typed = Math.max(...group.map((t) => t.shown));   // letters typed so far (all type together)
+        try { sessionStorage.setItem(STARTED_KEY, JSON.stringify({ page, typed, at: Date.now() })); } catch (e) {}
       },
     };
   };
-  // On the project page: when (if at all) its first-screen texts already started typing on the home page
-  function startedOnHome() {
+  // On the project page: how many letters of its first-screen texts were already typed on the home page
+  // (null if they did not start there)
+  function typedOnHome() {
     try {
       const saved = JSON.parse(sessionStorage.getItem(STARTED_KEY) || "null");
       sessionStorage.removeItem(STARTED_KEY);
-      if (!saved || saved.page !== location.pathname || Date.now() - saved.started > 15000) return null;
-      return saved.started;
+      if (!saved || saved.page !== location.pathname || Date.now() - saved.at > 15000) return null;
+      return saved.typed;
     } catch (e) { return null; }
   }
-  const homeStart = startedOnHome();
+  const homeTyped = typedOnHome();
 
   // A story paragraph types on its own, quickly, with a tiny stop after each sentence
   const STORY_STEP = 10;       // ms between two steps
@@ -151,7 +154,7 @@
   document.fonts.ready.then(() => {
     all.forEach(measure);
     // the first screen: right away, or going on from where it got to on the home page
-    if (intro.length && homeStart !== null) typeGroup(intro, 0, Math.floor((Date.now() - homeStart) / PER_LETTER));
+    if (intro.length && homeTyped !== null) typeGroup(intro, 0, homeTyped);
     else if (intro.length) typeGroup(intro);
     // the black end (the last fold): as soon as its texts start coming onto the screen, with no pause
     if (info.length) {
