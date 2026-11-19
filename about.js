@@ -195,40 +195,47 @@ shapes.forEach((s) => {
 // The photos (Figma "Desktop - 5"). They lie on the strip, each lined up with the left edge of a word, and
 // slide with it. They are always seen: the shapes jump over them (and invert them where they cross them,
 // styles.css .about-pieces).
-//   - "profile 3" (256 × 268): above ELANA, its bottom 19 above the words (one grid gutter)
-//   - "Gemini_Generated_Image" (314 × 413): under DESIGNER, 650 to the right of its left edge (Figma x 3936),
-//     its top 19 below the words
+//   - "profile 3" (270 × 283, Figma "Desktop - 6"): above ELANA, its bottom 19 above the words (one grid gutter)
+//   - "Gemini_Generated_Image": under DESIGNER, exactly as wide as its last two letters "ER": its left edge at
+//     the start of the E (fromX, about units in the word), its right edge at the end of the R; its height keeps
+//     the photo's shape (314 × 413). Its top 19 below the words
 // Their numbers are Desktop 5 pixels (the words' top at y 450), turned into about units like the words
 // (61.76 per cell there, 67.93 here).
 const PHOTO_SCALE = 67.93 / 61.76;
 const DESIGNER = ABOUT_WORDS.findIndex((w) => w.text === "DESIGNER");
 const PHOTOS = [
-  { src: "images/about-profile.jpg", alt: "Elana Gertel", crop: "50% 63%", word: 1, dx: 1, top: 163, w: 256, h: 268 },
-  { src: "images/about-designer.jpg", alt: "Elana drawing in a sketchbook among colour swatches", crop: "50% 4%", word: DESIGNER, dx: 650.33, top: 592, w: 314, h: 413 },
+  { src: "images/about-profile.jpg", alt: "Elana Gertel", crop: "50% 63%", word: 1, dx: 1, top: 148, w: 270, h: 283 },
+  { src: "images/about-designer.jpg", alt: "Elana drawing in a sketchbook among colour swatches", crop: "50% 4%", word: DESIGNER, fromX: 783.2, top: 592, w: 314, h: 413 },
 ].map((p) => {
+  // a photo that spans the end of its word (from fromX to the word's end): its width in about units, and
+  // its height keeping the photo's shape
+  const spanW = p.fromX !== undefined ? ABOUT_WORDS[p.word].width - p.fromX : null;
+  const w = spanW !== null ? spanW : p.w * PHOTO_SCALE;
+  const h = spanW !== null ? spanW * p.h / p.w : p.h * PHOTO_SCALE;
   const el = document.createElement("img");
   el.className = "about-photo";
   el.src = p.src;
   el.alt = p.alt;
-  el.style.setProperty("--w", p.w * PHOTO_SCALE);
-  el.style.setProperty("--h", p.h * PHOTO_SCALE);
+  el.style.setProperty("--w", w);
+  el.style.setProperty("--h", h);
   el.style.objectPosition = p.crop;   // the crop of the photo in Figma
   stage.insertBefore(el, stage.firstChild);   // under everything (also under the small texts)
   const y = WORD_Y + (p.top - 450) * PHOTO_SCALE;
   const above = y < WORD_Y;   // the photo above the words (or under them)
-  // phones: a photo that does not fit on a short screen is drawn smaller, keeping the corner next to the words
+  // a photo that does not fit on a short screen is drawn smaller, keeping the corner next to the words
   el.style.transformOrigin = above ? "left bottom" : "left top";
-  return { el, x: WORD_STRIP_X[p.word] + p.dx * PHOTO_SCALE, y, h: p.h * PHOTO_SCALE, above };
+  const x = WORD_STRIP_X[p.word] + (spanW !== null ? p.fromX : p.dx * PHOTO_SCALE);
+  return { el, x, y, h, above };
 });
 
-// Phones (a touch screen with no mouse): how much smaller a photo is drawn so it fits between the words and
-// the top or bottom edge of the screen (1 = its own size). On a computer the photos keep their size.
-const FIT_PHOTOS = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-const PHOTO_EDGE_GAP = 8;   // screen pixels kept free between a photo and the edge of the screen
+// How much smaller a photo is drawn so it fits between the words and the top or bottom edge of the screen,
+// keeping a gap to the edge like in Figma ("Desktop - 6": 19 between the photo under DESIGNER and the bottom
+// of the screen). 1 = its own size; on a tall enough screen the photos keep their size.
+const PHOTO_EDGE_GAP = 19;   // Figma pixels kept free between a photo and the edge of the screen
 function photoFit(p, u, top, screenH) {
-  if (!FIT_PHOTOS) return 1;
+  const gap = Math.max(8, PHOTO_EDGE_GAP * window.innerWidth / 1440);   // in screen pixels (at least 8)
   const height = p.h * u;
-  const room = p.above ? top + height - PHOTO_EDGE_GAP : screenH - PHOTO_EDGE_GAP - top;
+  const room = p.above ? top + height - gap : screenH - gap - top;
   return Math.max(0.3, Math.min(1, room / height));
 }
 
@@ -630,7 +637,7 @@ const EXTRA_MOVE = Math.max(0, TEXTS[LAST_TEXT].stripX + typingLength(LAST_TEXT)
 const BIO = "I’m Elana, a designer working at the intersection of product, UI / UX, and branding. My roots are typography, illustration, and motion. I design with the business goal in mind first, making sure strong aesthetics always serve a purpose.\n" +
             "Using AI as a core part of my workflow, I also vibe-code and ship my own functional products from scratch, bridging the gap between visual craft and live software.\n" +
             "I love collaborating closely with teams to solve messy problems early and turn ideas into clear, expressive experiences.";
-const BIO_FIRST_WAIT = 1200;   // ms the bar blinks before the first letter
+const BIO_FIRST_WAIT = 800;    // ms the bar blinks before the first letter
 const BLINK_AFTER = 350;       // a pause longer than this (ms) lets the bar blink
 const bioEl = document.createElement("p");
 bioEl.className = "about-bio";
@@ -680,12 +687,13 @@ stage.appendChild(bioEl);
 let bioShown = 0, bioTimer = null, bioOn = false;
 // How long to wait before the next letter, like a person typing
 function bioPause(typed, next) {
-  if (typed === ".") return 400 + Math.random() * 350;        // the end of a sentence: a breath
+  // (about twice as fast as a person, so the paragraph does not take long)
+  if (typed === ".") return 200 + Math.random() * 150;        // the end of a sentence: a breath
   if (next === "\n") return 0;
-  if (typed === "\n") return 750 + Math.random() * 300;       // a new paragraph: a longer think
-  if (typed === ",") return 140 + Math.random() * 120;
-  if (typed === " " && Math.random() < 0.05) return 380 + Math.random() * 300;   // a little hesitation
-  return 14 + Math.random() * 30;                             // the letters of a word, unevenly
+  if (typed === "\n") return 400 + Math.random() * 150;       // a new paragraph: a longer think
+  if (typed === ",") return 70 + Math.random() * 60;
+  if (typed === " " && Math.random() < 0.03) return 200 + Math.random() * 150;   // a little hesitation
+  return 6 + Math.random() * 14;                              // the letters of a word, unevenly
 }
 function bioWait(ms) {
   // the bar only blinks during the longer pauses
