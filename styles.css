@@ -646,9 +646,11 @@ a.flow-photo:focus-visible {
   top: calc(100% + 17.11 * var(--u));   /* 16 Figma pixels under the picture */
 }
 
+/* The number: --number-x Figma pixels left of the picture, its top --number-y Figma pixels above the
+   picture's bottom, so its baseline sits on the picture's bottom edge (home.js sets them from Figma) */
 .flow-photo-number {
-  left: calc(-42.78 * var(--u));         /* 40 Figma pixels left of the picture */
-  top: calc(100% - 17.11 * var(--u));    /* its top 16 Figma pixels above the picture's bottom */
+  left: calc(var(--number-x, 40) / -0.9351 * var(--u));
+  top: calc(100% - var(--number-y, 11.55) / 0.9351 * var(--u));
   font-style: italic;
 }
 
@@ -679,13 +681,26 @@ a.flow-photo:focus-visible {
 }
 
 /* The picture windows: Figma sizes (Component 2) / 0.9351, in home units */
-/* House picture (Double Families): window 139.39 × 138.47 in Figma */
+/* House picture (Double Families, number 5): window 140 × 164 in Figma (its new borders) */
 .photo-house {
+  width: calc(149.72 * var(--u));
+  height: calc(175.38 * var(--u));
+}
+
+.photo-house img {
+  left: -0.01%;
+  top: -6.59%;
+  width: 99.99%;
+  height: 111.53%;
+}
+
+/* The other copy of the house picture (lower down): window 139.39 × 138.47 in Figma, as before */
+.photo-house-b {
   width: calc(149.07 * var(--u));
   height: calc(148.08 * var(--u));
 }
 
-.photo-house img {
+.photo-house-b img {
   left: -0.21%;
   top: -26%;
   width: 100.42%;
@@ -745,11 +760,11 @@ a.flow-photo:focus-visible {
   object-fit: cover;
 }
 
-/* The main brain picture ("mind", it opens The Memory Lab): the same window, cropped a little
-   differently (Figma, Component 2) */
+/* The main brain picture ("mind", it opens The Memory Lab): window 126 × 124 in Figma (frame 80),
+   cropped a little differently from the other copies */
 .photo-mind {
-  width: calc(141.17 * var(--u));
-  height: calc(133.27 * var(--u));
+  width: calc(134.74 * var(--u));
+  height: calc(132.61 * var(--u));
 }
 
 .photo-mind img {
@@ -1038,10 +1053,7 @@ a.flow-photo:focus-visible {
   animation: flow-cursor-blink 1s steps(1) infinite;
 }
 
-/* The small texts on About end with the same blinking bar, in bold */
-.about-text-cursor {
-  font-weight: 700;
-}
+/* The small texts on About end with the same blinking bar (regular weight, like the text: Figma "Desktop - 6") */
 
 /* The typewriter (about.js): a small text is hidden until it is reached; while its letters are being
    typed the bar stands still, before and after it blinks */
@@ -1741,20 +1753,20 @@ body.lab-page {
   background-color: var(--color-background);   /* so the white text with "exclusion" shows black on it */
 }
 
-/* The small texts "!", "my name is..", "and I am a...", "and creator of..." (Figma "Desktop - 5":
-   Averia Serif Libre 12, white with "exclusion", so they show black on white). about.js places them (moved with transform). */
+/* The small texts "!", "my name is..", "and I am a...", "and creator of..." (Figma "Desktop - 6":
+   Helvetica 12, line height 1.24, like the rest of the site; drawn with "exclusion", so they show #252525
+   on the page). about.js places them (moved with transform). */
 .about-text {
   position: absolute;
   left: 0;
   top: 0;
   margin: 0;
-  font-family: var(--font-edge);   /* Averia Serif Libre (Figma "Desktop - 5") */
+  font-family: var(--font-nav);    /* Helvetica (Figma "Desktop - 6") */
   font-size: max(9px, calc(13.2 * var(--u)));   /* 12 in Figma (13.2 about units) */
   font-weight: 400;
-  line-height: 1.16;
-  letter-spacing: 0.08em;
+  line-height: 1.24;
   white-space: nowrap;
-  color: #ffffff;
+  color: var(--color-nav-blend);
   mix-blend-mode: exclusion;
 }
 
@@ -1770,8 +1782,8 @@ body.lab-page {
   will-change: transform;
 }
 
-/* The paragraph at the bottom left (Figma "Desktop - 5": x 65, its bottom 21 above the screen's bottom,
-   527 wide; Averia Serif Libre 12, line height 1.48, letter spacing 0.96). about.js types it out once
+/* The paragraph at the bottom left (Figma "Desktop - 6": x 65, its bottom 21 above the screen's bottom,
+   457 wide; Helvetica 12, line height 1.6). about.js types it out once
    VISION stands in the middle of the screen. White with "exclusion", so it shows black on white. */
 .about-bio {
   --u-screen: calc(100vw / 1440);   /* one Figma pixel of the screen */
@@ -1779,15 +1791,14 @@ body.lab-page {
   z-index: 4;
   left: calc(65 * var(--u-screen));
   bottom: calc(21 * var(--u-screen));
-  width: max(calc(527 * var(--u-screen)), min(400px, calc(100vw - 32px)));
+  width: max(calc(457 * var(--u-screen)), min(400px, calc(100vw - 32px)));
   margin: 0;
-  font-family: var(--font-edge);
+  font-family: var(--font-nav);
   font-size: max(9px, calc(12 * var(--u-screen)));
   font-weight: 400;
-  line-height: 1.48;
-  letter-spacing: 0.08em;   /* 0.96px */
-  white-space: pre-line;    /* the line break between the two paragraphs */
-  color: #ffffff;
+  line-height: 1.6;
+  white-space: pre-line;    /* the line breaks between the paragraphs */
+  color: var(--color-nav-blend);
   mix-blend-mode: exclusion;
   visibility: hidden;
 }

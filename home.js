@@ -23,21 +23,22 @@ const STEP_STARTS = [0, FLOW_STEP_ENDS[0] + STEP_PAUSE];
 // at: [x, y] in frames 77, 76, 75 (home units). null = not on the page yet (it slides in from the edge later).
 // Pictures: "kind" picks the picture and how it is cropped (see .photo-… in styles.css).
 // number / caption: the project's number ("1  /", left of the picture, always shown in the gallery) and
-// its name (under it, shown while the picture is hovered) (Figma: frame "MacBook Pro 16' - 80"). The number also shows in the counter.
+// its name (under it, shown while the picture is hovered). numberAt: where the number sits (Figma frame 80):
+// [Figma pixels left of the picture, Figma pixels above its bottom] (its baseline is on the picture's bottom edge) (Figma: frame "MacBook Pro 16' - 80"). The number also shows in the counter.
 const ITEMS = [
   // pictures
-  { type: "photo", kind: "house",   alt: "Double Families", number: 5, caption: "The Double\nFamily", at: [[1705.7, 761.42], [1705.7, 761.42], [1046.76, 631.73]] },
-  { type: "photo", kind: "cactus",  alt: "The Israeli Cactus", number: 4, caption: "The Israeli\nCactus", at: [[-434.18, 937.87], [-434.18, 937.87], [350.27, 635.81]],
+  { type: "photo", kind: "house",   alt: "Double Families", number: 5, caption: "The Double\nFamily", numberAt: [32.54, 19.55], at: [[1705.7, 761.42], [1705.7, 761.42], [1045.38, 600.52]] },
+  { type: "photo", kind: "cactus",  alt: "The Israeli Cactus", number: 4, caption: "The Israeli\nCactus", numberAt: [41.54, 11.55], at: [[-434.18, 937.87], [-434.18, 937.87], [350.27, 635.81]],
     link: "israeli-cactus.html", toTitle: "cactus" },   // opens the project page (moves: to-cactus-moves.js)
-  { type: "photo", kind: "mind",    alt: "The Memory Lab",  number: 1, caption: "The Memory\nLab", at: [[-391.4, 425.62], [-238.76, 389.96], [344.53, 327.42]],
+  { type: "photo", kind: "mind",    alt: "The Memory Lab",  number: 1, caption: "The Memory\nLab", numberAt: [39.54, 11.55], at: [[-391.4, 425.62], [-238.76, 389.96], [490.36, 327.82]],
     link: "memory-lab.html", toTitle: "lab" },          // "mind": opens the project page (moves: to-lab-moves.js)
-  { type: "photo", kind: "sense",   alt: "Sense",           number: 2, caption: "Sense\nShopping", at: [[1764.52, -18.18], [1764.52, -18.18], [1052.93, 19.25]],
+  { type: "photo", kind: "sense",   alt: "Sense",           number: 2, caption: "Sense\nShopping", numberAt: [40.59, 12.58], at: [[1764.52, -18.18], [1764.52, -18.18], [1052.93, 19.25]],
     link: "sense.html", toTitle: "sense" },                // opens the project page (moves: to-sense-moves.js)
   { type: "photo", kind: "archive", alt: "",                number: 3, caption: "The Israeli\nMovie Archive", at: [[1578.44, 1454.39], [1578.44, 1454.39], [1335.19, 1247.51]] },
-  { type: "photo", kind: "archive", alt: "Israeli Movie Archive", number: 3, caption: "The Israeli\nMovie Archive", at: [[-349.7, 1797.67], [-349.7, 1797.67], [1335.19, 172.75]],
+  { type: "photo", kind: "archive", alt: "Israeli Movie Archive", number: 3, caption: "The Israeli\nMovie Archive", numberAt: [40.54, 12.55], at: [[-349.7, 1797.67], [-349.7, 1797.67], [1335.19, 174.9]],
     link: "israeli-movie-archive.html", toTitle: "archive" },   // opens the project page (moves: to-archive-moves.js)
   { type: "photo", kind: "water-b", alt: "The Memory Lab",  number: 1, caption: "The Memory\nLab", at: [null, null, [344.78, 1091.6]] },
-  { type: "photo", kind: "house",   alt: "Double Families", number: 5, caption: "The Double\nFamily", at: [null, null, [689.81, 1613.67]] },
+  { type: "photo", kind: "house-b", alt: "Double Families", number: 5, caption: "The Double\nFamily", at: [null, null, [689.81, 1613.67]] },
 
   // project names (width in Figma pixels; text centred inside it). They show in the opening only:
   // in the gallery each picture shows its own caption while hovered (see "caption" above)
@@ -60,7 +61,8 @@ const ITEMS = [
 
 // Which picture file each kind of picture uses
 const PHOTO_FILES = {
-  "house": "gallery-house.png",
+  "house": "gallery-house.png?v=2",   // ?v=2: the new picture, without its background (Figma, Nov 2026)
+  "house-b": "gallery-house.png?v=2", // the same picture, cropped as before (the copy lower down)
   "brain": "gallery-brain.png",
   "archive": "gallery-archive.jpg",   // the new picture (Figma "לפיגמה ץץץ"): the Israeli Movie Archive
   "mind": "gallery-brain.png",   // the same brain picture, cropped differently
@@ -148,6 +150,11 @@ const itemElements = ITEMS.map((item) => {
     img.alt = item.alt;
     crop.append(img);   // always sharp (no blur)
     el.appendChild(crop);
+    // where the number sits, exactly as in Figma: [how far left of the picture, how far above its bottom]
+    if (item.numberAt) {
+      el.style.setProperty("--number-x", item.numberAt[0]);
+      el.style.setProperty("--number-y", item.numberAt[1]);
+    }
     // the number (shown in the gallery) and the name (hidden until the picture is hovered)
     [["flow-photo-caption", item.caption], ["flow-photo-number", item.number && item.number + "  /"]].forEach(([name, text]) => {
       if (!text) return;

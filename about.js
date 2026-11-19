@@ -236,7 +236,7 @@ const textEls = TEXTS.map((t) => {
   const p = document.createElement("p");
   p.className = "about-text";
   p.setAttribute("aria-label", t.text);
-  // the typed letters (filled in by the typewriter), then the bold "|" that blinks like a typing cursor
+  // the typed letters (filled in by the typewriter), then the "|" that blinks like a typing cursor
   const typed = document.createElement("span");
   typed.setAttribute("aria-hidden", "true");
   const cursor = document.createElement("span");
@@ -628,7 +628,8 @@ const EXTRA_MOVE = Math.max(0, TEXTS[LAST_TEXT].stripX + typingLength(LAST_TEXT)
 // The bar stands still while letters come and blinks while it pauses; at the end it keeps blinking.
 // Scrolling back away from VISION hides it (the typing waits); coming back shows it again and it goes on.
 const BIO = "I’m Elana, a designer working at the intersection of product, UI / UX, and branding. My roots are typography, illustration, and motion. I design with the business goal in mind first, making sure strong aesthetics always serve a purpose.\n" +
-            "Using AI as a core part of my workflow, I also vibe-code and ship my own functional products from scratch, bridging the gap between visual craft and live software. I love collaborating closely with teams to solve messy problems early and turn ideas into clear, expressive experiences.";
+            "Using AI as a core part of my workflow, I also vibe-code and ship my own functional products from scratch, bridging the gap between visual craft and live software.\n" +
+            "I love collaborating closely with teams to solve messy problems early and turn ideas into clear, expressive experiences.";
 const BIO_FIRST_WAIT = 1200;   // ms the bar blinks before the first letter
 const BLINK_AFTER = 350;       // a pause longer than this (ms) lets the bar blink
 const bioEl = document.createElement("p");
