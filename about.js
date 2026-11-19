@@ -634,14 +634,25 @@ const EXTRA_MOVE = Math.max(0, TEXTS[LAST_TEXT].stripX + typingLength(LAST_TEXT)
 // longer ones after full stops and between the two paragraphs, and now and then a little hesitation.
 // The bar stands still while letters come and blinks while it pauses; at the end it keeps blinking.
 // Scrolling back away from VISION hides it (the typing waits); coming back shows it again and it goes on.
-const BIO = "I’m Elana, a designer working at the intersection of product, UI / UX, and branding. My roots are typography, illustration, and motion. I design with the business goal in mind first, making sure strong aesthetics always serve a purpose.\n" +
-            "Using AI as a core part of my workflow, I also vibe-code and ship my own functional products from scratch, bridging the gap between visual craft and live software.\n" +
-            "I love collaborating closely with teams to solve messy problems early and turn ideas into clear, expressive experiences.";
+// The lines end exactly where they end in Figma ("Desktop - 6": one paragraph). [line, true = the paragraph ends here]
+const BIO_LINES = [
+  ["I’m Elana, a designer working at the intersection of product, UI / UX, and branding.", false],
+  ["My roots are typography, illustration, and motion. I design with the business goal in", false],
+  ["mind first, making sure strong aesthetics always serve a purpose. Using AI as a core", false],
+  ["part of my workflow, I also vibe-code and ship my own functional products from", false],
+  ["scratch, bridging the gap between visual craft and live software. I love collaborating", false],
+  ["closely with teams to solve messy problems early and turn ideas into clear,", false],
+  ["expressive experiences.", true],
+];
+const BIO = BIO_LINES.map(([line]) => line).join("\n");
+// where a paragraph ends (the typing stops to think there; at the other line ends it just goes on)
+const BIO_PARAGRAPH_ENDS = new Set();
+BIO_LINES.reduce((at, [line, ends]) => { if (ends) BIO_PARAGRAPH_ENDS.add(at + line.length); return at + line.length + 1; }, 0);
 const BIO_FIRST_WAIT = 800;    // ms the bar blinks before the first letter
 const BLINK_AFTER = 350;       // a pause longer than this (ms) lets the bar blink
 const bioEl = document.createElement("p");
 bioEl.className = "about-bio";
-bioEl.setAttribute("aria-label", BIO);
+bioEl.setAttribute("aria-label", BIO_LINES.map(([line, ends]) => line + (ends ? "\n" : " ")).join("").trim());
 const bioTyped = document.createElement("span");
 bioTyped.setAttribute("aria-hidden", "true");
 const bioBar = document.createElement("span");
@@ -686,11 +697,13 @@ stage.appendChild(bioEl);
 
 let bioShown = 0, bioTimer = null, bioOn = false;
 // How long to wait before the next letter, like a person typing
-function bioPause(typed, next) {
+// (typedAt: where the letter just typed is in BIO)
+function bioPause(typed, next, typedAt) {
   // (about twice as fast as a person, so the paragraph does not take long)
+  if (next === "\n") return BIO_PARAGRAPH_ENDS.has(typedAt + 1) ? 0 : 6 + Math.random() * 14;
   if (typed === ".") return 200 + Math.random() * 150;        // the end of a sentence: a breath
-  if (next === "\n") return 0;
-  if (typed === "\n") return 400 + Math.random() * 150;       // a new paragraph: a longer think
+  if (typed === "\n") return BIO_PARAGRAPH_ENDS.has(typedAt) ? 400 + Math.random() * 150   // a new paragraph: a longer think
+                                                          : 6 + Math.random() * 14;      // just the next line
   if (typed === ",") return 70 + Math.random() * 60;
   if (typed === " " && Math.random() < 0.03) return 200 + Math.random() * 150;   // a little hesitation
   return 6 + Math.random() * 14;                              // the letters of a word, unevenly
@@ -706,7 +719,7 @@ function bioNext() {
   bioShown++;
   bioTyped.textContent = bioWithBreaks.slice(0, bioShown);
   if (bioShown >= BIO.length) { bioEl.classList.remove("is-typing"); return; }   // done: the bar blinks on
-  bioWait(bioPause(BIO[bioShown - 1], BIO[bioShown]));
+  bioWait(bioPause(BIO[bioShown - 1], BIO[bioShown], bioShown - 1));
 }
 // Called by draw(): on at the end (VISION in the middle), off when scrolled back
 function bioAt(atEnd) {
