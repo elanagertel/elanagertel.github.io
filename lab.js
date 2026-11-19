@@ -112,9 +112,10 @@ const STAY_TIME = 700;                   // ms a letter stays organic after the 
 const GOO = 7;                           // how soft the shapes melt together halfway (Figma pixels)
 const TAP_STAY_TIME = 900;               // phones: ms a tapped letter stays organic before it oozes back
 
-// The project's picture (from the home page) shows only inside the letters while they are organic
-// (Figma: the picture lies over the title on "Lighten", at x 297, y 96, 846 × 832). The normal letters
-// stay black: the picture fades in as a letter oozes into its organic shape, and out as it oozes back.
+// The project's picture (from the home page) shows only inside a letter while it is organic (hovered)
+// (Figma "Frame 219": the picture lies over the organic letters on "Hard light", at x 297, y 96, 846 × 832):
+// blended with the black letter it shows dark and strong, and nothing shows outside the letter.
+// The normal letters stay black: the picture fades in as a letter oozes into its organic shape.
 const ORGANIC_PICTURE = document.getElementById("lab").dataset.organicPicture;
 const PICTURE_BOX = [297, 96, 846, 832];   // Figma pixels: x, y, width, height
 
@@ -254,7 +255,8 @@ function setUpMorph(white) {
     if (ORGANIC_PICTURE && pictureId) {
       picture = document.createElementNS(SVG_NS, "path");
       picture.style.fill = `url(#${pictureId})`;   // (a style, so it wins over the black fill in styles.css)
-      picture.style.stroke = "none";                 // no black outline around the picture
+      picture.style.stroke = `url(#${pictureId})`;   // its edge too, so no plain black outline is left
+      picture.style.mixBlendMode = "hard-light";      // Figma: "Hard light" over the black letter
       picture.style.visibility = "hidden";
       letter.group.appendChild(picture);
     }
@@ -302,11 +304,7 @@ function setUpMorph(white) {
       s.path.setAttribute("d", d);
       if (s.picture) {
         s.picture.setAttribute("d", d);
-        // the more organic, the more picture; the black letter under it fades away at the same time,
-        // so no black edge is left around the picture
-        const amount = ooze(letter.t);
-        s.picture.style.opacity = amount.toFixed(3);
-        s.path.style.opacity = (1 - amount).toFixed(3);
+        s.picture.style.opacity = ooze(letter.t).toFixed(3);   // the more organic, the more picture
       }
     });
     letter.holes.forEach(({ path, points, middle }) => {
