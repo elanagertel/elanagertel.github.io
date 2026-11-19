@@ -681,7 +681,7 @@ a.flow-photo:focus-visible {
 }
 
 /* The picture windows: Figma sizes (Component 2) / 0.9351, in home units */
-/* House picture (Double Families, number 5): window 140 × 164 in Figma (its new borders) */
+/* House picture (Double Families, both copies): window 140 × 164 in Figma (its new borders) */
 .photo-house {
   width: calc(149.72 * var(--u));
   height: calc(175.38 * var(--u));
@@ -692,19 +692,6 @@ a.flow-photo:focus-visible {
   top: -6.59%;
   width: 99.99%;
   height: 111.53%;
-}
-
-/* The other copy of the house picture (lower down): window 139.39 × 138.47 in Figma, as before */
-.photo-house-b {
-  width: calc(149.07 * var(--u));
-  height: calc(148.08 * var(--u));
-}
-
-.photo-house-b img {
-  left: -0.21%;
-  top: -26%;
-  width: 100.42%;
-  height: 132.09%;
 }
 
 /* Brain picture (the other copies in the gallery): window 132.01 × 124.62 in Figma */
@@ -774,19 +761,32 @@ a.flow-photo:focus-visible {
   height: 148.21%;
 }
 
-/* Watercolour poster: window 141.24 × 128.32 in Figma, poster 141.07 × 199.52 inside, 10.15 up */
-.photo-water-a,
-.photo-water-b {
+/* Watercolour poster (old version, not used in the gallery now): window 141.24 × 128.32 in Figma,
+   poster 141.07 × 199.52 inside, 10.15 up */
+.photo-water-a {
   width: calc(151.04 * var(--u));
   height: calc(137.22 * var(--u));
 }
 
-.photo-water-a img,
-.photo-water-b img {
+.photo-water-a img {
   left: 0;
   top: calc(-10.86 * var(--u));
   width: calc(150.86 * var(--u));
   height: calc(213.37 * var(--u));
+}
+
+/* Watercolour poster in the gallery (Figma frame 80, "Frame 93"): window 142 × 125, showing part of the
+   poster (145.48 × 205.76, without a background), 3 to the left and 12 up */
+.photo-water-b {
+  width: calc(151.86 * var(--u));
+  height: calc(133.68 * var(--u));
+}
+
+.photo-water-b img {
+  left: calc(-3.21 * var(--u));
+  top: calc(-12.83 * var(--u));
+  width: calc(155.58 * var(--u));
+  height: calc(220.04 * var(--u));
 }
 
 /* ----- Project names: Crimson Text semi-bold italic 37.6px, centred, tight lines ----- */
@@ -996,6 +996,33 @@ a.flow-photo:focus-visible {
 
 .project-arrows-preview.is-in .project-arrow {
   translate: 0 0;
+}
+
+/* Home page: the small liquid blob the mouse turns into while it pushes a big letter (home-cursor.js
+   moves it and cuts it to its outline with clip-path). It swaps the page's two colours in what is behind
+   it: the light page shows dark (#252525), a dark letter shows the page's colour (#f8f9f4).
+   (invert, then contrast and brightness: x → 1 − x, then moved up by 0.118, so 0.973 ↔ 0.145) */
+.blob-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  opacity: 0;
+  -webkit-backdrop-filter: invert(1) contrast(0.809) brightness(1.236);
+  backdrop-filter: invert(1) contrast(0.809) brightness(1.236);
+}
+
+.blob-cursor.is-on {
+  opacity: 1;
+}
+
+/* ...meanwhile the arrow is hidden */
+body.has-blob-cursor,
+body.has-blob-cursor * {
+  cursor: none !important;
 }
 
 .project-arrow[hidden] {

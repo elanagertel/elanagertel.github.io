@@ -112,6 +112,12 @@ const STAY_TIME = 700;                   // ms a letter stays organic after the 
 const GOO = 7;                           // how soft the shapes melt together halfway (Figma pixels)
 const TAP_STAY_TIME = 900;               // phones: ms a tapped letter stays organic before it oozes back
 
+// The project's picture (from the home page) shows only inside the letters while they are organic
+// (Figma: the picture lies over the title on "Lighten", at x 297, y 96, 846 × 832). The normal letters
+// stay black: the picture fades in as a letter oozes into its organic shape, and out as it oozes back.
+const ORGANIC_PICTURE = document.getElementById("lab").dataset.organicPicture;
+const PICTURE_BOX = [297, 96, 846, 832];   // Figma pixels: x, y, width, height
+
 // Phones: a tap also sends "mouse" events; they are ignored right after a finger touched the screen (mobile.js)
 const byFinger = () => typeof window.touchedJustNow === "function" && window.touchedJustNow();
 
@@ -186,6 +192,23 @@ function setUpMorph(white) {
   const defs = document.createElementNS(SVG_NS, "defs");
   drawing.appendChild(defs);
 
+  // the picture as a fill (black title only): it lies where Figma puts it, whatever part of it a letter covers
+  const pictureId = white ? null : "organic-picture";
+  if (ORGANIC_PICTURE && pictureId) {
+    const pattern = document.createElementNS(SVG_NS, "pattern");
+    pattern.setAttribute("id", pictureId);
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+    const [px, py, pw, ph] = PICTURE_BOX;
+    [["x", px], ["y", py], ["width", pw], ["height", ph]].forEach(([k, v]) => pattern.setAttribute(k, v));
+    const image = document.createElementNS(SVG_NS, "image");
+    image.setAttribute("href", ORGANIC_PICTURE);
+    image.setAttribute("width", pw);
+    image.setAttribute("height", ph);
+    image.setAttribute("preserveAspectRatio", "xMidYMid slice");
+    pattern.appendChild(image);
+    defs.appendChild(pattern);
+  }
+
   // the organic letters: outer outline and holes, in page positions
   const letters = ORGANIC_LETTERS.map((organic, n) => {
     const parts = organic.d.split(/(?=M)/).map((part) => part.trim());
@@ -226,7 +249,16 @@ function setUpMorph(white) {
     const path = document.createElementNS(SVG_NS, "path");
     path.style.visibility = "hidden";
     letter.group.appendChild(path);
-    letter.shapes.push({ svg: shape.svg, path, from, to: lineUp(from, letter.outer) });
+    // the same outline again, filled with the picture, on top (it fades in as the letter turns organic)
+    let picture = null;
+    if (ORGANIC_PICTURE && pictureId) {
+      picture = document.createElementNS(SVG_NS, "path");
+      picture.style.fill = `url(#${pictureId})`;   // (a style, so it wins over the black fill in styles.css)
+      picture.style.stroke = "none";                 // no black outline around the picture
+      picture.style.visibility = "hidden";
+      letter.group.appendChild(picture);
+    }
+    letter.shapes.push({ svg: shape.svg, path, picture, from, to: lineUp(from, letter.outer) });
   });
   // the holes, drawn in the background colour on top
   letters.forEach((letter) => letter.holeOutlines.forEach((points) => {
@@ -260,12 +292,22 @@ function setUpMorph(white) {
     letter.shapes.forEach((s) => {
       s.svg.classList.toggle("is-reshaping", showing);   // the real shape hides while reshaping
       s.path.style.visibility = showing ? "visible" : "hidden";
+      if (s.picture) s.picture.style.visibility = showing ? "visible" : "hidden";
       if (!showing) return;
-      s.path.setAttribute("d", pathFrom(s.from.map((p, i) => {
+      const d = pathFrom(s.from.map((p, i) => {
         // each point runs its own part of the time: it starts later the further it is
         const e = ooze(clamp01((letter.t * (1 + OOZE_SPREAD) - s.delay[i]) / 1));
         return [p[0] + (s.to[i][0] - p[0]) * e, p[1] + (s.to[i][1] - p[1]) * e];
-      })));
+      }));
+      s.path.setAttribute("d", d);
+      if (s.picture) {
+        s.picture.setAttribute("d", d);
+        // the more organic, the more picture; the black letter under it fades away at the same time,
+        // so no black edge is left around the picture
+        const amount = ooze(letter.t);
+        s.picture.style.opacity = amount.toFixed(3);
+        s.path.style.opacity = (1 - amount).toFixed(3);
+      }
     });
     letter.holes.forEach(({ path, points, middle }) => {
       const e = ooze(clamp01((letter.t * (1 + OOZE_SPREAD) - OOZE_SPREAD * 0.6) / 1));

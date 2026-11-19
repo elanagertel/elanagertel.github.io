@@ -37,8 +37,8 @@ const ITEMS = [
   { type: "photo", kind: "archive", alt: "",                number: 3, caption: "The Israeli\nMovie Archive", at: [[1578.44, 1454.39], [1578.44, 1454.39], [1335.19, 1247.51]] },
   { type: "photo", kind: "archive", alt: "Israeli Movie Archive", number: 3, caption: "The Israeli\nMovie Archive", numberAt: [40.54, 12.55], at: [[-349.7, 1797.67], [-349.7, 1797.67], [1335.19, 174.9]],
     link: "israeli-movie-archive.html", toTitle: "archive" },   // opens the project page (moves: to-archive-moves.js)
-  { type: "photo", kind: "water-b", alt: "The Memory Lab",  number: 1, caption: "The Memory\nLab", at: [null, null, [344.78, 1091.6]] },
-  { type: "photo", kind: "house-b", alt: "Double Families", number: 5, caption: "The Double\nFamily", at: [null, null, [689.81, 1613.67]] },
+  { type: "photo", kind: "water-b", alt: "The Memory Lab",  number: 1, caption: "The Memory\nLab", at: [null, null, [344.35, 941.08]] },
+  { type: "photo", kind: "house",   alt: "Double Families", number: 5, caption: "The Double\nFamily", at: [null, null, [689.81, 1614.73]] },
 
   // project names (width in Figma pixels; text centred inside it). They show in the opening only:
   // in the gallery each picture shows its own caption while hovered (see "caption" above)
@@ -62,14 +62,13 @@ const ITEMS = [
 // Which picture file each kind of picture uses
 const PHOTO_FILES = {
   "house": "gallery-house.png?v=2",   // ?v=2: the new picture, without its background (Figma, Nov 2026)
-  "house-b": "gallery-house.png?v=2", // the same picture, cropped as before (the copy lower down)
   "brain": "gallery-brain.png",
   "archive": "gallery-archive.jpg",   // the new picture (Figma "לפיגמה ץץץ"): the Israeli Movie Archive
   "mind": "gallery-brain.png",   // the same brain picture, cropped differently
   "cactus": "gallery-cactus.png",
   "sense": "gallery-sense.jpg",
   "water-a": "gallery-watercolor.png",
-  "water-b": "gallery-watercolor.png",
+  "water-b": "gallery-watercolor.png?v=2",   // ?v=2: the poster without its background (Figma, Nov 2026)
 };
 
 const flow = document.getElementById("flow");
@@ -387,8 +386,14 @@ LETTER_HOVER.forEach((letter) => {
     if (byFinger()) return;
     plan = escapePlan(letter, area, event);
     hoverOn(plan);
+    // while it pushes the letter, the mouse drips into a blob (home-cursor.js)
+    if (window.blobCursor && flow.classList.contains("is-done") && !leaving) window.blobCursor.drip();
   });
-  area.addEventListener("mouseleave", () => { if (!byFinger()) hoverOff(plan); });
+  area.addEventListener("mouseleave", () => {
+    if (byFinger()) return;
+    hoverOff(plan);
+    if (window.blobCursor) window.blobCursor.release();
+  });
   // Phones: a tap pushes the letter away from the finger, and after a moment it slides back
   let backTimer = null;
   area.addEventListener("click", (event) => {
@@ -438,6 +443,7 @@ function goToProject(event, i) {
   const u = flow.getBoundingClientRect().width / 1440 * HOME_SCALE;   // one home unit
   const shift = (window.innerHeight / 2 + window.scrollY) / u - plan.titleMid;
   flow.classList.add("is-leaving");
+  if (window.blobCursor) window.blobCursor.release();   // the mouse is an arrow again
   if (foldNow && ITEMS[i].number) foldNow.textContent = String(ITEMS[i].number);
   document.body.classList.add("is-opening-project");   // the counter grows to the project page's size
   // the plan starts from the shapes this picture spreads out (the mouse is on it): make sure they are there
@@ -573,9 +579,9 @@ function playToTitle(plan, link, shift, size = 1) {
   // the project page's texts under the title start typing before the title is fully built
   // (type-texts.js draws them where they are on the project page; the project page then goes on typing them)
   let preview = null;
-  if (typeof window.typeIntroPreview === "function" && window.matchMedia("(hover: hover)").matches) {
-    fetch(link).then((answer) => answer.text()).then((html) => {
-      const page = new DOMParser().parseFromString(html, "text/html");
+  fetch(link).then((answer) => answer.text()).then((html) => {
+    const page = new DOMParser().parseFromString(html, "text/html");
+    if (typeof window.typeIntroPreview === "function" && window.matchMedia("(hover: hover)").matches) {
       const texts = [...page.querySelectorAll(".lab-intro")].map((p) => ({
         className: p.className, style: p.getAttribute("style") || "", text: p.textContent.trim() }));
       if (!texts.length) return;
@@ -585,8 +591,8 @@ function playToTitle(plan, link, shift, size = 1) {
       const project = main ? [...main.classList].filter((c) => c !== "lab" && c !== "lab-invert").join(" ") : "";
       const show = () => { if (!preview) preview = window.typeIntroPreview(texts, new URL(link).pathname, project); };
       setTimeout(show, Math.max(0, plan.total - INTRO_EARLY));
-    }).catch(() => {});
-  }
+    }
+  }).catch(() => {});
   // Once the plan is over: wait until every shape has really landed (with many shapes moving at once the
   // browser can start a slide a little late), show the finished title for a moment, then open the page
   const SHRINK = 300;   // ms

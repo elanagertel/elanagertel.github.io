@@ -67,7 +67,8 @@
     const seen = pictures.filter((pic) => {
       const box = pic.getBoundingClientRect();
       return box.height > 0 && box.top + box.height / 2 <= middle;
-    }).length;
+    }).length * (window.scrollY > 10 ? 1 : 0);   // on the first screen (not scrolled yet): this project's number,
+                                                 // even when the first picture already lies under the title
     if (seen === shown) return;
     const forward = shown === null || seen > shown;
     const animate = shown !== null && !reduced;
