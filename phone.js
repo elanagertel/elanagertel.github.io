@@ -63,6 +63,7 @@
         }, wait);
       },
       clear() { clearInterval(timer); clearTimeout(el.typeWait); box.textContent = ""; bar.hidden = true; },
+      show() { clearInterval(timer); clearTimeout(el.typeWait); box.textContent = words; bar.hidden = true; },   // all at once
     };
   }
 
@@ -77,13 +78,14 @@
   menu.className = "phone-menu";
   menu.setAttribute("aria-label", "Site");
   menu.hidden = true;
+  // (Figma "iPhone 16 - 5", from the top: "Home  /", "About Me  /", "Contact me  /" and its details)
   const LINKS = [
+    { cls: "phone-menu-home", words: "Home  /", href: "index.html", here: isHome },
+    { cls: "phone-menu-about", words: "About Me  /", href: "about.html", here: page === "about.html" },
     { cls: "phone-menu-contact", words: "Contact me  /" },
     { cls: "phone-menu-line", words: "@elanagertel  /  Instagram", href: "https://www.instagram.com/elanagertel/" },
     { cls: "phone-menu-line", words: "+972-54-262-7915  /  Whatsapp", href: "https://wa.me/972542627915" },
     { cls: "phone-menu-line", words: "gertel.elana@gmail.com", href: "mailto:gertel.elana@gmail.com" },
-    { cls: "phone-menu-about", words: "About Me  /", href: "about.html", here: page === "about.html" },
-    { cls: "phone-menu-home", words: "Home  /", href: "index.html", here: isHome },
   ];
   const menuTexts = LINKS.map((link) => {
     const el = document.createElement(link.href ? "a" : "p");
@@ -112,7 +114,9 @@
     if (open) {
       menu.hidden = false;
       // the texts type themselves out once the dark layer has slid in, one group after the other
-      menuTexts.forEach((t, i) => t.type(30, 350 + (i === 0 ? 0 : i < 4 ? 250 : 250 + (i - 3) * 200)));
+      // Home, About Me and Contact me are there at once; only the contact details type themselves out
+      // (all three together, once the dark layer has slid in)
+      menuTexts.forEach((t, i) => (i < 3 ? t.show() : t.type(30, 350)));
     } else {
       menuTexts.forEach((t) => t.clear());
       setTimeout(() => { if (!open) menu.hidden = true; }, reduced ? 0 : 450);
@@ -184,16 +188,12 @@
       const box = first.parentElement.getBoundingClientRect();
       const midX = (Math.min(...shapes.map((r) => r.left)) + Math.max(...shapes.map((r) => r.right))) / 2;
       const midY = (Math.min(...shapes.map((r) => r.top)) + Math.max(...shapes.map((r) => r.bottom))) / 2;
-      // (never wider than the screen's margins: shrink it if it is)
-      const room = window.innerWidth - 2 * 18;
-      const wide = Math.max(...shapes.map((r) => r.right)) - Math.min(...shapes.map((r) => r.left));
-      if (wide > room + 1 && !first.dataset.fitted) {
-        first.dataset.fitted = "1";
-        lab.style.setProperty("--tu-fit", room / wide);
-        return requestAnimationFrame(centreTitle);
-      }
-      // its middle: 37.5% + 15.3 down the screen (Figma "iPhone 16 - 7")
-      first.style.translate = `${box.left + box.width / 2 - midX}px ${box.top + box.height * 0.375 + 15.3 * window.innerWidth / 393 - midY}px`;
+      // its middle: 37.5% + 15.3 down the screen (Figma "iPhone 16 - 7"), or higher for a tall title,
+      // so its bottom stays 40px above the arrows
+      const height = Math.max(...shapes.map((r) => r.bottom)) - Math.min(...shapes.map((r) => r.top));
+      const pp = window.innerWidth / 393;
+      const wanted = Math.min(box.height * 0.375 + 15.3 * pp, box.height * 0.5 + 20 * pp - 40 - height / 2);
+      first.style.translate = `${box.left + box.width / 2 - midX}px ${box.top + wanted - midY}px`;
     }
     requestAnimationFrame(centreTitle);
     window.addEventListener("resize", centreTitle);
@@ -481,9 +481,10 @@
     });
     const left = Math.min(...boxes.map((b) => b.x)), right = Math.max(...boxes.map((b) => b.x + b.w));
     const top = Math.min(...boxes.map((b) => b.y)), bottom = Math.max(...boxes.map((b) => b.y + b.h));
-    let tu = 52.513 / 126.225 * p;
-    if ((right - left) * tu > W - 36 + 1) tu *= (W - 36) / ((right - left) * tu);   // (as the page shrinks it)
-    const mid = [W / 2, H * 0.375 + 15.3 * p];
+    // (the same size and place as on the page: the same pieces' size for every title, letters 52.51 wide;
+    // a tall title a little higher, so its bottom stays 40px above the arrows)
+    const tu = 52.513 / 126.225 * p;
+    const mid = [W / 2, Math.min(H * 0.375 + 15.3 * p, 0.5 * H + 20 * p - 40 - (bottom - top) * tu / 2)];
     const targets = boxes.map((b) => ({
       x: mid[0] + (b.x - (left + right) / 2) * tu, y: mid[1] + (b.y - (top + bottom) / 2) * tu,
       w: b.w * tu, h: b.h * tu,

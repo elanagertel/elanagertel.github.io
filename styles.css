@@ -675,10 +675,7 @@ a.flow-photo:focus-visible {
   transition: opacity var(--name-fade, 400ms) var(--name-ease, ease);
 }
 
-/* ...but while a picture is hovered, only its own number stays: the others fade away */
-.flow.is-done:has(.flow-photo.is-colored) .flow-photo:not(.is-colored) .flow-photo-number {
-  opacity: 0;
-}
+/* (the numbers always stay, also while another picture is hovered: only the names come and go) */
 
 /* Going to a project page: the numbers and names fade away at once (the pictures slide out without them,
    so nothing is left in the frame) */
@@ -929,6 +926,12 @@ a.flow-photo:focus-visible {
 
 .home-page.is-opening-project .fold-count {
   font-size: max(10px, calc(15.5 * var(--u)));
+}
+
+/* The home page has no counter on its sides any more (Figma frame 80): it only shows while a project
+   opens, so the project page's counter is already there when it opens */
+.home-page:not(.is-opening-project) .fold-count {
+  visibility: hidden;
 }
 
 .fold-count-now {
@@ -2218,6 +2221,12 @@ body.lab-page {
   font-style: italic;
 }
 
+/* The page you are on is also bold (Figma frame 80: "Home  /" in bold oblique on the home page;
+   contact.js marks it with aria-current) */
+.site-nav-item[aria-current="page"] {
+  font-weight: 700;
+}
+
 /* While a word in the bar types itself out, an invisible copy keeps its size (contact.js) */
 .site-nav-ghost {
   visibility: hidden;
@@ -2330,12 +2339,14 @@ body.lab-page {
   text-decoration: none;
 }
 
-.phone-menu-contact { top: 164px; }
-.phone-menu-line { top: 225px; }
-.phone-menu-line + .phone-menu-line { top: calc(225px + 1.82em); }
-.phone-menu-line + .phone-menu-line + .phone-menu-line { top: calc(225px + 2 * 1.82em); }
-.phone-menu-about { top: 361px; }
-.phone-menu-home { top: 427px; }
+/* (Figma, from the top: "Home  /" at y 77, "About Me  /" at y 143, "Contact me  /" at y 208,
+   and its details from y 269, rows 1.82 apart) */
+.phone-menu-home { top: 77px; left: 17px; }
+.phone-menu-about { top: 143px; }
+.phone-menu-contact { top: 208px; }
+.phone-menu-line { top: 269px; left: 17px; }
+.phone-menu-line + .phone-menu-line { top: calc(269px + 1.82em); }
+.phone-menu-line + .phone-menu-line + .phone-menu-line { top: calc(269px + 2 * 1.82em); }
 
 .phone-menu-item.is-here {
   font-style: italic;
@@ -2498,9 +2509,11 @@ body.lab-page {
    One column with the phone's margins: the first screen (the title), the short texts in two columns,
    then the pictures and the story, and the black end with the white title. */
 .is-phone-portrait .lab {
-  /* the title's own unit: its letters 52.51 wide (Figma "iPhone 16 - 7"; 126.22 on the big version),
-     so ISRAELI just fills the width between the margins (phone.js shrinks it if a title is wider) */
-  --tu: calc(52.513 / 126.225 * var(--p) * var(--tu-fit, 1));
+  /* the title's own unit: the same for every title, so all titles are made of pieces of one size
+     (Figma "iPhone 16 - 7": letters 52.51 wide, 126.22 on the big version; then ISRAELI, the widest row,
+     just fills the width between the margins). A tall title moves up a little (phone.js), so its bottom
+     stays 40px above the arrows. */
+  --tu: calc(52.513 / 126.225 * var(--p));
   --phone-arrow-w: calc(20.28 * var(--p));
   display: grid;
   grid-template-columns: 1fr 1fr;
