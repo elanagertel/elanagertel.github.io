@@ -2194,3 +2194,34 @@ body.lab-page {
 ::view-transition-new(root) {
   animation: none;
 }
+
+/* "Contact me  /", "About Me  /" and "Home  /": while contact.js types them out again on hover, the bar stands still */
+.site-nav-bar {
+  animation: none;
+}
+
+/* About: once a later text has started typing, an earlier text's bar goes away (about.js adds .is-passed) */
+.about-text.is-passed .about-text-cursor {
+  visibility: hidden;
+}
+
+/* The page you are on, and a word typed out while hovered: oblique (contact.js adds .is-oblique) */
+.site-nav-item.is-oblique {
+  font-style: italic;
+}
+
+/* While a word in the bar types itself out, an invisible copy keeps its size (contact.js) */
+.site-nav-ghost {
+  visibility: hidden;
+}
+
+.site-nav-live {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* (the slant straightens from the letters' baseline, contact.js) */
+.site-nav-item {
+  transform-origin: 0 85%;
+}

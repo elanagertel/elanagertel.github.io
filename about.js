@@ -589,10 +589,22 @@ TEXTS.forEach((t, i) => {
     n++;
     textEls[i].typed.textContent = t.text.slice(0, n);
     textEls[i].classList.add("is-typing");
+    hidePassedBars();
     if (n < t.text.length) setTimeout(next, AUTO_LETTER);
     else textEls[i].classList.remove("is-typing");
   }, AUTO_FIRST);
 });
+
+// Once a later text has started typing, the earlier texts' bars go away (only the newest one blinks).
+// The paragraph at the bottom counts as the last text.
+var bioStarted = false;   // (set once the paragraph has typed its first letter)
+function hidePassedBars() {
+  let later = bioStarted;
+  for (let i = textEls.length - 1; i >= 0; i--) {
+    textEls[i].classList.toggle("is-passed", later);
+    if (textEls[i].typed.textContent.length > 0) later = true;
+  }
+}
 
 function typeTo(i, moved) {
   const el = textEls[i], t = TEXTS[i];
@@ -617,6 +629,7 @@ function stepLetters(el, t) {
   }
   el.stepping = true;
   el.typed.textContent = t.text.slice(0, n + (el.want > n ? 1 : -1));
+  hidePassedBars();
   // while letters are being typed the bar stands still
   el.classList.add("is-typing");
   clearTimeout(el.blinkTimer);
@@ -718,6 +731,8 @@ function bioNext() {
   if (!bioOn || bioShown >= BIO.length) { bioEl.classList.remove("is-typing"); return; }
   bioShown++;
   bioTyped.textContent = bioWithBreaks.slice(0, bioShown);
+  bioStarted = bioShown > 0;
+  hidePassedBars();
   if (bioShown >= BIO.length) { bioEl.classList.remove("is-typing"); return; }   // done: the bar blinks on
   bioWait(bioPause(BIO[bioShown - 1], BIO[bioShown], bioShown - 1));
 }

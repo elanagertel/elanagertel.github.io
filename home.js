@@ -297,8 +297,31 @@ function glideHome(plan, done) {
 // and fades out the same way while they glide back
 let hoveredPhoto = null;   // the picture the mouse asked for last
 let namedPhoto = null;     // the picture whose name is showing
+// The name types itself out, letter by letter, with a still bar that goes away once it is typed
+// (like "About Me  /" and "Home  /" in the bar at the top, contact.js)
+const NAME_PER_LETTER = 30;   // ms for each letter
+function typeName(photo) {
+  const caption = photo.querySelector(".flow-photo-caption");
+  if (!caption) return;
+  if (!caption.dataset.words) caption.dataset.words = caption.textContent;
+  const words = caption.dataset.words;
+  clearInterval(caption.typeTimer);
+  const box = document.createElement("span");
+  const bar = document.createElement("span");
+  bar.className = "flow-edge-cursor site-nav-bar";
+  bar.textContent = "|";
+  caption.textContent = "";
+  caption.append(box, bar);
+  let shown = 0;
+  caption.typeTimer = setInterval(() => {
+    shown++;
+    box.textContent = words.slice(0, shown);
+    if (shown >= words.length) { clearInterval(caption.typeTimer); bar.remove(); }
+  }, NAME_PER_LETTER);
+}
 function showName(photo, on, time) {
   if (!photo) return;
+  if (on) { typeName(photo); time = 150; }   // it shows at once and types (instead of fading in)
   photo.style.setProperty("--name-fade", time + "ms");
   // in: slow at first, full only at the very end (when the shapes stop); out: the same, backwards
   photo.style.setProperty("--name-ease", on ? "cubic-bezier(0.7, 0, 1, 1)" : "cubic-bezier(0, 0, 0.3, 1)");

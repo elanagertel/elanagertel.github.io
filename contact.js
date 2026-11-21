@@ -56,6 +56,7 @@
     if (open === value) return;
     open = value;
     if (open) list.hidden = false;
+    else contact.dispatchEvent(new Event("contact-closing"));   // "Contact me" types back in regular
     lines.forEach((l) => l.line.classList.remove("is-done"));   // the bars show while it erases
     clearInterval(linesTimer);
     linesTimer = setInterval(step, PER_LETTER);
@@ -89,5 +90,90 @@
     if (!byFinger() || !open) return;
     if (event.target.closest(".flow-contact, .flow-contact-lines")) return;
     setOpen(false);
+  });
+})();
+
+// "Contact me  /", "About Me  /" and "Home  /" (in the bar at the top, on every page): hovering one types its own words
+// out again, letter by letter, with the same bar as the contact details (it stands still while typing and
+// goes away once the words are typed).
+(function () {
+  // The page you are on has its word oblique (Home on the home page, About Me on About)
+  const page = location.pathname.split("/").pop() || "index.html";
+  const here = page === "about.html" ? ".site-nav-about" : page === "index.html" ? ".site-nav-home" : null;
+  if (here && document.querySelector(here)) document.querySelector(here).setAttribute("aria-current", "page");
+
+  const PER_LETTER = 80;   // ms for each letter
+  document.querySelectorAll(".flow-contact, .site-nav-about, .site-nav-home").forEach((link) => {
+    const words = link.textContent;
+    link.setAttribute("aria-label", words.replace("/", "").trim());
+    const box = document.createElement("span");
+    box.setAttribute("aria-hidden", "true");
+    box.textContent = words;
+    const bar = document.createElement("span");
+    bar.className = "flow-edge-cursor site-nav-bar";
+    bar.setAttribute("aria-hidden", "true");
+    bar.textContent = "|";
+    bar.hidden = true;
+    // an invisible copy of the words keeps the word at its full size while it types (otherwise the mouse
+    // would end up outside it and the typing would start over and over); the typed letters lie on top
+    const ghost = document.createElement("span");
+    ghost.className = "site-nav-ghost";
+    ghost.setAttribute("aria-hidden", "true");
+    ghost.textContent = words;
+    const live = document.createElement("span");
+    live.className = "site-nav-live";
+    live.append(box, bar);
+    link.textContent = "";
+    link.append(ghost, live);
+
+    // types the words again, oblique or regular (the bar has the same slant as the letters)
+    let timer = null, oblique = false;
+    function typeAgain(slanted) {
+      clearInterval(timer);
+      oblique = slanted;
+      link.classList.toggle("is-oblique", slanted);
+      let shown = 0;
+      box.textContent = "";
+      bar.hidden = false;
+      timer = setInterval(() => {
+        shown++;
+        box.textContent = words.slice(0, shown);
+        if (shown >= words.length) {
+          clearInterval(timer);
+          timer = null;
+          bar.hidden = true;   // typed: the bar goes away
+        }
+      }, PER_LETTER);
+    }
+    // back to regular without typing: the letters straighten up smoothly (Helvetica's oblique is its
+    // regular letters slanted, so the regular letters start slanted the same way and shift back upright)
+    function straighten() {
+      if (!oblique) return;
+      clearInterval(timer);
+      timer = null;
+      box.textContent = words;
+      bar.hidden = true;
+      oblique = false;
+      link.classList.remove("is-oblique");
+      link.animate([{ transform: "skewX(-12deg)" }, { transform: "skewX(0deg)" }],
+        { duration: 500, easing: "cubic-bezier(0.65, 0, 0.35, 1)" });
+    }
+    const byFinger = () => typeof window.touchedJustNow === "function" && window.touchedJustNow();   // phones: no
+    const isContact = link.classList.contains("flow-contact");
+    const isHere = link.getAttribute("aria-current") === "page";
+    // hovering: it types itself out oblique, so when it is clicked it is already oblique
+    link.addEventListener("mouseenter", () => { if (!byFinger() && !oblique) typeAgain(true); });
+    // leaving: About Me / Home shift back to regular (the page you are on stays oblique);
+    // Contact me shifts back once its details start erasing themselves
+    if (isContact) link.addEventListener("contact-closing", () => { straighten(); });
+    else if (!isHere) link.addEventListener("mouseleave", () => { if (!byFinger()) straighten(); });
+    if (isHere) { oblique = true; link.classList.add("is-oblique"); }
+    // leaving this page (a click on a link to another page): its word types back in regular as it goes
+    if (isHere) document.addEventListener("click", (event) => {
+      const to = event.target.closest("a[href]");
+      if (!to || !oblique) return;
+      const toPage = new URL(to.href, location.href).pathname.split("/").pop() || "index.html";
+      if (toPage !== page) straighten();
+    });
   });
 })();
