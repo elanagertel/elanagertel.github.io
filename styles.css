@@ -37,6 +37,14 @@
   --phone-caption-text: 11px;    /* the picture captions on the home page */
   --phone-logo-elana: 72px;      /* the small ELANA on the left edge (GERTEL gets the same height) */
   --phone-media-max-h: 88svh;    /* pictures and videos on the project pages: never taller than this */
+
+  /* Phones held upright (phone.js, Figma "iPhone 16 - 3" and "- 5", 393 wide) */
+  --p: calc(100vw / 393);              /* one pixel of the Figma phone */
+  --phone-text: 16px;                  /* the smallest texts (Figma: 16); the desktop's 12 becomes 16 */
+  --phone-ratio: calc(16 / 12);        /* so every other desktop size is multiplied by this */
+  --phone-margin: 18px;                /* the side margins (Figma: 18) */
+  --phone-menu-dark: #07060b;          /* the menu's layer: Figma's white with "exclusion" over the page */
+  --phone-menu-text: #ffffff;
 }
 
 /* ===== Font: Simpler Pro by Hagilda (stored in fonts/) ===== */
@@ -2224,4 +2232,530 @@ body.lab-page {
 /* (the slant straightens from the letters' baseline, contact.js) */
 .site-nav-item {
   transform-origin: 0 85%;
+}
+
+/* =====================================================================
+   PHONES HELD UPRIGHT (phone.js adds .is-phone-portrait to <html>)
+   Figma: "iPhone 16 - 3" (home, first screen), "- 5" (the menu open), "- 6" (the gallery),
+   "- 7" (a project page's first screen), 393 × 852.
+   The big version's bar, counter and cursor are hidden; the phone has its own menu and name.
+   ===================================================================== */
+.is-phone-portrait .site-nav,
+.is-phone-portrait .fold-count,
+.is-phone-portrait .flow-contact-lines,
+.is-phone-portrait .blob-cursor,
+.is-phone-portrait .rotate-prompt {
+  display: none !important;
+}
+
+/* Typing (phone.js): an invisible copy keeps the text's size; the typed letters lie on top of it */
+.phone-ghost {
+  visibility: hidden;
+}
+
+.phone-live {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: inherit;
+}
+
+.phone-bar {
+  animation: none;   /* the bar stands still while it types, and goes away at the end */
+}
+
+/* The menu button at the top right (Figma: two bars 29 × 14, one under the other, 1 apart, #252525;
+   18 from the right, 36 from the top). While the menu is open it is a white square in the same place
+   (Figma "iPhone 16 - 5"). */
+.phone-menu-button {
+  position: fixed;
+  z-index: 60;
+  top: 36px;
+  right: var(--phone-margin);
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  border: 0;
+  background: linear-gradient(var(--color-shape) 0 14px, transparent 14px 15px, var(--color-shape) 15px 29px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* (a bigger invisible area around it for a finger) */
+.phone-menu-button::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+
+.phone-menu-open .phone-menu-button {
+  width: 28.6px;
+  height: 28.6px;
+  background: var(--phone-menu-text);
+}
+
+/* The menu: a dark layer that slides in from the right (Figma: the white "exclusion" rectangle waiting
+   just outside the screen in frame 3, over the whole screen in frame 5) */
+.phone-menu {
+  position: fixed;
+  z-index: 55;
+  inset: 0;
+  background-color: var(--phone-menu-dark);
+  /* it is uncovered from the right edge to the left (it never waits outside the screen, which would
+     make the page wider on a phone) */
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path 450ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.phone-menu[hidden] {
+  display: block;        /* (kept on the page so it can slide out; hidden = off the screen) */
+  visibility: hidden;
+}
+
+.phone-menu-open .phone-menu {
+  clip-path: inset(0 0 0 0);
+}
+
+/* Its texts (Figma: Helvetica 16, white): "Contact me  /" at y 164, the details from y 225 (rows 1.82 apart),
+   "About Me  /" at y 361, "Home  /" at y 427. The page you are on is oblique. */
+.phone-menu-item {
+  position: absolute;
+  left: var(--phone-margin);
+  margin: 0;
+  font-family: var(--font-nav);
+  font-size: var(--phone-text);
+  line-height: 1.24;
+  white-space: pre;
+  color: var(--phone-menu-text);
+  text-decoration: none;
+}
+
+.phone-menu-contact { top: 164px; }
+.phone-menu-line { top: 225px; }
+.phone-menu-line + .phone-menu-line { top: calc(225px + 1.82em); }
+.phone-menu-line + .phone-menu-line + .phone-menu-line { top: calc(225px + 2 * 1.82em); }
+.phone-menu-about { top: 361px; }
+.phone-menu-home { top: 427px; }
+
+.phone-menu-item.is-here {
+  font-style: italic;
+}
+
+/* (more room around the links for a finger) */
+.phone-menu a.phone-menu-item {
+  padding: 6px 0;
+  margin-top: -6px;
+}
+
+.phone-name {
+  position: fixed;
+  z-index: 60;
+  left: 17px;
+  top: 32px;
+  font-family: var(--font-nav);
+  font-size: var(--phone-text);
+  font-style: italic;
+  line-height: 1.24;
+  color: var(--color-nav-blend);
+  mix-blend-mode: exclusion;
+  text-decoration: none;
+}
+
+.phone-menu-open .phone-name {
+  left: calc(314.5px - 0.5 * var(--name-w, 112px));
+  top: auto;
+  bottom: 32px;
+  color: var(--phone-menu-text);
+  mix-blend-mode: normal;
+}
+
+/* While the menu is open the page under it does not scroll */
+.phone-menu-open body {
+  overflow: hidden;
+}
+
+/* ----- The home page on the phone ----- */
+.is-phone-portrait .home-page .flow {
+  display: none;
+}
+
+.phone-home {
+  display: none;
+}
+
+/* The gallery scrolls up and down (what is wider than the screen is cut off at the sides):
+   the whole screen is its scrolling box */
+.is-phone-portrait .phone-home {
+  display: block;
+  position: fixed;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+}
+
+.is-phone-portrait .phone-home::-webkit-scrollbar {
+  display: none;
+}
+
+/* The gallery (phone.js places everything in it, Figma "iPhone 16 - 6"): the letters and the pictures */
+.phone-flow {
+  position: relative;
+  overflow: clip;   /* what waits outside the gallery never makes it bigger */
+}
+
+/* (nothing on the phone may make the page wider than the screen) */
+.is-phone-portrait body {
+  overflow-x: clip;
+}
+
+/* A letter (Figma: 57.2 square, two by two pieces), placed and grown by phone.js. Its pieces may slide
+   in from outside it. Hidden until the opening has placed its pieces. */
+.phone-flow-letter {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(57.21 * var(--p));
+  height: calc(57.21 * var(--p));
+  overflow: visible;
+  transform-origin: 0 0;
+  visibility: hidden;
+}
+
+.is-ready .phone-flow-letter,
+.is-done .phone-flow-letter {
+  visibility: visible;
+}
+
+.phone-piece path {
+  fill: #000000;   /* (Figma's letters are black) */
+}
+
+/* A project picture (phone.js sets its size: --pic-w × --pic-h), with its number on its left and its name under it */
+.phone-flow-photo {
+  position: absolute;
+  z-index: 2;   /* over the letters (they slide under the pictures when they spread) */
+  width: var(--pic-w);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* while the opening plays the pictures cannot be tapped yet */
+.is-opening .phone-flow-photo {
+  pointer-events: none;
+}
+
+/* The picture's window, with the picture lying in it as in Figma (phone.js sets its place and size) */
+.phone-photo-window {
+  position: relative;
+  display: block;
+  width: var(--pic-w);
+  height: var(--pic-h);
+  overflow: hidden;
+}
+
+.phone-photo-window img {
+  position: absolute;
+  max-width: none;
+  object-fit: cover;
+}
+
+/* the number: oblique, left of the picture, its bottom on the picture's bottom (like the home page) */
+.phone-project-number,
+.phone-project-caption {
+  font-family: var(--font-nav);
+  font-size: var(--phone-text);
+  line-height: 1.24;
+  white-space: pre;
+  color: var(--color-text);
+}
+
+/* (Figma "iPhone 16 - 6", the Israeli Cactus: "4  /" in Helvetica Oblique 12, 5.5 left of the picture,
+   its top 12 above the picture's bottom; the name in Helvetica 12 under the picture's left edge, 6 below it) */
+.phone-flow-photo .phone-project-number,
+.phone-flow-photo .phone-project-caption {
+  font-size: 12px;
+}
+
+.phone-project-number {
+  position: absolute;
+  right: calc(100% + 10px);   /* (a little more room than in Figma) */
+  top: calc(var(--pic-h) - 12px);
+  font-style: italic;
+}
+
+/* the name: under the picture (16 below it), typing itself out once it is on the screen */
+.phone-project-caption {
+  position: absolute;
+  left: 0;
+  top: calc(var(--pic-h) + 12px);   /* (a little more room than in Figma) */
+  z-index: 2;
+}
+
+/* ----- Project pages on the phone (phone.js puts everything in the big version's order) -----
+   One column with the phone's margins: the first screen (the title), the short texts in two columns,
+   then the pictures and the story, and the black end with the white title. */
+.is-phone-portrait .lab {
+  /* the title's own unit: its letters 52.51 wide (Figma "iPhone 16 - 7"; 126.22 on the big version),
+     so ISRAELI just fills the width between the margins (phone.js shrinks it if a title is wider) */
+  --tu: calc(52.513 / 126.225 * var(--p) * var(--tu-fit, 1));
+  --phone-arrow-w: calc(20.28 * var(--p));
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--phone-margin);
+  row-gap: 0;
+  align-items: start;
+  height: auto;
+  padding: 0 var(--phone-margin);
+  overflow: clip;
+}
+
+/* every part takes the whole width, one under the other, in the place phone.js gave it */
+.is-phone-portrait .lab > * {
+  grid-column: 1 / -1;
+  position: relative;
+  inset: auto;
+  height: auto;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+}
+
+/* (the page's hidden heading stays hidden: it takes no room) */
+.is-phone-portrait .lab > .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+}
+
+/* The first screen: the title in its middle (like the name on the home page, a little above the middle) */
+.is-phone-portrait .lab > .lab-first-track {
+  order: 0;
+  height: 100svh;
+  margin: 0 calc(-1 * var(--phone-margin));
+}
+
+.is-phone-portrait .lab-first {
+  --u: var(--tu);
+  position: absolute;
+  top: calc(44% - var(--title-cy, 512) * var(--u));
+  left: calc(50% - var(--title-cx, 720) * var(--u));
+  width: calc(1440 * var(--u));
+  height: calc(1024 * var(--u));
+  background: none;
+}
+
+.is-phone-portrait .lab-first-screen {
+  position: fixed;   /* (tapping the first screen scrolls down to the pictures) */
+  inset: auto;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100svh;
+}
+
+.is-phone-portrait .lab-white {
+  display: none;
+}
+
+/* the arrows to the other projects: under the title, on the margins (Figma: y 50% + 20, 20.3 × 40.6) */
+.is-phone-portrait .lab > .project-arrow {
+  position: absolute;
+  top: calc(50svh + 20 * var(--p));
+  width: var(--phone-arrow-w);
+  z-index: 6;
+}
+
+.is-phone-portrait .lab > .project-arrow-prev { left: var(--phone-margin); right: auto; }
+.is-phone-portrait .lab > .project-arrow-next { right: var(--phone-margin); left: auto; }
+
+/* The counter under the arrows (Figma: "3  /" at x 17 and "/  07" on the right margin, y 58.33% - 6,
+   Helvetica 16): it stays on the screen while you scroll, like on the big version */
+.is-phone-portrait.phone-project .fold-count {
+  display: block !important;
+  position: fixed;
+  top: calc(58.33svh - 6 * var(--p));
+  font-size: 12px;   /* (like the numbers beside the pictures on the home page) */
+  font-style: italic;
+}
+
+.is-phone-portrait.phone-project .fold-count-now {
+  left: 17px;
+  right: auto;
+}
+
+.is-phone-portrait.phone-project .fold-count-total {
+  left: auto;
+  right: var(--phone-margin);
+}
+
+/* The short texts on the first screen (Figma "iPhone 16 - 7": Helvetica 12, line height 124%):
+   phone.js gives each its place (--px, --py, Figma phone px) */
+.is-phone-portrait .lab > .lab-intro {
+  position: absolute;
+  left: calc(var(--px) * var(--p));
+  top: calc(var(--py) / 852 * 100svh);
+  width: auto;
+  max-width: calc(100vw - var(--px) * var(--p) - var(--phone-margin));
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.24;
+  white-space: pre-line;
+}
+
+
+/* Pictures and videos: the whole width between the margins, in their own shape */
+.is-phone-portrait .lab > .lab-track {
+  margin-top: 56px;
+}
+
+.is-phone-portrait .lab-media {
+  position: static;
+  width: 100%;
+  height: auto;
+  aspect-ratio: calc(var(--w) / var(--h));
+  margin: 0;
+  object-fit: cover;
+}
+
+/* the book spreads reach from edge to edge of the screen, like on the big screen */
+.is-phone-portrait .lab > .cactus-track {
+  margin-left: calc(-1 * var(--phone-margin));
+  margin-right: calc(-1 * var(--phone-margin));
+}
+
+/* The story paragraphs: 16px, line height 160% (Figma), between the pictures */
+.is-phone-portrait .lab > .lab-text-track {
+  display: block;
+  margin-top: 56px;
+  mix-blend-mode: normal;
+}
+
+.is-phone-portrait .lab-text {
+  position: relative;
+  bottom: auto;
+  width: auto;
+  font-size: var(--phone-text);
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+/* the pictures beside a paragraph: two side by side */
+.is-phone-portrait .lab > .lab-side-track {
+  display: block;
+  margin-top: 56px;
+}
+
+.is-phone-portrait .lab-side {
+  position: static;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--phone-margin);
+  width: auto;
+}
+
+/* The black end: the title in white, in its middle */
+.is-phone-portrait .lab > .lab-footer {
+  order: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 70svh;
+  margin: 96px calc(-1 * var(--phone-margin)) 0;
+  background-color: #000000;
+}
+
+.is-phone-portrait .lab-footer .lab-footer-title {
+  --u: var(--tu);
+  position: relative;
+  top: auto;
+  flex: none;
+  width: calc(1440 * var(--u));
+  height: calc(var(--title-full-h, 450) * var(--u));
+  translate: calc((720 - var(--title-cx, 720)) * var(--u)) 0;
+}
+
+/* ----- The About page on the phone -----
+   The words keep building while you scroll, 16/12 as big as they would be (so DESIGNER, the widest,
+   just fits between the margins): the page is drawn as if the screen were 16/12 as wide, with its middle
+   in the middle of the screen. */
+.is-phone-portrait .about {
+  --u: calc(100cqw / 1440 * 0.9291 * var(--phone-ratio));   /* (about.js measures the wider screen below) */
+  overflow-x: clip;   /* what is wider than the screen is cut off, without making the page wider */
+}
+
+.is-phone-portrait .about-stage {
+  width: calc(100% * var(--phone-ratio));
+  margin-left: calc((1 - var(--phone-ratio)) * 50%);
+}
+
+/* The small texts ("my name is..", "I am a…"): 16px, under the words, one at a time (the newest one;
+   about.js marks the older ones .is-passed). They stand still under the words while they type. */
+.is-phone-portrait .about-text {
+  transform: none !important;
+  left: calc((var(--phone-ratio) - 1) * 50vw + var(--phone-margin));
+  top: calc(50% + 120px * 393 / 393);
+  width: calc(100vw - 2 * var(--phone-margin));
+  font-size: var(--phone-text);
+  white-space: normal;
+}
+
+.is-phone-portrait .about-text.is-passed {
+  visibility: hidden;
+}
+
+/* The paragraph at the end: 16px, between the margins, above the name at the bottom right
+   (one paragraph: its rows break where the phone's width ends them) */
+.is-phone-portrait .about-bio {
+  left: calc((var(--phone-ratio) - 1) * 50vw + var(--phone-margin));
+  right: auto;
+  bottom: 84px;
+  width: calc(100vw - 2 * var(--phone-margin));
+  font-size: var(--phone-text);
+  white-space: normal;
+}
+
+/* (on the phone the number has its slash after it: "3  /", Figma "iPhone 16 - 7") */
+.is-phone-portrait.phone-project .fold-count-now::after {
+  content: "  /";
+  white-space: pre;
+}
+
+/* Home on the phone: pressing a picture spreads the letters' pieces (phone.js moves each piece; they
+   slide in one straight line, like the big version's shapes) */
+.is-done .phone-piece {
+  transition: transform 550ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Going to a project: the title's pieces are built in a layer over the screen, where the project page
+   draws its title (phone.js) */
+.phone-title-build {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.phone-title-piece {
+  position: absolute;
+  overflow: visible;
+}
+
+.phone-title-piece path {
+  fill: var(--color-shape);
+  stroke: var(--color-shape);
+  stroke-width: 0.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.phone-home.is-leaving {
+  pointer-events: none;
+}
+
+/* Home on the phone: a picture's name can be tapped (it opens the project), with some room around it for a finger */
+.phone-flow-photo.is-named .phone-project-caption {
+  padding: 8px 8px 8px 0;
+  margin-top: -8px;
 }

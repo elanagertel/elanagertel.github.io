@@ -2,8 +2,8 @@
 // 1. touchedJustNow(): tells the other scripts whether the last tap was a finger (not a mouse).
 //    A phone also sends "mouse" events after every tap (mouseenter, mouseleave, focus…), so the hover
 //    effects use this to tell a real mouse from a finger, and give fingers their own tap effects.
-// 2. The rotate prompt: on a phone held upright (portrait), a white screen asks the visitor to turn
-//    the phone sideways. It goes away by itself once the phone is turned (there is no way around it).
+// 2. The rotate prompt (turned off: phones held upright now get their own version, phone.js). It used to ask
+//    the visitor to turn the phone sideways.
 // 3. The small names on the edges (ELANA / GERTEL): on a phone the first tap shows "home|" / "about me|",
 //    a second tap opens the link.
 // This file is loaded before the page's other scripts, so they can use window.touchedJustNow and
@@ -121,8 +121,10 @@
     })();
   }
 
+  // The prompt is no longer shown: phones held upright get their own version of the site (phone.js)
+  const PROMPT_ON = false;
   function isShowing() {
-    return isPhone && portrait.matches;
+    return PROMPT_ON && isPhone && portrait.matches;
   }
   function update() {
     const showing = isShowing();
@@ -132,7 +134,7 @@
   // while it shows, a finger on it does not scroll the page under it
   prompt.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
 
-  if (isPhone) {
+  if (PROMPT_ON && isPhone) {
     document.body.appendChild(prompt);
     portrait.addEventListener("change", update);   // turning the phone shows or hides it
     update();
