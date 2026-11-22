@@ -137,6 +137,64 @@
   slideOutTo(document.querySelector(".phone-menu-about"), "about", false, false);
   // the arrows on a project page: to the previous / next project (they slide out the same way)
   document.querySelectorAll(".project-arrow").forEach((arrow) => slideOutTo(arrow, "project", true));
-  // "Next Project" at the end of a project page (lab.js; the white title there clicks it too)
-  slideOutTo(document.querySelector(".lab-next-label"), "project", true);
+  // ----- From the black end of a project page to the next project -----
+  // "Next Project" (and the white title, lab.js) opens the next project at once: it opens looking just like
+  // the black end you left (black, its name in white, "Next Project"); then the black slides up over the
+  // title (which stays where it is), uncovering the new page (the bar at the top, the title), and
+  // only then do the texts under the title type themselves out (type-texts.js waits introTypingWait).
+  const END_KEY = "fromProjectEnd";
+  const UP_HOLD = 250;   // ms the black stays before it slides up
+  const UP_TIME = 700;   // ms it takes to slide up
+  const nextLabel = document.querySelector(".lab-next-label");
+  if (nextLabel) nextLabel.addEventListener("click", (event) => {
+    if (event.defaultPrevented || REDUCED) return;
+    event.preventDefault();
+    try { sessionStorage.setItem(END_KEY, String(Date.now())); } catch (e) {}
+    window.location.href = nextLabel.href;
+  });
+
+  function cameFromEnd() {
+    try {
+      const at = Number(sessionStorage.getItem(END_KEY) || 0);
+      sessionStorage.removeItem(END_KEY);
+      return !REDUCED && Date.now() - at < 10000;
+    } catch (e) { return false; }
+  }
+  if (PAGE === "project" && cameFromEnd()) {
+    // the black, right away (so the page never shows without it)
+    const black = document.createElement("div");
+    black.className = "project-arrive";
+    black.setAttribute("aria-hidden", "true");
+    document.body.appendChild(black);
+    window.introTypingWait = UP_HOLD + UP_TIME + 150;
+
+    // on it: this project's name in white, exactly over the page's own title (drawn from its own shapes),
+    // and "Next Project" where it was
+    const phone = document.documentElement.classList.contains("is-phone-portrait");
+    function dress() {
+      const pieces = [...document.querySelectorAll("#lab-first > .lab-piece:not(.lab-piece-white)")];
+      const boxes = pieces.map((el) => el.getBoundingClientRect());
+      if (boxes.length) {
+        const dx = 0, dy = 0;   // (exactly over the page's own title, so it never moves)
+        pieces.forEach((el, i) => {
+          const b = boxes[i], copy = el.cloneNode(true);
+          copy.setAttribute("class", "project-arrive-piece");
+          copy.style.cssText = `left:${b.left + dx}px; top:${b.top + dy}px; width:${b.width}px; height:${b.height}px`;
+          black.appendChild(copy);
+        });
+      }
+      const label = document.createElement("span");
+      label.className = "project-arrive-label";
+      label.textContent = "Next Project";
+      black.appendChild(label);
+      // then the black slides up over the title: its edge rises from the bottom of the screen to the top,
+      // and the title and "Next Project" stay where they are (where the black has gone, the page shows)
+      black.animate([{ clipPath: "inset(0 0 0% 0)" }, { clipPath: "inset(0 0 100% 0)" }],
+        { duration: UP_TIME, delay: UP_HOLD, easing: EASE, fill: "forwards" })
+        .finished.then(() => black.remove());
+    }
+    // (phones held upright lay the page out once it has loaded, phone.js: measure only after that)
+    if (phone) window.addEventListener("DOMContentLoaded", () => requestAnimationFrame(() => requestAnimationFrame(dress)));
+    else dress();
+  }
 })();

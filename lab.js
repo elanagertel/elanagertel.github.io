@@ -438,17 +438,37 @@ if (footerTitle && !nextPage) {
   setUpMorph(true, ORGANIC_LETTERS);
 } else if (footerTitle) {
   readNextTitle().then((next) => {
-    // its middle goes where this title's middle is (the middle of the screen at the end of the page)
+    // its middle goes up or down to where this title's middle is (the middle of the screen at the end of
+    // the page); across, it stays where its own page has it (so opening the next page, it does not move)
     const [l0, t0, r0, b0] = titleBox(TITLE_PIECES, TITLE_SCALE);
     const [l1, t1, r1, b1] = titleBox(next.pieces, next.scale);
-    const dx = (l0 + r0) / 2 - (l1 + r1) / 2, dy = (t0 + b0) / 2 - (t1 + b1) / 2;
+    const dx = upright ? (l0 + r0) / 2 - (l1 + r1) / 2 : 0, dy = (t0 + b0) / 2 - (t1 + b1) / 2;
     makeShapes(next.pieces.map(([n, w, x, y]) => [n, w, x + dx, y + dy]), next.scale, true);
     setUpMorph(true, next.organic.map((letter) => ({ ...letter, x: letter.x + dx, y: letter.y + dy })));
+    if (upright) requestAnimationFrame(() => requestAnimationFrame(placeEndTitle));
   }).catch(() => {
     // (if it cannot be read: this project's own title, as before)
     makeShapes(TITLE_PIECES, TITLE_SCALE, true);
     setUpMorph(true, ORGANIC_LETTERS);
   });
+
+  // Phones held upright: the black end fills the screen at the very end; the name in it stands exactly
+  // where the next project's page shows its title (phone.js: in the middle across, and its middle 37.5% +
+  // 15.3 down the screen, or higher for a tall title, so its bottom stays 40px above the arrows), so the
+  // title does not jump when that page opens
+  function placeEndTitle() {
+    const end = document.querySelector(".lab-footer");
+    const shapes = [...footerTitle.querySelectorAll(".lab-piece-white")];
+    if (!end || !shapes.length) return;
+    footerTitle.style.transform = "";
+    const boxes = shapes.map((el) => el.getBoundingClientRect()), e = end.getBoundingClientRect();
+    const left = Math.min(...boxes.map((b) => b.left)), right = Math.max(...boxes.map((b) => b.right));
+    const top = Math.min(...boxes.map((b) => b.top)), bottom = Math.max(...boxes.map((b) => b.bottom));
+    const H = e.height, pp = window.innerWidth / 393;
+    const wanted = Math.min(H * 0.375 + 15.3 * pp, H * 0.5 + 20 * pp - 40 - (bottom - top) / 2);
+    footerTitle.style.transform = `translate(${window.innerWidth / 2 - (left + right) / 2}px, ${e.top + wanted - (top + bottom) / 2}px)`;
+  }
+  if (upright) window.addEventListener("resize", placeEndTitle);
 
   // "Next Project" (Figma: Helvetica Oblique 15.5, white, at x 1159, 330 under the screen's middle).
   // It, and the white title, lead to the next project.

@@ -2783,6 +2783,50 @@ body.lab-page {
   position: relative;
 }
 
+/* Opening the next project from the black end: the new page starts under the same black, with its name
+   in white and "Next Project"; then the black slides up and away (page-change.js) */
+.project-arrive {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: #000000;
+  pointer-events: none;
+}
+
+.project-arrive-piece {
+  position: absolute;
+  overflow: visible;
+}
+
+.project-arrive-piece path {
+  fill: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 1px;   /* (like the shapes everywhere: touching pieces look merged) */
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+}
+
+.project-arrive-label {
+  --u: calc(100vw / 1440);
+  position: absolute;
+  left: calc(1159 * var(--u));
+  top: calc(50vh + 330 * var(--u));   /* (as on the black end: 330 under the middle of the screen) */
+  font-family: var(--font-nav);
+  font-size: max(10px, calc(15.5 * var(--u)));
+  font-style: italic;
+  line-height: 1.24;
+  white-space: nowrap;
+  color: #ffffff;
+}
+
+.is-phone-portrait .project-arrive-label {
+  left: auto;
+  right: var(--phone-margin);
+  top: auto;
+  bottom: 24px;
+  font-size: 12px;
+}
+
 .is-phone-portrait .lab-next-label {
   left: auto;
   right: var(--phone-margin);

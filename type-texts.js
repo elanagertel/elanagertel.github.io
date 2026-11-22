@@ -159,7 +159,8 @@
     all.forEach(measure);
     // the first screen: right away, or going on from where it got to on the home page
     if (intro.length && homeTyped !== null) typeGroup(intro, 0, homeTyped);
-    else if (intro.length) typeGroup(intro);
+    // (coming from the black end of the project before: they wait until the black has slid away, page-change.js)
+    else if (intro.length) typeGroup(intro, window.introTypingWait || FIRST_WAIT);
     // the black end (the last fold): as soon as its texts start coming onto the screen, with no pause
     if (info.length) {
       const watch = new IntersectionObserver((entries) => {
