@@ -80,7 +80,8 @@
   menu.hidden = true;
   // (Figma "iPhone 16 - 5", from the top: "Home  /", "About Me  /", "Contact me  /" and its details)
   const LINKS = [
-    { cls: "phone-menu-home", words: "Home  /", href: "index.html", here: isHome },
+    // ("Home" goes straight to the gallery; the opening only plays from "ELANA GERTEL" at the top left)
+    { cls: "phone-menu-home", words: "Home  /", href: "index.html?gallery", here: isHome },
     { cls: "phone-menu-about", words: "About Me  /", href: "about.html", here: page === "about.html" },
     { cls: "phone-menu-contact", words: "Contact me  /" },
     { cls: "phone-menu-line", words: "@elanagertel  /  Instagram", href: "https://www.instagram.com/elanagertel/" },
@@ -153,6 +154,13 @@
     // side by side at y 607, the school and the technique under them at y 625, and the brief and the
     // solution lower down (y 739 and 757). Each one is found by its place on the big version (--x, --y).
     root.classList.add("phone-project");
+
+    // the pictures beside a paragraph lie in one row, the same height: each one's share of the row is its
+    // width divided by its height (from its aspect-ratio in the page)
+    lab.querySelectorAll(".lab-side img").forEach((img) => {
+      const [w, h] = (img.style.aspectRatio || "1 / 1").split("/").map(Number);
+      img.style.setProperty("--share", w / h);
+    });
     lab.querySelectorAll(".lab-intro").forEach((el) => {
       const x = parseFloat(el.style.getPropertyValue("--x")), y = parseFloat(el.style.getPropertyValue("--y"));
       let place;
@@ -198,6 +206,39 @@
     requestAnimationFrame(centreTitle);
     window.addEventListener("resize", centreTitle);
 
+    // ----- The counter -----
+    // On the first screen: this project's number ("1  /" and "/  05"), part of the first screen, so it
+    // scrolls up and away with the title. Then the pictures' counter ("1  /  11", fold-count.js) comes up
+    // with the first picture and stays at its place (58.33% - 6 down the screen) while you scroll on.
+    const now = document.querySelector(".fold-count-now"), total = document.querySelector(".fold-count-total");
+    if (now && total) {
+      [[now, "phone-first-count-now"], [total, "phone-first-count-total"]].forEach(([counter, cls]) => {
+        const copy = document.createElement("p");
+        copy.className = "phone-first-count " + cls;
+        copy.setAttribute("aria-hidden", "true");
+        // (fold-count.js gives this project's number; the left one has its slash after it: "1  /")
+        copy.textContent = (counter.dataset.project || "") + (counter === now ? "  /" : "");
+        lab.appendChild(copy);
+      });
+      const firstPicture = () => {
+        const tops = [...lab.querySelectorAll(".lab-media")].map((m) => m.getBoundingClientRect().top);
+        return tops.length ? Math.min(...tops) : null;
+      };
+      function placeCounter() {
+        const stick = window.innerHeight * 0.5833 - 6 * window.innerWidth / 393;
+        const pictureTop = firstPicture();
+        // it comes up level with the first picture's top, and stops at its place
+        const y = pictureTop === null ? stick : Math.max(stick, pictureTop);
+        [now, total].forEach((counter) => {
+          counter.style.top = y + "px";
+          counter.style.visibility = pictureTop === null ? "hidden" : "";   // (a page without pictures: none)
+        });
+      }
+      placeCounter();
+      window.addEventListener("scroll", placeCounter, { passive: true });
+      window.addEventListener("resize", placeCounter);
+    }
+
     // At the end: the white title goes into the black end (it lies still there, in white)
     const footer = lab.querySelector(".lab-footer");
     const whiteTitle = document.getElementById("lab-footer-title");
@@ -205,6 +246,46 @@
       whiteTitle.style.clipPath = "none";
       footer.appendChild(whiteTitle);
     }
+  }
+
+  // ----- The About page: you can also swipe sideways to go on -----
+  // The page moves on as you scroll down; on a phone a sideways swipe does the same: swiping to the left
+  // moves the words along like scrolling down (back to the right goes back). The words follow the finger
+  // (the page moves one pixel for every 3 of scrolling, about.js), and a quick flick glides on a little.
+  if (page === "about.html") {
+    const PER_PIXEL = 3;   // (SCROLL_PER_PIXEL in about.js)
+    let start = null, last = null, sideways = null, speed = 0, glide = 0;
+    document.addEventListener("touchstart", (event) => {
+      cancelAnimationFrame(glide);
+      const t = event.touches[0];
+      start = last = [t.clientX, t.clientY, performance.now()];
+      sideways = null;
+      speed = 0;
+    }, { passive: true });
+    document.addEventListener("touchmove", (event) => {
+      if (!start || open) return;
+      const t = event.touches[0];
+      const dx = t.clientX - start[0], dy = t.clientY - start[1];
+      if (sideways === null && Math.hypot(dx, dy) > 8) sideways = Math.abs(dx) > Math.abs(dy);
+      if (!sideways) return;   // (up and down: the page scrolls as usual)
+      event.preventDefault();
+      const now = performance.now(), step = t.clientX - last[0];
+      window.scrollBy(0, -step * PER_PIXEL);
+      speed = -step * PER_PIXEL / Math.max(1, now - last[2]);   // (scroll px per ms)
+      last = [t.clientX, t.clientY, now];
+    }, { passive: false });
+    document.addEventListener("touchend", () => {
+      if (sideways && Math.abs(speed) > 0.2) {
+        let prev = performance.now();
+        (function slide(now) {
+          const dt = now - prev; prev = now;
+          window.scrollBy(0, speed * dt);
+          speed *= Math.pow(0.995, dt);   // it slows down
+          if (Math.abs(speed) > 0.05) glide = requestAnimationFrame(slide);
+        })(prev + 16);
+      }
+      start = null;
+    }, { passive: true });
   }
 
   // ----- The home page -----
@@ -302,10 +383,11 @@
     return fetch("images/" + file + ".svg").then((r) => r.text())
       .then((text) => new DOMParser().parseFromString(text, "image/svg+xml").documentElement);
   }
+  // Each letter is a box; each of its pieces is its own small drawing (as big as the letter, showing only
+  // that piece), so every piece can slide on its own (this also works in Safari on the iPhone)
   const letters = LETTERS.map((l) => {
-    const el = document.createElementNS(SVG_NS, "svg");
-    el.setAttribute("class", "phone-flow-letter");
-    el.setAttribute("viewBox", `0 0 ${LETTER} ${LETTER}`);
+    const el = document.createElement("div");
+    el.className = "phone-flow-letter";
     el.setAttribute("aria-hidden", "true");
     flowBox.appendChild(el);
     return { ...l, el, pieces: [] };
@@ -315,8 +397,9 @@
     return Promise.all(files.map(readSvg)).then((svgs) => {
       svgs.forEach((svg, k) => {
         svg.querySelectorAll("path").forEach((path) => {
-          const piece = document.createElementNS(SVG_NS, "g");
+          const piece = document.createElementNS(SVG_NS, "svg");
           piece.setAttribute("class", "phone-piece");
+          piece.setAttribute("viewBox", `0 0 ${LETTER} ${LETTER}`);
           const copy = document.createElementNS(SVG_NS, "path");
           copy.setAttribute("d", path.getAttribute("d"));
           // (the G's small square lies in its bottom right quarter)
@@ -328,6 +411,8 @@
       });
     });
   }));
+  // a piece's outline (to measure it)
+  const shapeIn = (piece) => piece.querySelector("path");
 
   // Put a letter at [x, y] (Figma phone px, on the page) at a size (1 = the name's 57.2)
   const at = ([x, y], size) => `translate(${x * p}px, ${y * p}px) scale(${size})`;
@@ -410,14 +495,14 @@
       const away = across ? Math.sign(dx || 1) : Math.sign(dy || 1);
       const kind = (k + pictureIndex) % 3;                 // which half of the letter moves
       l.pieces.forEach((piece) => {
-        const b = piece.getBBox();
+        const b = shapeIn(piece).getBBox();
         const col = b.x + b.width / 2 < CELL ? 0 : 1, row = b.y + b.height / 2 < CELL ? 0 : 1;
         const far = away > 0 ? 1 : 0;                      // the column / row on the side away from the picture
         let moves;
         if (kind === 0) moves = across ? col === far : row === far;   // the far half slides further away
         else if (kind === 1) moves = across ? row === 0 : col === 0;  // the top (or left) half slides
         else moves = across ? row === 1 : col === 1;                  // the bottom (or right) half slides
-        const step = moves ? away * CELL : 0;
+        const step = moves ? away * CELL * p : 0;          // (one square, in screen px before the letter's size)
         piece.style.transform = across ? `translate(${step}px, 0px)` : `translate(0px, ${step}px)`;
       });
     });
@@ -493,7 +578,7 @@
     // the pieces on the screen now, and the nearest one for each place in the title
     const sources = [];
     letters.forEach((l) => l.pieces.forEach((piece) => {
-      const r = piece.getBoundingClientRect();
+      const r = shapeIn(piece).getBoundingClientRect();
       sources.push({ piece, x: r.left + r.width / 2, y: r.top + r.height / 2, used: false });
     }));
     const order = targets.map((t, i) => i).sort(() => Math.random() - 0.5);
@@ -537,7 +622,7 @@
     // the pieces that are not needed leave through the nearest side
     sources.filter((src) => !src.used).forEach((src) => {
       const out = src.x < W / 2 ? -(src.x + 80) : (W - src.x + 80);
-      src.piece.animate([{ translate: "0 0" }, { translate: `${out / (SMALL * p)}px 0` }],
+      src.piece.animate([{ translate: "0 0" }, { translate: `${out / SMALL}px 0` }],
         { duration: SLIDE, easing: EASE, fill: "forwards" });
     });
     // the pictures slide out to their sides, and the names go away
@@ -565,22 +650,30 @@
     pictures.forEach((ph) => { ph.item.style.translate = ph.outside + "px 0"; });
     home.classList.add("is-opening");
 
-    // 1. The puzzle: every piece starts outside the screen (left or right, a little higher or lower)
-    //    and comes in with two straight slides: across first, then up or down into its place
+    // 1. The puzzle: every piece starts outside the screen, behind one of its four edges (left, right,
+    //    top or bottom, a little off to one side), and comes in with two straight slides: first straight
+    //    in from its edge, then sideways (or up/down) into its place
     const all = [];
     letters.forEach((l) => {
-      const [lx] = namePlace(l);
-      l.pieces.forEach((piece) => all.push({ piece, lx }));
+      const [lx, ly] = namePlace(l);
+      l.pieces.forEach((piece) => all.push({ piece, lx, ly }));
     });
     all.sort(() => Math.random() - 0.5);
     const START_PAUSE = 300, SPREAD = 1500;   // the pieces set off one after the other within SPREAD ms
-    all.forEach(({ piece, lx }, i) => {
-      const side = Math.random() < 0.5 ? -1 : 1;
-      const dx = side < 0 ? -(lx + LETTER + 40 + Math.random() * 60) : (393 - lx + 40 + Math.random() * 60);
-      const dy = (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 140);
+    const screenFigmaH = screenH / p;
+    all.forEach(({ piece, lx, ly }, i) => {
+      const edge = i % 4;                                    // 0 left, 1 right, 2 top, 3 bottom (taking turns)
+      const off = (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 120);   // how far off to one side
+      const beyond = 40 + Math.random() * 80;                // how far outside the edge it waits
+      let start, middle;
+      if (edge === 0) { start = [-(lx + LETTER + beyond), off]; middle = [0, off]; }
+      else if (edge === 1) { start = [393 - lx + beyond, off]; middle = [0, off]; }
+      else if (edge === 2) { start = [off, -(ly + LETTER + beyond)]; middle = [off, 0]; }
+      else { start = [off, screenFigmaH - ly + beyond]; middle = [off, 0]; }
+      const px_ = ([x, y]) => `translate(${x * p}px, ${y * p}px)`;   // (Figma phone px → screen px)
       piece.animate([
-        { transform: `translate(${dx}px, ${dy}px)` },
-        { transform: `translate(0px, ${dy}px)`, offset: 0.5, easing: EASE },
+        { transform: px_(start) },
+        { transform: px_(middle), offset: 0.5, easing: EASE },
         { transform: "translate(0px, 0px)" },
       ], { duration: 2 * SLIDE, delay: START_PAUSE + (i / all.length) * SPREAD, easing: "linear", fill: "backwards" });
     });

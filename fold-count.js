@@ -62,13 +62,20 @@
 
   let shown = null;   // what the counter shows now: 0 = this project, 1… = a picture
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Phones held upright (phone.js): the first screen has its own copy of this project's number (it scrolls
+  // away with the title), so this counter only counts the pictures (from 1)
+  const phone = document.documentElement.classList.contains("is-phone-portrait");
+  now.dataset.project = String(number || 0);
+  total.dataset.project = "/  " + twoDigits(PROJECTS.length);
   function update() {
     const middle = window.innerHeight / 2 + 2;
-    const seen = pictures.filter((pic) => {
+    const counted = pictures.filter((pic) => {
       const box = pic.getBoundingClientRect();
       return box.height > 0 && box.top + box.height / 2 <= middle;
-    }).length * (window.scrollY > 10 ? 1 : 0);   // on the first screen (not scrolled yet): this project's number,
-                                                 // even when the first picture already lies under the title
+    }).length;
+    const seen = phone ? Math.max(1, counted)
+               : counted * (window.scrollY > 10 ? 1 : 0);   // on the first screen (not scrolled yet): this project's number,
+                                                             // even when the first picture already lies under the title
     if (seen === shown) return;
     const forward = shown === null || seen > shown;
     const animate = shown !== null && !reduced;

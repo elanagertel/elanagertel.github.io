@@ -2439,6 +2439,16 @@ body.lab-page {
   visibility: visible;
 }
 
+/* each piece: a drawing as big as its letter, showing only that piece (phone.js slides it) */
+.phone-piece {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
 .phone-piece path {
   fill: #000000;   /* (Figma's letters are black) */
 }
@@ -2587,12 +2597,30 @@ body.lab-page {
 /* The counter under the arrows (Figma: "3  /" at x 17 and "/  07" on the right margin, y 58.33% - 6,
    Helvetica 16): it stays on the screen while you scroll, like on the big version */
 .is-phone-portrait.phone-project .fold-count {
-  display: block !important;
+  display: grid !important;   /* (the old and the new number lie in the same spot while one rolls in) */
   position: fixed;
   top: calc(58.33svh - 6 * var(--p));
   font-size: 12px;   /* (like the numbers beside the pictures on the home page) */
   font-style: italic;
 }
+
+/* The project's number on the first screen ("1  /" and "/  05", phone.js): in the same place, but part of
+   the first screen, so it scrolls away with it (the counter above then counts the pictures) */
+.phone-first-count {
+  position: absolute !important;
+  top: calc(58.33svh - 6 * var(--p)) !important;
+  margin: 0;
+  font-family: var(--font-nav);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.24;
+  white-space: pre;
+  color: var(--color-nav-blend);
+  mix-blend-mode: exclusion;
+}
+
+.phone-first-count-now { left: 17px !important; }
+.phone-first-count-total { right: var(--phone-margin) !important; left: auto !important; }
 
 .is-phone-portrait.phone-project .fold-count-now {
   left: 17px;
@@ -2661,12 +2689,22 @@ body.lab-page {
   margin-top: 56px;
 }
 
+/* (all of them in one row, the same height: each one is as wide as its shape needs, phone.js gives it
+   its share of the row from its proportions) */
 .is-phone-portrait .lab-side {
   position: static;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--phone-margin);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
   width: auto;
+}
+
+.is-phone-portrait .lab-side img {
+  flex: var(--share, 1) 1 0;
+  min-width: 0;
+  width: auto;
+  height: auto;
 }
 
 /* The black end: the title in white, in its middle */
@@ -2690,42 +2728,23 @@ body.lab-page {
   translate: calc((720 - var(--title-cx, 720)) * var(--u)) 0;
 }
 
-/* ----- The About page on the phone -----
-   The words keep building while you scroll, 16/12 as big as they would be (so DESIGNER, the widest,
-   just fits between the margins): the page is drawn as if the screen were 16/12 as wide, with its middle
-   in the middle of the screen. */
+/* ----- The About page on the phone (Figma "iPhone 16 - 8") -----
+   The same strip as the big version, at its own size (61.76 per cell, so one about unit is 61.76 / 67.93
+   Figma phone px), seen through the phone's screen; about.js places everything where that frame has it.
+   The small texts are 12 (Helvetica, like the big version), the photos lie under the words. */
 .is-phone-portrait .about {
-  --u: calc(100cqw / 1440 * 0.9291 * var(--phone-ratio));   /* (about.js measures the wider screen below) */
+  --u: calc(var(--p) * 61.76 / 67.93);
   overflow-x: clip;   /* what is wider than the screen is cut off, without making the page wider */
 }
 
-.is-phone-portrait .about-stage {
-  width: calc(100% * var(--phone-ratio));
-  margin-left: calc((1 - var(--phone-ratio)) * 50%);
-}
-
-/* The small texts ("my name is..", "I am a…"): 16px, under the words, one at a time (the newest one;
-   about.js marks the older ones .is-passed). They stand still under the words while they type. */
-.is-phone-portrait .about-text {
-  transform: none !important;
-  left: calc((var(--phone-ratio) - 1) * 50vw + var(--phone-margin));
-  top: calc(50% + 120px * 393 / 393);
-  width: calc(100vw - 2 * var(--phone-margin));
-  font-size: var(--phone-text);
-  white-space: normal;
-}
-
-.is-phone-portrait .about-text.is-passed {
-  visibility: hidden;
-}
-
-/* The paragraph at the end: 16px, between the margins, above the name at the bottom right
-   (one paragraph: its rows break where the phone's width ends them) */
+/* The paragraph at the end (Figma: Helvetica 16, line height 160%, 457 wide, its left edge on VISION's,
+   198 under the words' top): on the phone it starts on the left margin and is as wide as the screen allows */
 .is-phone-portrait .about-bio {
-  left: calc((var(--phone-ratio) - 1) * 50vw + var(--phone-margin));
+  left: var(--phone-margin);
   right: auto;
-  bottom: 84px;
-  width: calc(100vw - 2 * var(--phone-margin));
+  top: calc(50% - 67.93 * var(--u) + 198 * var(--p));
+  bottom: auto;
+  width: min(calc(457 * var(--p)), calc(100vw - 2 * var(--phone-margin)));
   font-size: var(--phone-text);
   white-space: normal;
 }
@@ -2734,6 +2753,7 @@ body.lab-page {
 .is-phone-portrait.phone-project .fold-count-now::after {
   content: "  /";
   white-space: pre;
+  grid-area: 1 / 2;   /* beside the number (which rolls in its own spot, column 1) */
 }
 
 /* Home on the phone: pressing a picture spreads the letters' pieces (phone.js moves each piece; they
@@ -2771,4 +2791,13 @@ body.lab-page {
 .phone-flow-photo.is-named .phone-project-caption {
   padding: 8px 8px 8px 0;
   margin-top: -8px;
+}
+
+/* About: the parts of the last paragraph in bold and in oblique (Figma "Desktop - 6"; about.js) */
+.about-bio-bold {
+  font-weight: 700;
+}
+
+.about-bio-oblique {
+  font-style: italic;
 }

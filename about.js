@@ -22,37 +22,60 @@
 // The words' middle is kept in the middle of the screen, on any screen.
 
 const ABOUT_SCALE = 0.9291;              // 63.11 / 67.93: every piece on the site is one size (63.11 per cell)
-const SCREEN_W = 1440 / ABOUT_SCALE;     // the screen's width in about units
+// Phones held upright (phone.js; Figma "iPhone 16 - 8"): the same strip at the big version's own size
+// (61.76 per cell, like Figma "Desktop - 5"), seen through the phone's narrow screen: HI starts at the left
+// margin, and the words, texts and photos lie where that frame has them.
+const ON_PHONE = document.documentElement.classList.contains("is-phone-portrait");
+const PHONE_SCALE = 67.93 / 61.76;       // Figma phone px → about units
+// one about unit, in screen pixels
+function aboutUnit() {
+  return ON_PHONE ? window.innerWidth / 393 / PHONE_SCALE
+                  : document.getElementById("about-stage").clientWidth / 1440 * ABOUT_SCALE;
+}
+const SCREEN_W = ON_PHONE ? 393 * PHONE_SCALE : 1440 / ABOUT_SCALE;     // the screen's width in about units
 const WORD_Y = 0;          // the top of the words (about units, measured from the words' top)
 const WORD_MID = 67.93;    // the middle of the words (half their height): it lies in the middle of the screen
 const OUTSIDE_X = -160;    // just outside the left edge: where new shapes come in from
-const SCREEN_RIGHT = SCREEN_W - 17; // a letter can be built once it is fully on the screen (17 from the right edge)
-const EDGE_X = 300;        // a shape that slides to here (the left part of the screen) starts to spread
+// a letter can be built once it is fully on the screen (17 from the right edge); on a phone, whose screen
+// is narrower than the words, already while it comes in from the right (so VISION is whole when its left
+// edge reaches the margin at the end)
+const SCREEN_RIGHT = ON_PHONE ? SCREEN_W + 520 : SCREEN_W - 17;   // (+ one jump: a shape lands 150 later)
+const EDGE_X = ON_PHONE ? 200 : 300;   // a shape that slides to here (the left part of the screen) starts to spread
 const SCROLL_PER_PIXEL = 3;   // how many pixels you scroll for the page to move one (Figma) pixel
 
 // ----- Where everything lies on the strip (Figma pixels): as in Frame 184, HI starting in the middle of the screen -----
-const START_X = 593.46 / ABOUT_SCALE;   // where HI starts (Figma "Desktop - 5": x 593.46)
-const WORD_STRIP_X = ABOUT_WORDS.map((w) => START_X + w.x);
+const START_X = ON_PHONE ? 18 * PHONE_SCALE : 593.46 / ABOUT_SCALE;   // where HI starts (Figma "Desktop - 5": x 593.46; phone: 18)
+// On the phone (Figma "iPhone 16 - 8") the words and texts lie a little further apart: their x there
+const PHONE_WORD_X = [18, 879.02, 1990.66, 2790.72, 4261.04];   // HI, ELANA, VISUAL, DESIGNER, VISION
+const PHONE_TEXT_X = [217.84, 588.68, 1700.32, 3937.19];        // come scroll…, my name is.., and I am a…, and creator of…
+const WORD_STRIP_X = ABOUT_WORDS.map((w, k) => ON_PHONE ? START_X + (PHONE_WORD_X[k] - 18) * PHONE_SCALE : START_X + w.x);
 
 // The page has moved all the way once the last word (VISION) stands in the middle of the screen
+// (on a phone: with its left edge on the left margin, like HI at the start)
 // (or a little further, if its last shape lands later: see the end of the plan)
 const LAST = ABOUT_WORDS.length - 1;
-let TOTAL_MOVE = WORD_STRIP_X[LAST] + ABOUT_WORDS[LAST].width / 2 - SCREEN_W / 2;
+const VISION_PLACE = ON_PHONE ? WORD_STRIP_X[LAST] - START_X : WORD_STRIP_X[LAST] + ABOUT_WORDS[LAST].width / 2 - SCREEN_W / 2;
+let TOTAL_MOVE = VISION_PLACE;
 
 // Each small text belongs to the word before it (it shows up once that word is built)
 const TEXT_APPEAR = 185;       // how far you scroll while a small text is typed (it is done within this)
 const SCREEN_MIDDLE = SCREEN_W / 2;   // the middle of the screen
 const LETTER_WIDTH = 7.4;      // about how wide one letter of a small text is (about units), to find its middle
 const WORD_AFTER_TEXT = 40;    // how far the page moves after a small text has appeared, before the next word starts
-const TEXTS = ABOUT_TEXTS.map((t) => ({
+// Where the words' middle is on the screen (part of its height): the middle (also on a phone)
+const WORDS_AT = 0.5;
+const TEXTS = ABOUT_TEXTS.map((t, k) => ({
   ...t,
   y: t.bottom ? WORD_Y + 135.86 - 13.2 * 1.16 : WORD_Y,   // on the top line, or with its bottom on the words' bottom line
-  stripX: START_X + t.x,
-  after: ABOUT_WORDS.reduce((last, w, k) => (w.x < t.x ? k : last), 0),
+  stripX: ON_PHONE ? START_X + (PHONE_TEXT_X[k] - 18) * PHONE_SCALE : START_X + t.x,
+  after: ABOUT_WORDS.reduce((last, w, j) => (w.x < t.x ? j : last), 0),
 }));
 // When the page has moved far enough for the middle of each small text to be in the middle of the screen
 // (TYPE_EARLY: how far before the middle the typing starts; 0 = right when it reaches the middle)
 const TYPE_EARLY = 105;        // about units: the typing starts while the text is still on the right of the screen
+// (on a phone the last one, "and creator of...", starts earlier, so VISION is built in time to stand with
+// its left edge on the margin at the end)
+if (ON_PHONE) TEXTS[TEXTS.length - 1].early = 180;
 TEXTS.forEach((t) => { t.atMiddle = t.stripX + (t.text.length * LETTER_WIDTH) / 2 - SCREEN_MIDDLE - (t.early ?? TYPE_EARLY); });   // (a text can have its own: early)
 // "my name is.." (after HI, which is there from the start) appears like the others: once it nears the middle
 TEXTS.forEach((t) => { if (t.after === 0) t.appear = t.atMiddle; });
@@ -60,7 +83,8 @@ TEXTS[0].appear = 0;   // "come scroll with me :).." is there from the start (it
 // A text with "whenHI" appears once HI has moved that part of the way from where it starts to the small
 // ELANA on the left edge (its right edge: x 65 + 108.49 on the screen, in about units)
 const ELANA_RIGHT = (65 + 108.49) / ABOUT_SCALE;
-TEXTS.forEach((t) => { if (t.whenHI !== undefined) t.appear = (START_X - ELANA_RIGHT) * t.whenHI; });
+// (on a phone there is no small ELANA on the left edge: it appears once it nears the middle, like the others)
+if (!ON_PHONE) TEXTS.forEach((t) => { if (t.whenHI !== undefined) t.appear = (START_X - ELANA_RIGHT) * t.whenHI; });
 
 // ----- Plan every jump, once, by playing the whole page through in small steps -----
 // "moved" = how far the page has moved to the left (Figma pixels). A shape that rests on the strip at x
@@ -159,7 +183,7 @@ const lateLetters = [];                          // letters that would not be re
 
 // The page ends once the last word is finished
 TOTAL_MOVE = Math.max(TOTAL_MOVE, wordWritten[LAST] + 20);
-if (TOTAL_MOVE > WORD_STRIP_X[LAST] + ABOUT_WORDS[LAST].width / 2 - SCREEN_W / 2 + 1) {
+if (TOTAL_MOVE > VISION_PLACE + 1) {
   console.warn("VISION is built late, so it ends a little left of the middle", Math.round(TOTAL_MOVE));
 }
 
@@ -210,8 +234,12 @@ const PHOTOS = [
   // a photo that spans the end of its word (from fromX to the word's end): its width in about units, and
   // its height keeping the photo's shape
   const spanW = p.fromX !== undefined ? ABOUT_WORDS[p.word].width - p.fromX : null;
-  const w = spanW !== null ? spanW : p.w * PHOTO_SCALE;
-  const h = spanW !== null ? spanW * p.h / p.w : p.h * PHOTO_SCALE;
+  // Phones held upright (Figma "iPhone 16 - 8"): both under the words, 10.4 below them, each at the left
+  // edge of its word: the profile under ELANA (306 × 320), the other under DESIGNER (244 × 320)
+  const phone = ON_PHONE ? (p.word === 1 ? [306, 320] : [244, 320]) : null;
+  const w = phone ? phone[0] * PHONE_SCALE : spanW !== null ? spanW : p.w * PHOTO_SCALE;
+  const h = phone ? phone[1] * PHONE_SCALE : spanW !== null ? spanW * p.h / p.w : p.h * PHOTO_SCALE;
+  const ownH = h;
   const el = document.createElement("img");
   el.className = "about-photo";
   el.src = p.src;
@@ -220,11 +248,13 @@ const PHOTOS = [
   el.style.setProperty("--h", h);
   el.style.objectPosition = p.crop;   // the crop of the photo in Figma
   stage.insertBefore(el, stage.firstChild);   // under everything (also under the small texts)
-  const y = WORD_Y + (p.top - 450) * PHOTO_SCALE;
-  const above = y < WORD_Y;   // the photo above the words (or under them)
+  const ownY = WORD_Y + (p.top - 450) * PHOTO_SCALE;
+  const above = !ON_PHONE && ownY < WORD_Y;   // the photo above the words (or under them)
+  // (on a phone: 10.4 under the words; above the words: its bottom stays where it was)
+  const y = ON_PHONE ? WORD_Y + 2 * WORD_MID + 10.4 * PHONE_SCALE : above ? ownY + ownH - h : ownY;
   // a photo that does not fit on a short screen is drawn smaller, keeping the corner next to the words
   el.style.transformOrigin = above ? "left bottom" : "left top";
-  const x = WORD_STRIP_X[p.word] + (spanW !== null ? p.fromX : p.dx * PHOTO_SCALE);
+  const x = WORD_STRIP_X[p.word] + (ON_PHONE ? 0 : spanW !== null ? p.fromX : p.dx * PHOTO_SCALE);
   return { el, x, y, h, above };
 });
 
@@ -291,14 +321,14 @@ function shapePosition(s, moved) {
 
 // The page is as long as the scrolling needs: one screen to stand on, plus the scrolling for the whole move
 function setPageHeight() {
-  const u = stage.clientWidth / 1440 * ABOUT_SCALE;
+  const u = aboutUnit();
   about.style.height = `${window.innerHeight + (TOTAL_MOVE + EXTRA_MOVE) * SCROLL_PER_PIXEL * u}px`;
 }
 
 function draw() {
-  const u = stage.clientWidth / 1440 * ABOUT_SCALE;   // one about unit, in screen pixels
+  const u = aboutUnit();   // one about unit, in screen pixels
   const screenH = stage.clientHeight;
-  const fromBottom = (y) => screenH / 2 + (y - WORD_MID) * u;   // about y → screen y (the words' middle in the middle)
+  const fromBottom = (y) => screenH * WORDS_AT + (y - WORD_MID) * u;   // about y → screen y (the words' middle at WORDS_AT)
   const scrolled = Math.min(TOTAL_MOVE + EXTRA_MOVE, Math.max(0, window.scrollY / u / SCROLL_PER_PIXEL));
   const moved = Math.min(TOTAL_MOVE, scrolled);   // the shapes stop with VISION in the middle; the texts go on
 
@@ -507,8 +537,8 @@ const TAP_LIVELY_TIME = 1800;   // phones: ms a tapped letter stays as lively as
 // where the mouse is, in about units (for the liquid to move away from it)
 let pointer = null;
 stage.addEventListener("mousemove", (event) => {
-  const b = stage.getBoundingClientRect(), u = b.width / 1440 * ABOUT_SCALE;
-  pointer = [(event.clientX - b.left) / u, WORD_MID + (event.clientY - b.top - b.height / 2) / u];
+  const b = stage.getBoundingClientRect(), u = aboutUnit();
+  pointer = [(event.clientX - b.left) / u, WORD_MID + (event.clientY - b.top - b.height * WORDS_AT) / u];
 });
 
 // each letter has a spot that feels the mouse: around its shapes and its organic shape
@@ -540,8 +570,8 @@ visionLetters.forEach((L) => {
   let calmTimer = null;
   el.addEventListener("click", (event) => {
     if (!byFinger()) return;
-    const b = stage.getBoundingClientRect(), u = b.width / 1440 * ABOUT_SCALE;
-    pointer = [(event.clientX - b.left) / u, WORD_MID + (event.clientY - b.top - b.height / 2) / u];
+    const b = stage.getBoundingClientRect(), u = aboutUnit();
+    pointer = [(event.clientX - b.left) / u, WORD_MID + (event.clientY - b.top - b.height * WORDS_AT) / u];
     touchLetter(event);
     clearTimeout(calmTimer);
     calmTimer = setTimeout(() => { L.hovered = false; L.lastTouch = performance.now(); }, TAP_LIVELY_TIME);
@@ -557,7 +587,7 @@ function placeMorph(moved, u, screenH) {
   morphSvg.setAttribute("viewBox", `0 ${(WORD_MID - h / 2).toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)}`);
   visionLetters.forEach((L) => {
     L.el.style.left = L.area.x0 * u + "px";
-    L.el.style.top = screenH / 2 + (L.area.y0 - WORD_MID) * u + "px";
+    L.el.style.top = screenH * WORDS_AT + (L.area.y0 - WORD_MID) * u + "px";
     L.el.style.width = (L.area.x1 - L.area.x0) * u + "px";
     L.el.style.height = (L.area.y1 - L.area.y0) * u + "px";
   });
@@ -658,6 +688,37 @@ const BIO_LINES = [
   ["expressive experiences.", true],
 ];
 const BIO = BIO_LINES.map(([line]) => line).join("\n");
+// Its styles (Figma "Desktop - 6", Helvetica 12): two parts bold and the last sentence oblique
+const BIO_STYLES = [
+  ["", "I’m Elana, a designer working at the intersection of product, UI / UX, and branding. My roots are typography, illustration, and motion. "],
+  ["bold", "I design with the business goal in mind first"],
+  ["", ", making sure strong aesthetics always serve a purpose. Using AI as a core part of my workflow,"],
+  ["bold", " I also vibe-code and ship my own functional products from scratch"],
+  ["", ", bridging the gap between visual craft and live software. "],
+  ["oblique", "I love collaborating closely with teams to solve messy problems early and turn ideas into clear, expressive experiences."],
+];
+// each letter's style ("" = regular), in the order of BIO (its line breaks are the spaces of the styles' text)
+const BIO_STYLE_AT = BIO_STYLES.flatMap(([style, text]) => [...text].map(() => style));
+// Write the first n letters of a text into an element, each run of one style in its own span
+// (returns where each letter is: [text node, place in it], so the rows can be measured)
+function writeBio(el, text, n) {
+  el.textContent = "";
+  const places = [];
+  let span = null, style = null;
+  for (let i = 0; i < n; i++) {
+    const s = BIO_STYLE_AT[i] || "";
+    if (span === null || s !== style) {
+      span = document.createElement("span");
+      if (s) span.className = "about-bio-" + s;
+      span.appendChild(document.createTextNode(""));
+      el.appendChild(span);
+      style = s;
+    }
+    places.push([span.firstChild, span.firstChild.data.length]);
+    span.firstChild.data += text[i];
+  }
+  return places;
+}
 // where a paragraph ends (the typing stops to think there; at the other line ends it just goes on)
 const BIO_PARAGRAPH_ENDS = new Set();
 BIO_LINES.reduce((at, [line, ends]) => { if (ends) BIO_PARAGRAPH_ENDS.add(at + line.length); return at + line.length + 1; }, 0);
@@ -677,7 +738,7 @@ bioBar.textContent = "|";
 const bioGhost = document.createElement("span");
 bioGhost.className = "about-bio-ghost";
 bioGhost.setAttribute("aria-hidden", "true");
-bioGhost.textContent = BIO;
+const bioGhostPlaces = writeBio(bioGhost, BIO, BIO.length);
 const bioLive = document.createElement("span");
 bioLive.className = "about-bio-live";
 bioLive.append(bioTyped, bioBar);
@@ -688,13 +749,14 @@ bioEl.append(bioGhost, bioLive);
 // The space before such a word becomes a line break (the same length, so every letter keeps its place).
 let bioWithBreaks = BIO;
 function measureBioLines() {
-  const node = bioGhost.firstChild, range = document.createRange();
+  const range = document.createRange();
   let out = "", lastTop = null;
   for (let i = 0; i < BIO.length; i++) {
     const ch = BIO[i];
     if (ch === "\n") { out += ch; lastTop = null; continue; }
     if (ch !== " ") {
-      range.setStart(node, i); range.setEnd(node, i + 1);
+      const [node, at] = bioGhostPlaces[i];
+      range.setStart(node, at); range.setEnd(node, at + 1);
       const top = range.getBoundingClientRect().top;
       if (lastTop !== null && top > lastTop + 2 && out.endsWith(" ")) out = out.slice(0, -1) + "\n";   // a new row
       lastTop = top;
@@ -702,7 +764,7 @@ function measureBioLines() {
     out += ch;
   }
   bioWithBreaks = out;
-  bioTyped.textContent = bioWithBreaks.slice(0, bioShown);
+  writeBio(bioTyped, bioWithBreaks, bioShown);
 }
 document.fonts.ready.then(measureBioLines);
 window.addEventListener("resize", measureBioLines);
@@ -730,7 +792,7 @@ function bioNext() {
   bioTimer = null;
   if (!bioOn || bioShown >= BIO.length) { bioEl.classList.remove("is-typing"); return; }
   bioShown++;
-  bioTyped.textContent = bioWithBreaks.slice(0, bioShown);
+  writeBio(bioTyped, bioWithBreaks, bioShown);
   bioStarted = bioShown > 0;
   hidePassedBars();
   if (bioShown >= BIO.length) { bioEl.classList.remove("is-typing"); return; }   // done: the bar blinks on
