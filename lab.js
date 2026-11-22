@@ -393,7 +393,11 @@ function setUpMorph(white, organicLetters) {
     area.addEventListener("mouseleave", () => { if (!byFinger()) oozeBackSoon(STAY_TIME); });
     area.addEventListener("click", (event) => {
       // the white title at the end (the next project's name) opens the next project, also with a finger
-      if (white && nextPage) { location.href = nextPage; return; }
+      if (white && nextPage) {
+        const label = document.querySelector(".lab-next-label");   // (it slides the page out first, page-change.js)
+        if (label) label.click(); else location.href = nextPage;
+        return;
+      }
       if (byFinger()) {
         // Phones: a tap makes the letter ooze from where the finger touched it; a moment later it oozes back
         oozeFrom(event);

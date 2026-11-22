@@ -22,7 +22,7 @@
   // texts; and on a project page a copy of the project's number under the title)
   const THINGS = {
     home: ".flow-piece, .flow-photo, .flow-name, .flow-year, .phone-piece, .phone-flow-photo, .phone-grid-text",
-    project: ".lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text, .project-arrow, .phone-first-count",
+    project: ".lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text, .project-arrow, .phone-first-count, .lab-next-label",
     about: ".about-piece, .about-photo, .about-text, .about-bio",
   };
 
@@ -137,4 +137,6 @@
   slideOutTo(document.querySelector(".phone-menu-about"), "about", false, false);
   // the arrows on a project page: to the previous / next project (they slide out the same way)
   document.querySelectorAll(".project-arrow").forEach((arrow) => slideOutTo(arrow, "project", true));
+  // "Next Project" at the end of a project page (lab.js; the white title there clicks it too)
+  slideOutTo(document.querySelector(".lab-next-label"), "project", true);
 })();
