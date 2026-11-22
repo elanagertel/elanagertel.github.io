@@ -133,6 +133,11 @@
   //   counter under it, and the short texts; then the pictures and the story paragraphs in the order the
   //   big version shows them, and at the end the black end with the title in white.
   if (document.getElementById("lab")) {
+    // the school's text is shorter on the phone (Figma "iPhone 16 - 7": only "Bezalel - Academy of Art and
+    // Design"); done now, before type-texts.js gets the texts ready to type
+    document.querySelectorAll(".lab-intro").forEach((el) => {
+      if (el.textContent.trim().startsWith("Bezalel")) el.textContent = el.textContent.trim().split("\n").slice(0, 2).join("\n");
+    });
     window.addEventListener("DOMContentLoaded", buildProjectPage);
   }
   function buildProjectPage() {
