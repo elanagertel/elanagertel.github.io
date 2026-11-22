@@ -471,9 +471,10 @@
   // ----- Tapping a picture: the pieces puzzle into the project's title, then the project page opens -----
   // The title is built exactly where the project page shows it (Figma "iPhone 16 - 7": across the width,
   // its middle 37.5% + 15.3 down the screen, its letters 52.51 wide), so the page opens with it in place.
-  // Each place in the title is taken by the nearest piece, which slides there in two straight slides
-  // (across, then up or down); pieces that are not needed slide out through the nearest side, and if the
-  // title needs more pieces than there are, the others come in from the sides. The pictures slide out.
+  // Each place in the title is taken by the nearest piece. First all the pieces scatter over the screen
+  // (one straight slide each) while the pictures slide out; then each title piece goes on into its place
+  // in two straight slides (across, then up or down). Pieces that are not needed leave through the
+  // nearest side, and if the title needs more pieces than there are, the others come in from the sides.
   const TITLE_FILES = {
     "memory-lab.html": "lab-organic.js",
     "israeli-cactus.html": "cactus-title.js",
@@ -496,16 +497,15 @@
     leaving = true;
     home.classList.add("is-leaving");
     const href = entry.pr.href;
-    // first the pictures slide out to their sides and their numbers and names go away; only then do
-    // the pieces come in from beyond the edges to write the title
+    let title;
+    try { title = await readTitle(href); } catch (e) { location.href = href; return; }
+    const shapes = await Promise.all(title.pieces.map(([number]) => shapeOf(number)));
+    // the pictures slide out to their sides and their numbers and names go away (while the letters scatter)
     pictures.forEach((ph) => {
       ph.texts.forEach((t) => t.clear());
       ph.item.animate([{ translate: "0 0" }, { translate: ph.outside + "px 0" }],
         { duration: SLIDE, easing: EASE, fill: "forwards" });
     });
-    let title;
-    try { [title] = await Promise.all([readTitle(href), wait(SLIDE + 100)]); } catch (e) { location.href = href; return; }
-    const shapes = await Promise.all(title.pieces.map(([number]) => shapeOf(number)));
 
     // where each title piece goes on the screen (as the project page draws it)
     const W = window.innerWidth, H = window.innerHeight;
@@ -545,12 +545,24 @@
       else from[i] = [tx < W / 2 ? -60 : W + 60, ty];   // (more pieces than there are: from the side)
     });
 
+    // First every piece scatters: one straight slide (across, or up or down) to a place somewhere on the
+    // screen (pieces waiting outside the screen come in), the pieces setting off on a few beats.
+    // Then the title's pieces go on from there into the title, in two more slides (across, then up or
+    // down); the pieces that are not needed leave through the nearest side.
+    const BEAT = 110, BEATS = 4;
+    const somewhere = (lo, hi) => lo + Math.random() * (hi - lo);
+    function scatterFrom([x, y]) {
+      const outX = x < 0 || x > W, outY = y < 0 || y > H;
+      const across = outX || (!outY && Math.random() < 0.5);
+      return across ? [somewhere(W * 0.08, W * 0.92), y] : [x, somewhere(H * 0.12, H * 0.88)];
+    }
+
     // the title's pieces, in a layer over the screen, each starting where its piece was
     const layer = document.createElement("div");
     layer.className = "phone-title-build";
     layer.setAttribute("aria-hidden", "true");
     document.body.appendChild(layer);
-    const BUILD = 2 * SLIDE, SPREAD_TIME = 500;
+    let end = 0;
     targets.forEach((t, i) => {
       const svg = shapes[i].cloneNode(true);
       svg.setAttribute("class", "phone-title-piece");
@@ -561,22 +573,26 @@
       svg.style.width = t.w + "px";
       svg.style.height = t.h + "px";
       layer.appendChild(svg);
-      const dx = from[i][0] - (t.x + t.w / 2), dy = from[i][1] - (t.y + t.h / 2);
-      svg.animate([
-        { transform: `translate(${dx}px, ${dy}px)` },
-        { transform: `translate(0px, ${dy}px)`, offset: 0.5, easing: EASE },
-        { transform: "translate(0px, 0px)" },
-      ], { duration: BUILD, delay: Math.random() * SPREAD_TIME, easing: "linear", fill: "backwards" });
+      const cx = t.x + t.w / 2, cy = t.y + t.h / 2;
+      const [sx, sy] = scatterFrom(from[i]);
+      const move = ([x, y]) => ({ transform: `translate(${x - cx}px, ${y - cy}px)`, easing: EASE });
+      const delay = Math.floor(Math.random() * BEATS) * BEAT;
+      svg.animate([move(from[i]), move([sx, sy]), move([cx, sy]), move([cx, cy])],
+        { duration: 3 * SLIDE, delay, fill: "backwards" });
+      end = Math.max(end, delay + 3 * SLIDE);
     });
 
-    // the pieces that are not needed leave through the nearest side
+    // the pieces that are not needed scatter too, then leave through the nearest side
     sources.filter((src) => !src.used).forEach((src) => {
-      const out = src.x < W / 2 ? -(src.x + 80) : (W - src.x + 80);
-      src.piece.animate([{ translate: "0 0" }, { translate: `${out / src.scale}px 0` }],
-        { duration: SLIDE, easing: EASE, fill: "forwards" });
+      const [sx, sy] = scatterFrom([src.x, src.y]);
+      const out = sx < W / 2 ? -(sx + 80) : (W - sx + 80);
+      const local = (dx, dy) => ({ translate: `${dx / src.scale}px ${dy / src.scale}px`, easing: EASE });
+      const delay = Math.floor(Math.random() * BEATS) * BEAT;
+      src.piece.animate([local(0, 0), local(sx - src.x, sy - src.y), local(sx - src.x + out, sy - src.y)],
+        { duration: 2 * SLIDE, delay, fill: "forwards" });
     });
     // the finished title stays a moment, then the project page opens (with the title in the same place)
-    await wait(BUILD + SPREAD_TIME + 250);
+    await wait(end + 250);
     location.href = href;
   }
 
