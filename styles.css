@@ -2802,11 +2802,11 @@ body.lab-page {
 }
 
 /* ----- The About page on the phone (Figma "iPhone 16 - 8") -----
-   The same strip as the big version, at its own size (61.76 per cell, so one about unit is 61.76 / 67.93
+   The same strip as the big version, at its own size (a piece 28.55, so one about unit is 28.554 / 67.93
    Figma phone px), seen through the phone's screen; about.js places everything where that frame has it.
    The small texts are 12 (Helvetica, like the big version), the photos lie under the words. */
 .is-phone-portrait .about {
-  --u: calc(var(--p) * 61.76 / 67.93);
+  --u: calc(var(--p) * 28.554 / 67.93);   /* (a piece 28.55, a letter 57.11 tall: Figma "iPhone 16 - 8") */
   overflow-x: clip;   /* what is wider than the screen is cut off, without making the page wider */
 }
 
@@ -2815,7 +2815,7 @@ body.lab-page {
 .is-phone-portrait .about-bio {
   left: var(--phone-margin);
   right: auto;
-  top: calc(50% - 67.93 * var(--u) + 198 * var(--p));
+  top: calc(46.175% - 67.93 * var(--u) + 196.16 * var(--p));   /* (the words' middle at 393.41 of 852, about.js; Figma y 561) */
   bottom: auto;
   width: min(calc(457 * var(--p)), calc(100vw - 2 * var(--phone-margin)));
   font-size: var(--phone-text);

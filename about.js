@@ -23,10 +23,10 @@
 
 const ABOUT_SCALE = 0.9291;              // 63.11 / 67.93: every piece on the site is one size (63.11 per cell)
 // Phones held upright (phone.js; Figma "iPhone 16 - 8"): the same strip at the big version's own size
-// (61.76 per cell, like Figma "Desktop - 5"), seen through the phone's narrow screen: HI starts at the left
+// (each piece 28.55, a letter 57.11 tall: Figma "iPhone 16 - 8"), seen through the phone's narrow screen: HI starts at the left
 // margin, and the words, texts and photos lie where that frame has them.
 const ON_PHONE = document.documentElement.classList.contains("is-phone-portrait");
-const PHONE_SCALE = 67.93 / 61.76;       // Figma phone px → about units
+const PHONE_SCALE = 67.93 / 28.554;      // Figma phone px → about units (a piece 28.55, a letter 57.11: Figma "iPhone 16 - 8")
 // one about unit, in screen pixels
 function aboutUnit() {
   return ON_PHONE ? window.innerWidth / 393 / PHONE_SCALE
@@ -46,8 +46,8 @@ const SCROLL_PER_PIXEL = 3;   // how many pixels you scroll for the page to move
 // ----- Where everything lies on the strip (Figma pixels): as in Frame 184, HI starting in the middle of the screen -----
 const START_X = ON_PHONE ? 18 * PHONE_SCALE : 593.46 / ABOUT_SCALE;   // where HI starts (Figma "Desktop - 5": x 593.46; phone: 18)
 // On the phone (Figma "iPhone 16 - 8") the words and texts lie a little further apart: their x there
-const PHONE_WORD_X = [18, 879.02, 1990.66, 2790.72, 4261.04];   // HI, ELANA, VISUAL, DESIGNER, VISION
-const PHONE_TEXT_X = [217.84, 588.68, 1700.32, 3937.19];        // come scroll…, my name is.., and I am a…, and creator of…
+const PHONE_WORD_X = [18, 623.8, 1137.77, 1507.65, 2221.77];    // HI, ELANA, VISUAL, DESIGNER, VISION
+const PHONE_TEXT_X = [110.39, 325.46, 1004, 2037.69];           // come scroll…, my name is.., and I am a…, and creator of…
 const WORD_STRIP_X = ABOUT_WORDS.map((w, k) => ON_PHONE ? START_X + (PHONE_WORD_X[k] - 18) * PHONE_SCALE : START_X + w.x);
 
 // The page has moved all the way once the last word (VISION) stands in the middle of the screen
@@ -62,8 +62,9 @@ const TEXT_APPEAR = 185;       // how far you scroll while a small text is typed
 const SCREEN_MIDDLE = SCREEN_W / 2;   // the middle of the screen
 const LETTER_WIDTH = 7.4;      // about how wide one letter of a small text is (about units), to find its middle
 const WORD_AFTER_TEXT = 40;    // how far the page moves after a small text has appeared, before the next word starts
-// Where the words' middle is on the screen (part of its height): the middle (also on a phone)
-const WORDS_AT = 0.5;
+// Where the words' middle is on the screen (part of its height): the middle; on a phone a little higher
+// (Figma "iPhone 16 - 8": the words' top at y 364.84 of 852, so their middle at 393.41)
+const WORDS_AT = ON_PHONE ? 393.41 / 852 : 0.5;
 const TEXTS = ABOUT_TEXTS.map((t, k) => ({
   ...t,
   y: t.bottom ? WORD_Y + 135.86 - 13.2 * 1.16 : WORD_Y,   // on the top line, or with its bottom on the words' bottom line
@@ -234,9 +235,9 @@ const PHOTOS = [
   // a photo that spans the end of its word (from fromX to the word's end): its width in about units, and
   // its height keeping the photo's shape
   const spanW = p.fromX !== undefined ? ABOUT_WORDS[p.word].width - p.fromX : null;
-  // Phones held upright (Figma "iPhone 16 - 8"): both under the words, 10.4 below them, each at the left
-  // edge of its word: the profile under ELANA (306 × 320), the other under DESIGNER (244 × 320)
-  const phone = ON_PHONE ? (p.word === 1 ? [306, 320] : [244, 320]) : null;
+  // Phones held upright (Figma "iPhone 16 - 8"): both under the words, 75 below them: the profile under
+  // ELANA, at its left edge (295 × 308), the other under DESIGNER, 88.35 in from its left edge (244 × 320)
+  const phone = ON_PHONE ? (p.word === 1 ? [295, 308, 0] : [244, 320, 88.35]) : null;
   const w = phone ? phone[0] * PHONE_SCALE : spanW !== null ? spanW : p.w * PHOTO_SCALE;
   const h = phone ? phone[1] * PHONE_SCALE : spanW !== null ? spanW * p.h / p.w : p.h * PHOTO_SCALE;
   const ownH = h;
@@ -250,11 +251,11 @@ const PHOTOS = [
   stage.insertBefore(el, stage.firstChild);   // under everything (also under the small texts)
   const ownY = WORD_Y + (p.top - 450) * PHOTO_SCALE;
   const above = !ON_PHONE && ownY < WORD_Y;   // the photo above the words (or under them)
-  // (on a phone: 10.4 under the words; above the words: its bottom stays where it was)
-  const y = ON_PHONE ? WORD_Y + 2 * WORD_MID + 10.4 * PHONE_SCALE : above ? ownY + ownH - h : ownY;
+  // (on a phone: 75 under the words; above the words: its bottom stays where it was)
+  const y = ON_PHONE ? WORD_Y + 2 * WORD_MID + 75 * PHONE_SCALE : above ? ownY + ownH - h : ownY;
   // a photo that does not fit on a short screen is drawn smaller, keeping the corner next to the words
   el.style.transformOrigin = above ? "left bottom" : "left top";
-  const x = WORD_STRIP_X[p.word] + (ON_PHONE ? 0 : spanW !== null ? p.fromX : p.dx * PHOTO_SCALE);
+  const x = WORD_STRIP_X[p.word] + (ON_PHONE ? phone[2] * PHONE_SCALE : spanW !== null ? p.fromX : p.dx * PHOTO_SCALE);
   return { el, x, y, h, above };
 });
 
