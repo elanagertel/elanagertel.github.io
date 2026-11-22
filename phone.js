@@ -599,9 +599,31 @@
   // ----- The opening -----
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
   ready.then(async () => {
-    if (skip) {   // straight to the pictures
+    if (reduced) {   // (less motion asked for: straight to the pictures)
       letters.forEach((l) => put(l, g(l.at), l.scale));
       pictures.forEach((ph) => ph.texts.forEach((t) => t.show()));
+      home.classList.add("is-done");
+      return;
+    }
+    if (skip) {
+      // Coming back through "Home" (index.html?gallery): no puzzle; the page's letters and pictures slide
+      // in from the nearest side, one slide each, on three beats (some letters and some pictures on each),
+      // then the numbers and names type themselves out
+      home.classList.add("is-opening", "is-ready");   // (is-ready: the letters show)
+      const sideOut = (x, w) => (x + w / 2 < 393 / 2 ? -(x + w + 40) * p : (393 - x + 40) * p);
+      const comeIn = (el, out, beat) => {
+        el.animate([{ translate: out + "px 0" }, { translate: "0 0" }],
+          { duration: SLIDE, delay: 150 + beat * SLIDE, easing: EASE, fill: "backwards" });
+      };
+      letters.forEach((l) => put(l, g(l.at), l.scale));
+      // the letters on the screen (E L A N A G), taking turns over the three beats
+      letters.filter((l) => l.at[0] + l.size > 0 && l.at[0] < 393 && l.at[1] < PAGE_H)
+        .forEach((l, i) => comeIn(l.el, sideOut(l.at[0], l.size), [1, 0, 2, 2, 0, 1][i % 6]));
+      const PICTURE_BEATS = { 1: 0, 2: 1, 3: 2, 4: 2, 5: 0, 6: 1 };
+      pictures.forEach((ph) => comeIn(ph.item, ph.outside, PICTURE_BEATS[ph.pr.number]));
+      await wait(150 + 3 * SLIDE);
+      pictures.forEach((ph) => ph.texts.forEach((t) => t.type(30, 0)));
+      home.classList.remove("is-opening");
       home.classList.add("is-done");
       return;
     }
