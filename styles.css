@@ -2772,9 +2772,23 @@ body.lab-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 70svh;
+  height: 100svh;   /* (the whole screen at the end, like the big version) */
   margin: 96px calc(-1 * var(--phone-margin)) 0;
   background-color: #000000;
+}
+
+/* "Next Project" at the bottom right of the black end (like the big version, where it lies under the
+   next project's name on the right; here on the phone's margin, Helvetica Oblique 12) */
+.is-phone-portrait .lab-footer {
+  position: relative;
+}
+
+.is-phone-portrait .lab-next-label {
+  left: auto;
+  right: var(--phone-margin);
+  top: auto;
+  bottom: 24px;
+  font-size: 12px;
 }
 
 .is-phone-portrait .lab-footer .lab-footer-title {

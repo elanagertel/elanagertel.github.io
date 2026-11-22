@@ -92,8 +92,8 @@ if (whiteLayer) {
   const footer = document.querySelector(".lab-footer");
   // The white title is the next project's name, so this project's black title must not show
   // through around it: everything of the black title below the top of the black end is cut off.
-  // (Phones held upright keep the old end, where the black title is never over the black end.)
-  const keepBlack = document.documentElement.classList.contains("is-phone-portrait");
+  // (phones held upright: the same; their name and menu button at the top are covered too)
+  const keepBlack = false;
   const blackParts = () => keepBlack ? [] : document.querySelectorAll(
     "#lab-first > .lab-piece:not(.lab-piece-white), #lab-first > .lab-morph:not(.lab-morph-white)");
   const cutWhite = () => {
@@ -103,7 +103,7 @@ if (whiteLayer) {
     // the bar at the top and the counter belong to the project, not to the black end with the next
     // project's name: they stay where they are, and the black end comes up over them and covers them
     // (everything of them below the top of the black end is cut off, like the black title)
-    const covered = keepBlack ? [] : [...document.querySelectorAll(".site-nav-item, .fold-count")];
+    const covered = keepBlack ? [] : [...document.querySelectorAll(".site-nav-item, .fold-count, .phone-name, .phone-menu-button")];
     [...blackParts(), ...covered].forEach((el) => {
       const box = el.getBoundingClientRect();
       const below = box.bottom - footerTop;   // how much of it lies over the black end
@@ -392,16 +392,16 @@ function setUpMorph(white, organicLetters) {
     area.addEventListener("mouseenter", (event) => { if (!byFinger()) oozeFrom(event); });
     area.addEventListener("mouseleave", () => { if (!byFinger()) oozeBackSoon(STAY_TIME); });
     area.addEventListener("click", (event) => {
+      // the white title at the end (the next project's name) opens the next project, also with a finger
+      if (white && nextPage) { location.href = nextPage; return; }
       if (byFinger()) {
         // Phones: a tap makes the letter ooze from where the finger touched it; a moment later it oozes back
         oozeFrom(event);
         oozeBackSoon(MORPH_TIME + TAP_STAY_TIME);
         return;
       }
-      // the first screen's title still scrolls down when clicked (it lies over the big button);
-      // the white title at the end (the next project's name) opens the next project
+      // the first screen's title still scrolls down when clicked (it lies over the big button)
       if (!white) document.getElementById("lab-first-screen").click();
-      else if (nextPage && !upright) location.href = nextPage;
     });
   });
 }
@@ -427,9 +427,9 @@ function readNextTitle() {
     "\nreturn { pieces: TITLE_PIECES, scale: TITLE_SCALE, organic: ORGANIC_LETTERS };")());
 }
 
-// (phones held upright keep this project's own title at the end, as before: their end has no Figma design yet)
+// (phones held upright too: their black end at the bottom of the page shows the next project's name)
 const upright = document.documentElement.classList.contains("is-phone-portrait");
-if (footerTitle && (!nextPage || upright)) {
+if (footerTitle && !nextPage) {
   makeShapes(TITLE_PIECES, TITLE_SCALE, true);
   setUpMorph(true, ORGANIC_LETTERS);
 } else if (footerTitle) {
@@ -452,5 +452,6 @@ if (footerTitle && (!nextPage || upright)) {
   label.className = "lab-next-label";
   label.href = nextPage;
   label.textContent = "Next Project";
-  document.getElementById("lab-white").appendChild(label);
+  // (phones held upright: in the black end itself, at its bottom right; see .is-phone-portrait .lab-next-label)
+  (upright ? document.querySelector(".lab-footer") : document.getElementById("lab-white")).appendChild(label);
 }
