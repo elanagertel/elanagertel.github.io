@@ -2696,7 +2696,9 @@ body.lab-page {
   position: absolute;
   grid-area: auto;   /* (placed from the page's edge, not inside the grid's 18px margin) */
   left: calc(var(--px) * var(--p));
-  top: calc(var(--py) / 852 * 100svh);
+  /* the group of texts stands where Figma has it on the screen (the year's top at 607 of 852), and the
+     texts keep Figma's distances to each other (in px, like their letters), on any screen height */
+  top: calc(607 / 852 * 100svh + (var(--py) - 607) * var(--p));
   width: auto;
   max-width: calc(100vw - var(--px) * var(--p) - var(--phone-margin));
   font-size: 12px;
@@ -2713,7 +2715,7 @@ body.lab-page {
 /* the school (two lines) stands on the same line as the year: its bottom is level with the year's bottom
    (the year: 12, line height 124%, at y 607) */
 .is-phone-portrait .lab > .lab-intro.phone-intro-school {
-  top: calc(607 / 852 * 100svh + 12px * 1.24);
+  top: calc(607 / 852 * 100svh + 12px * 1.24);   /* (the year's bottom) */
   translate: 0 -100%;
 }
 
