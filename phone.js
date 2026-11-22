@@ -298,9 +298,9 @@
   // Like the big version:
   //   1. the black pieces slide in from the edges and puzzle their way into "ELANA GERTEL"
   //      (Figma "iPhone 16 - 3": two rows in the middle of the screen), each in 2 to 4 straight slides on a beat;
-  //   2. it breaks apart in three movements (each moves some letters, some pictures and some of their texts):
+  //   2. it breaks apart in three movements (each moves some letters and some pictures):
   //      E L A N A G go between the pictures, the others out past the edges of the screen (Figma "iPhone 16 - 12");
-  //      the pictures, numbers and names slide in from the sides.
+  //      the pictures slide in from the sides; at the end the numbers and names type themselves out.
   // The page (Figma "iPhone 16 - 12"): the pictures in a zigzag between the letters, each with its number above it and its
   // name under it. Tapping a picture: the letters' pieces come back in from the edges and puzzle into
   // the project's title, then the project page opens.
@@ -439,9 +439,7 @@
     window_.appendChild(picture);
     item.appendChild(window_);
     flowBox.appendChild(item);
-    // the number above it and the name under it (they slide in with the opening; tapping a picture
-    // wipes them away)
-    const textEls = [];
+    // the number above it and the name under it (they type themselves out at the end of the opening)
     const texts = [[pr.number + "  /", pr.numberAt], [pr.name, pr.nameAt]].map(([words, [tx, ty]]) => {
       const text = document.createElement("span");
       text.className = "phone-grid-text";
@@ -449,12 +447,11 @@
       text.style.left = tx * p + "px";
       text.style.top = ty * p + "px";
       flowBox.appendChild(text);
-      textEls.push(text);
       const typer = typed(text, words);
       typer.clear();
       return typer;
     });
-    const entry = { item, texts, textEls, pr };
+    const entry = { item, texts, pr };
     // Tapping a picture: the letters' pieces build the project's title, then the project opens
     item.addEventListener("click", (event) => {
       event.preventDefault();
@@ -642,14 +639,14 @@
     await wait(puzzleEnd + 400);      // (a short moment with the whole name)
 
     // 2. It breaks apart, like the big version: three movements, one right after the other (each one
-    //    slide long), and each movement moves some letters, some pictures and some of their texts.
+    //    slide long), and each movement moves some letters and some pictures.
     //    - The letters move as blocks, in two slides each (across, then up or down) to their places:
     //      the top row (E L A N A) in movements 1 and 2, the bottom row (G E R T E L) in 2 and 3.
     //      They grow (or shrink) to their size gradually along both slides (drawn as many small steps,
     //      so the size changes smoothly).
-    //    - The pictures, numbers and names slide in from the nearest side, in one slide each, in the
-    //      movement given in BEATS: [picture, its number, its name] (0 = first movement).
-    const BEATS = { 1: [0, 1, 2], 2: [1, 0, 2], 3: [2, 0, 1], 4: [2, 1, 0], 5: [0, 2, 1], 6: [1, 2, 0] };
+    //    - The pictures slide in from the nearest side, in one slide each, in the movement given in
+    //      BEATS (picture number: 0 = first movement).
+    const BEATS = { 1: 0, 2: 1, 3: 2, 4: 2, 5: 0, 6: 1 };
     const ease = (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);   // slow start, soft stop
     const STEPS = 30;
     named.forEach((l) => {
@@ -671,13 +668,11 @@
       el.style.translate = "";
     };
     pictures.forEach((ph) => {
-      const [pictureBeat, numberBeat, nameBeat] = BEATS[ph.pr.number];
-      ph.texts.forEach((t) => t.show());
-      slideIn(ph.item, ph.outside, pictureBeat);
-      slideIn(ph.textEls[0], ph.outside, numberBeat);
-      slideIn(ph.textEls[1], ph.outside, nameBeat);
+      slideIn(ph.item, ph.outside, BEATS[ph.pr.number]);
     });
     await wait(3 * SLIDE);
+    // 3. Once everything is in place, the numbers and names type themselves out
+    pictures.forEach((ph) => ph.texts.forEach((t) => t.type(30, 0)));
     home.classList.remove("is-opening");
     home.classList.add("is-done");
   });
