@@ -150,9 +150,10 @@
     root.classList.add("is-phone-portrait");
     parts.sort((a, b) => a.y - b.y).forEach((part, i) => { part.el.style.order = 10 + i; });
 
-    // The short texts, on the first screen (Figma "iPhone 16 - 7", 12px): the project's name and the year
-    // side by side at y 607, the school and the technique under them at y 625, and the brief and the
-    // solution lower down (y 739 and 757). Each one is found by its place on the big version (--x, --y).
+    // The short texts, on the first screen (Figma "iPhone 16 - 7"): the project's name and the year side
+    // by side at y 607, the school and the technique under them at y 625, and the brief and the solution
+    // lower down (y 734 and 755). The name, the year and the school are 12; the technique, the brief and
+    // the solution 16 (.phone-intro-big in styles.css). Each one is found by its place on the big version (--x, --y).
     root.classList.add("phone-project");
 
     // the pictures beside a paragraph lie in one row, the same height: each one's share of the row is its
@@ -163,13 +164,14 @@
     });
     lab.querySelectorAll(".lab-intro").forEach((el) => {
       const x = parseFloat(el.style.getPropertyValue("--x")), y = parseFloat(el.style.getPropertyValue("--y"));
-      let place;
+      let place, big = false;
       if (x < 200) place = [18, 607];                       // the project's name
-      else if (x < 450) place = y < 860 ? [200, 607] : [18, 635];   // the year / the school (a little lower than Figma: more room under the name)
-      else if (x < 800) place = [198, 635];                 // the technique
-      else place = y < 860 ? [18, 739] : [18, 757];         // the brief / the solution
+      else if (x < 450) place = y < 860 ? [200, 607] : [18, 625];   // the year / the school
+      else if (x < 800) { place = [198, 625]; big = true; } // the technique
+      else { place = y < 860 ? [18, 734] : [18, 755]; big = true; }   // the brief / the solution
       el.style.setProperty("--px", place[0]);
       el.style.setProperty("--py", place[1]);
+      el.classList.toggle("phone-intro-big", big);
     });
 
     // The title's size: as wide as the room between the arrows, but never taller than about half the screen.

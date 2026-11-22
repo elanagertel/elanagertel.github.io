@@ -2705,6 +2705,11 @@ body.lab-page {
   white-space: pre-line;
 }
 
+/* the technique, the brief and the solution are bigger (Figma "iPhone 16 - 7": 16) */
+.is-phone-portrait .lab > .lab-intro.phone-intro-big {
+  font-size: 16px;
+}
+
 
 /* Pictures and videos: the whole width between the margins, in their own shape */
 .is-phone-portrait .lab > .lab-track {
