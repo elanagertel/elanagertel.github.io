@@ -298,9 +298,9 @@
   // Like the big version:
   //   1. the black pieces slide in from the edges and puzzle their way into "ELANA GERTEL"
   //      (Figma "iPhone 16 - 3": two rows in the middle of the screen), each in 2 to 4 straight slides on a beat;
-  //   2. it breaks apart: each letter slides (as one block, in two straight slides, growing to its size on the way) to its place: E L A N A G
-  //      between the pictures, the others out past the edges of the screen (Figma "iPhone 16 - 12");
-  //   3. meanwhile the pictures slide in from the sides, and their numbers and names type themselves out.
+  //   2. it breaks apart in three movements (each moves some letters, some pictures and some of their texts):
+  //      E L A N A G go between the pictures, the others out past the edges of the screen (Figma "iPhone 16 - 12");
+  //      the pictures, numbers and names slide in from the sides.
   // The page (Figma "iPhone 16 - 12"): the pictures in a zigzag between the letters, each with its number above it and its
   // name under it. Tapping a picture: the letters' pieces come back in from the edges and puzzle into
   // the project's title, then the project page opens.
@@ -439,7 +439,9 @@
     window_.appendChild(picture);
     item.appendChild(window_);
     flowBox.appendChild(item);
-    // the number above it and the name under it (they type themselves out when the pictures come in)
+    // the number above it and the name under it (they slide in with the opening; tapping a picture
+    // wipes them away)
+    const textEls = [];
     const texts = [[pr.number + "  /", pr.numberAt], [pr.name, pr.nameAt]].map(([words, [tx, ty]]) => {
       const text = document.createElement("span");
       text.className = "phone-grid-text";
@@ -447,11 +449,12 @@
       text.style.left = tx * p + "px";
       text.style.top = ty * p + "px";
       flowBox.appendChild(text);
+      textEls.push(text);
       const typer = typed(text, words);
       typer.clear();
       return typer;
     });
-    const entry = { item, texts, pr };
+    const entry = { item, texts, textEls, pr };
     // Tapping a picture: the letters' pieces build the project's title, then the project opens
     item.addEventListener("click", (event) => {
       event.preventDefault();
@@ -638,10 +641,15 @@
     home.classList.add("is-ready");   // (the pieces are placed: show them)
     await wait(puzzleEnd + 400);      // (a short moment with the whole name)
 
-    // 2. It breaks apart (like the big version): all the letters move together, each as one block, in
-    //    two slides (across, then up or down) to its place, and grows (or shrinks) to its size gradually
-    //    along the whole way. The two slides are drawn as many small steps, so the size can change
-    //    smoothly through both of them.
+    // 2. It breaks apart, like the big version: three movements, one right after the other (each one
+    //    slide long), and each movement moves some letters, some pictures and some of their texts.
+    //    - The letters move as blocks, in two slides each (across, then up or down) to their places:
+    //      the top row (E L A N A) in movements 1 and 2, the bottom row (G E R T E L) in 2 and 3.
+    //      They grow (or shrink) to their size gradually along both slides (drawn as many small steps,
+    //      so the size changes smoothly).
+    //    - The pictures, numbers and names slide in from the nearest side, in one slide each, in the
+    //      movement given in BEATS: [picture, its number, its name] (0 = first movement).
+    const BEATS = { 1: [0, 1, 2], 2: [1, 0, 2], 3: [2, 0, 1], 4: [2, 1, 0], 5: [0, 2, 1], 6: [1, 2, 0] };
     const ease = (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);   // slow start, soft stop
     const STEPS = 30;
     named.forEach((l) => {
@@ -653,18 +661,23 @@
         const place = [a[0] + (b[0] - a[0]) * part, a[1] + (b[1] - a[1]) * part];
         frames.push({ transform: at(place, 1 + (l.scale - 1) * ease(t)) });
       }
-      l.el.animate(frames, { duration: 2 * SLIDE, easing: "linear" });
+      const delay = l.row === 0 ? 0 : SLIDE;
+      l.el.animate(frames, { duration: 2 * SLIDE, delay, easing: "linear", fill: "backwards" });
       put(l, to, l.scale);
     });
-    // 3. Meanwhile all the pictures slide in from the sides together with the letters, in one slide
-    //    each. Once they are in, their numbers and names type themselves out.
+    const slideIn = (el, out, beat) => {
+      el.animate([{ translate: out + "px 0" }, { translate: "0 0" }],
+        { duration: SLIDE, delay: beat * SLIDE, easing: EASE, fill: "backwards" });
+      el.style.translate = "";
+    };
     pictures.forEach((ph) => {
-      ph.item.animate([{ translate: ph.outside + "px 0" }, { translate: "0 0" }],
-        { duration: SLIDE, easing: EASE });
-      ph.item.style.translate = "";
+      const [pictureBeat, numberBeat, nameBeat] = BEATS[ph.pr.number];
+      ph.texts.forEach((t) => t.show());
+      slideIn(ph.item, ph.outside, pictureBeat);
+      slideIn(ph.textEls[0], ph.outside, numberBeat);
+      slideIn(ph.textEls[1], ph.outside, nameBeat);
     });
-    await wait(2 * SLIDE);   // (until the letters are in place too)
-    pictures.forEach((ph) => ph.texts.forEach((t) => t.type(30, 0)));
+    await wait(3 * SLIDE);
     home.classList.remove("is-opening");
     home.classList.add("is-done");
   });
