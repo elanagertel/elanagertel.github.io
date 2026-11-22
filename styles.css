@@ -2394,14 +2394,14 @@ body.lab-page {
   display: none;
 }
 
-/* The gallery scrolls sideways (it fills the screen's height; only on a very short screen does it
-   also scroll a little up and down): the whole screen is its scrolling box */
+/* The gallery scrolls sideways only (it is exactly as high as the screen): the whole screen is its
+   scrolling box */
 .is-phone-portrait .phone-home {
   display: block;
   position: fixed;
   inset: 0;
   overflow-x: auto;
-  overflow-y: auto;
+  overflow-y: hidden;
   overscroll-behavior: none;
   scrollbar-width: none;
 }
@@ -2627,17 +2627,20 @@ body.lab-page {
 .is-phone-portrait.phone-project .fold-count-now {
   left: 17px;
   right: auto;
+  padding-right: 3px;   /* (room for the slash's oblique top, so it is not cut off) */
 }
 
 .is-phone-portrait.phone-project .fold-count-total {
   left: auto;
   right: var(--phone-margin);
+  padding-left: 3px;
 }
 
 /* The short texts on the first screen (Figma "iPhone 16 - 7": Helvetica 12, line height 124%):
    phone.js gives each its place (--px, --py, Figma phone px) */
 .is-phone-portrait .lab > .lab-intro {
   position: absolute;
+  grid-area: auto;   /* (placed from the page's edge, not inside the grid's 18px margin) */
   left: calc(var(--px) * var(--p));
   top: calc(var(--py) / 852 * 100svh);
   width: auto;
