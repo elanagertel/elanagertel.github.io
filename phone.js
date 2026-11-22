@@ -656,17 +656,14 @@
       l.el.animate(frames, { duration: 2 * SLIDE, easing: "linear" });
       put(l, to, l.scale);
     });
-    // 3. Meanwhile the pictures slide in from the sides in one slide each, on two beats (like the big
-    //    version): the ones in the corners with the letters, the two in the middle once the letters have
-    //    passed. Once they are all in, their numbers and names type themselves out.
-    const LATER = ["gallery-archive.jpg", "gallery-watercolor.png?v=2"];
+    // 3. Meanwhile all the pictures slide in from the sides together with the letters, in one slide
+    //    each. Once they are in, their numbers and names type themselves out.
     pictures.forEach((ph) => {
-      const delay = LATER.includes(ph.pr.file) ? 2 * SLIDE : 0;
       ph.item.animate([{ translate: ph.outside + "px 0" }, { translate: "0 0" }],
-        { duration: SLIDE, delay, easing: EASE, fill: "backwards" });
+        { duration: SLIDE, easing: EASE });
       ph.item.style.translate = "";
     });
-    await wait(3 * SLIDE);
+    await wait(2 * SLIDE);   // (until the letters are in place too)
     pictures.forEach((ph) => ph.texts.forEach((t) => t.type(30, 0)));
     home.classList.remove("is-opening");
     home.classList.add("is-done");
