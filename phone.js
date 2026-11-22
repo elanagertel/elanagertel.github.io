@@ -320,24 +320,23 @@
   // Figma frame (852), the whole gallery is made a little smaller, all of it evenly, so it fits the
   // screen's height and everything keeps its place as in Figma.
   const FIT = Math.min(1, screenH / (852 * p));          // 1 = Figma's size
-  const GALLERY_W = (554.21 + 18) * FIT;                 // its right edge: the last letter, and the margin
+  const GALLERY_W = (682.29 + 18) * FIT;                 // its right edge: the last picture, and the margin
   const g = ([x, y]) => [x * FIT, y * FIT];              // Figma place → place on this screen
 
-  // The letters, in the order of the name (row, column), and their places in the gallery (Figma frame 9).
-  // The gallery has only 8 of the 11 letters: the other three (at: null) slide away when the name breaks.
+  // The letters, in the order of the name (row, column), and their places in the gallery (Figma frame 9)
   const IN_GALLERY = 56.99 * FIT;    // a letter's size in the gallery
   const LETTERS = [
     { file: "phone-e1", row: 0, col: 0, at: [198, 36] },
     { file: "phone-l1", row: 0, col: 1, at: [80, 233] },
     { file: "phone-a1", row: 0, col: 2, at: [497, 101] },
     { file: "phone-n",  row: 0, col: 3, at: [378, 233] },
-    { file: "phone-a2", row: 0, col: 4, at: null },
+    { file: "phone-a2", row: 0, col: 4, at: [439, 563] },
     { file: "phone-g",  row: 1, col: 0, at: [18, 562] },
     { file: "phone-e2", row: 1, col: 1, at: [258, 365] },
     { file: "phone-r",  row: 1, col: 2, at: [138, 759] },
     { file: "phone-t",  row: 1, col: 3, at: [258, 562] },
-    { file: "phone-e3", row: 1, col: 4, at: null },
-    { file: "phone-l2", row: 1, col: 5, at: null },
+    { file: "phone-e3", row: 1, col: 4, at: [617, 496] },
+    { file: "phone-l2", row: 1, col: 5, at: [439, 759] },
   ];
   // The pictures (Figma frame 9): place, size, and how the picture lies in its window (the same crops
   // as the big version: [left, top, width, height] of the picture, in % of the window).
@@ -355,6 +354,10 @@
       number: 3, caption: "The\nIsraeli\nMovie\nArchive", alt: "The Israeli Movie Archive", href: "israeli-movie-archive.html" },
     { file: "gallery-house.png?v=2", at: [251, 670], size: [130.29, 152.62], crop: [-0.01, -6.59, 99.99, 111.53],
       number: 5, caption: "The\nDouble\nFamily", alt: "The Double Family", href: null },
+    { file: "gallery-house.png?v=2", at: [552, 210], size: [130.29, 152.62], crop: [-0.01, -6.59, 99.99, 111.53],
+      caption: "The\nDouble\nFamily", alt: "The Double Family", href: null },
+    { file: "gallery-archive.jpg", at: [557, 635], size: [117.26, 115.4], crop: [-19.53, -4.56, 159.77, 104.94],
+      caption: "The\nIsraeli\nMovie\nArchive", alt: "The Israeli Movie Archive", href: "israeli-movie-archive.html" },
   ];
 
   PICTURES.forEach((pr) => { pr.size = pr.size.map((v) => v * FIT); });
@@ -493,7 +496,6 @@
     const cx = px + entry.pr.size[0] / 2, cy = py + entry.pr.size[1] / 2;
     const pictureIndex = pictures.indexOf(entry);
     letters.forEach((l, k) => {
-      if (!l.at) return;   // (a letter that is not in the gallery)
       const [lx, ly] = g(l.at);
       const dx = lx + IN_GALLERY / 2 - cx, dy = ly + IN_GALLERY / 2 - cy;
       const across = Math.abs(dx) > Math.abs(dy);          // it moves sideways (or up/down)
@@ -582,7 +584,7 @@
 
     // the pieces on the screen now, and the nearest one for each place in the title
     const sources = [];
-    letters.filter((l) => l.at).forEach((l) => l.pieces.forEach((piece) => {
+    letters.forEach((l) => l.pieces.forEach((piece) => {
       const r = shapeIn(piece).getBoundingClientRect();
       sources.push({ piece, x: r.left + r.width / 2, y: r.top + r.height / 2, used: false });
     }));
@@ -649,7 +651,7 @@
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
   ready.then(async () => {
     if (skip) {   // straight to the gallery
-      letters.forEach((l) => { if (l.at) put(l, g(l.at), SMALL); else l.el.hidden = true; });
+      letters.forEach((l) => put(l, g(l.at), SMALL));
       home.classList.add("is-done");
       return;
     }
@@ -698,15 +700,7 @@
     // 3. It breaks apart: each letter slides across, then up or down, to its place in the gallery
     //    (back to its own size on the way), one after the other; the pictures slide in from the sides
     letters.forEach((l, i) => {
-      const from = grown(namePlace(l));
-      if (!l.at) {   // a letter that is not in the gallery: it slides away out of the screen, to the side it is nearer to
-        const away = from[0] + LETTER / 2 < 393 / 2 ? -LETTER * GROW - 40 : 393 + 40;
-        l.el.animate([{ transform: at(from, GROW) }, { transform: at([away, from[1]], GROW) }],
-          { duration: 2 * SLIDE, delay: i * 70, easing: EASE, fill: "forwards" })
-          .finished.then(() => { l.el.hidden = true; });
-        return;
-      }
-      const to = g(l.at), mid = [to[0], from[1]];
+      const from = grown(namePlace(l)), to = g(l.at), mid = [to[0], from[1]];
       l.el.animate([
         { transform: at(from, GROW) },
         { transform: at(mid, (GROW + SMALL) / 2), offset: 0.5, easing: EASE },
