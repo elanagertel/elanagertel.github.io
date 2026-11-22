@@ -18,20 +18,28 @@
   // Which page this is, and the things on it that slide
   const PAGE = document.getElementById("about") ? "about"
     : document.body.classList.contains("lab-page") ? "project" : "home";
+  // (phones held upright have their own home page, phone.js: the letters' pieces, the pictures and their
+  // texts; and on a project page a copy of the project's number under the title)
   const THINGS = {
-    home: ".flow-piece, .flow-photo, .flow-name, .flow-year",
-    project: ".lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text, .project-arrow",
+    home: ".flow-piece, .flow-photo, .flow-name, .flow-year, .phone-piece, .phone-flow-photo, .phone-grid-text",
+    project: ".lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text, .project-arrow, .phone-first-count",
     about: ".about-piece, .about-photo, .about-text, .about-bio",
   };
 
+  // Where it is on the screen (a phone letter's piece is drawn in a box as big as its letter: its own
+  // shape tells where the piece really is)
+  function boxOf(el) {
+    const shape = el.matches(".phone-piece") ? el.querySelector("path") : null;
+    return (shape || el).getBoundingClientRect();
+  }
   // Is it (partly) on the screen?
   function onScreen(el) {
-    const r = el.getBoundingClientRect();
+    const r = boxOf(el);
     return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth;
   }
   // The shortest straight way off the screen: [dx, dy] in px
   function wayOut(el) {
-    const r = el.getBoundingClientRect(), w = window.innerWidth, h = window.innerHeight;
+    const r = boxOf(el), w = window.innerWidth, h = window.innerHeight;
     const ways = [
       { move: [-(r.right + GAP), 0], room: r.left },        // out on the left
       { move: [w - r.left + GAP, 0], room: w - r.right },   // out on the right
@@ -42,7 +50,7 @@
   }
   // When it starts: the things on the left first (two copies at the same place start together)
   function delayOf(el) {
-    const r = el.getBoundingClientRect();
+    const r = boxOf(el);
     return SPREAD * Math.min(1, Math.max(0, (r.left + r.width / 2) / window.innerWidth));
   }
   // Slide from one shift to another (CSS "translate", so it never fights with how the thing is placed)
@@ -88,7 +96,13 @@
   // A project page opened with an arrow (from another project): the old title left in pieces through the
   // nearest edges; the new title comes in the same way, reversed: each piece slides in from its nearest edge
   if (PAGE === "project" && window.pageChange.cameBack()) {
-    window.pageChange.slideIn([...document.querySelectorAll(THINGS.project)]);
+    const slideInProject = () => window.pageChange.slideIn([...document.querySelectorAll(THINGS.project)]);
+    // (phones held upright lay the page out once it has loaded, phone.js: measure only after that)
+    if (document.documentElement.classList.contains("is-phone-portrait")) {
+      window.addEventListener("DOMContentLoaded", () => requestAnimationFrame(slideInProject));
+    } else {
+      slideInProject();
+    }
   }
 
   // Clicking a link in the bar: everything on the screen slides out first, then the page opens
@@ -98,6 +112,9 @@
       // (on a phone the first tap only shows the link's name: mobile.js stops that tap)
       if (event.defaultPrevented || REDUCED) return;
       event.preventDefault();
+      // (phones: the menu closes, so the page shows while its things slide out)
+      const menuButton = document.querySelector(".phone-menu-button");
+      if (menuButton && document.documentElement.classList.contains("phone-menu-open")) menuButton.click();
       const things = [...document.querySelectorAll(THINGS[PAGE])].filter(onScreen);
       things.forEach((el) => slide(el, [0, 0], wayOut(el), delayOf(el)));
       try { sessionStorage.setItem(KEY, JSON.stringify({ page, at: Date.now() })); } catch (e) {}
@@ -107,6 +124,10 @@
   slideOutTo(document.querySelector(".site-nav-home"), "home");
   slideOutTo(document.querySelector(".site-nav-name"), "home");
   slideOutTo(document.querySelector(".site-nav-about"), "about");
+  // phones held upright: the links in the menu and the name at the top left (phone.js)
+  slideOutTo(document.querySelector(".phone-menu-home"), "home");
+  slideOutTo(document.querySelector(".phone-name"), "home");
+  slideOutTo(document.querySelector(".phone-menu-about"), "about");
   // the arrows on a project page: to the previous / next project (they slide out the same way)
   document.querySelectorAll(".project-arrow").forEach((arrow) => slideOutTo(arrow, "project", true));
 })();
