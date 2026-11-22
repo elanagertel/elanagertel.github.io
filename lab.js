@@ -13,39 +13,52 @@ function place(el, point) {
   el.style.setProperty("--y", point[1]);
 }
 
-// ----- Create the shapes: the black title at the top and the white one at the bottom -----
+// ----- Create the shapes: the black title at the top (and, later, the white one at the bottom) -----
 // Each shape is an <svg> right in the page, so it gets the same thin outline as on the home page
 // (touching shapes look merged, with no white line between them).
-// The black title goes in the first screen (which stays while you scroll), the white one in the
-// black end, in a box that the CSS puts in the middle of the screen at the end of the page.
+// The black title goes in the first screen (which stays while you scroll). The white title is the NEXT
+// project's title (Figma "Israeli Movie Archive", the end: black, with "THE ISRAELI CACTUS" in white);
+// it lies in the same place as this one and only shows over the black end (see "The white title" below).
 const titleShapes = [];
 const footerTitle = document.getElementById("lab-footer-title");
-[false, true].forEach((white) => {
-  TITLE_PIECES.forEach(([number, width, x, y]) => {
-    const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("class", white ? "flow-piece lab-piece lab-piece-white" : "flow-piece lab-piece");
-    svg.setAttribute("aria-hidden", "true");
-    svg.style.setProperty("--w", width * TITLE_SCALE);
-    place(svg, white ? [x, y - TITLE_TOP] : [x, y]);
-    (white ? footerTitle : document.getElementById("lab-first")).appendChild(svg);
-    titleShapes.push({ svg, file: "flow-piece-" + number + ".svg", white, x, y, width: width * TITLE_SCALE });
-  });
-});
 
 // The outlines come from pieces.js (loaded before this file), so the title is drawn right away,
 // before the page is first shown: coming from the home page, the title is simply there.
-function drawShapes() {
-  titleShapes.forEach((shape) => {
-    const { viewBox, outlines } = PIECE_SHAPES[shape.file];
-    shape.svg.setAttribute("viewBox", viewBox);
-    outlines.forEach((d) => {
-      const path = document.createElementNS(SVG_NS, "path");
-      path.setAttribute("d", d);
-      shape.svg.appendChild(path);
-    });
+function drawShape(shape) {
+  const { viewBox, outlines } = PIECE_SHAPES[shape.file];
+  shape.svg.setAttribute("viewBox", viewBox);
+  outlines.forEach((d) => {
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", d);
+    shape.svg.appendChild(path);
   });
 }
-drawShapes();
+
+// Make the shapes of a title (pieces: [shape number, width, x, y] in Figma pixels)
+function makeShapes(pieces, scale, white) {
+  pieces.forEach(([number, width, x, y]) => {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", white ? "flow-piece lab-piece lab-piece-white" : "flow-piece lab-piece");
+    svg.setAttribute("aria-hidden", "true");
+    svg.style.setProperty("--w", width * scale);
+    place(svg, white ? [x, y - TITLE_TOP] : [x, y]);
+    (white ? footerTitle : document.getElementById("lab-first")).appendChild(svg);
+    const shape = { svg, file: "flow-piece-" + number + ".svg", white, x, y, width: width * scale };
+    drawShape(shape);
+    titleShapes.push(shape);
+  });
+}
+makeShapes(TITLE_PIECES, TITLE_SCALE, false);
+
+// A title's box (Figma pixels): left, top, right, bottom
+function titleBox(pieces, scale) {
+  const boxes = pieces.map(([number, width, x, y]) => {
+    const [, , vw, vh] = PIECE_SHAPES["flow-piece-" + number + ".svg"].viewBox.split(/[\s,]+/).map(Number);
+    return [x, y, x + width * scale, y + width * scale * vh / vw];
+  });
+  return [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])),
+          Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
+}
 
 // The title's middle (Figma y), measured from its shapes: the CSS puts it in the middle of the
 // screen, level with the side names
@@ -77,9 +90,25 @@ window.addEventListener("resize", placeIntroOut);
 const whiteLayer = document.getElementById("lab-white");
 if (whiteLayer) {
   const footer = document.querySelector(".lab-footer");
+  // The white title is the next project's name, so this project's black title must not show
+  // through around it: everything of the black title below the top of the black end is cut off.
+  // (Phones held upright keep the old end, where the black title is never over the black end.)
+  const keepBlack = document.documentElement.classList.contains("is-phone-portrait");
+  const blackParts = () => keepBlack ? [] : document.querySelectorAll(
+    "#lab-first > .lab-piece:not(.lab-piece-white), #lab-first > .lab-morph:not(.lab-morph-white)");
   const cutWhite = () => {
-    const cut = footer.getBoundingClientRect().top - whiteLayer.getBoundingClientRect().top;
+    const footerTop = footer.getBoundingClientRect().top;
+    const cut = footerTop - whiteLayer.getBoundingClientRect().top;
     whiteLayer.style.clipPath = `inset(${Math.max(0, cut)}px 0 0 0)`;
+    // the bar at the top and the counter belong to the project, not to the black end with the next
+    // project's name: they stay where they are, and the black end comes up over them and covers them
+    // (everything of them below the top of the black end is cut off, like the black title)
+    const covered = keepBlack ? [] : [...document.querySelectorAll(".site-nav-item, .fold-count")];
+    [...blackParts(), ...covered].forEach((el) => {
+      const box = el.getBoundingClientRect();
+      const below = box.bottom - footerTop;   // how much of it lies over the black end
+      el.style.clipPath = below > 0 ? `inset(0 0 ${Math.min(below, box.height + 1)}px 0)` : "";
+    });
   };
   window.addEventListener("scroll", cutWhite, { passive: true });
   window.addEventListener("resize", cutWhite);
@@ -177,7 +206,7 @@ function ooze(p) {
 }
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
-function setUpMorph(white) {
+function setUpMorph(white, organicLetters) {
   const container = white ? footerTitle : document.getElementById("lab-first");
   const top = white ? TITLE_TOP : 0;   // the white title's box starts at the title's top edge
 
@@ -211,7 +240,7 @@ function setUpMorph(white) {
   }
 
   // the organic letters: outer outline and holes, in page positions
-  const letters = ORGANIC_LETTERS.map((organic, n) => {
+  const letters = organicLetters.map((organic, n) => {
     const parts = organic.d.split(/(?=M)/).map((part) => part.trim());
     const toPage = ([x, y]) => [organic.x + x, organic.y + y];
     const outer = outlinePoints(parts[0], toPage);
@@ -370,12 +399,59 @@ function setUpMorph(white) {
         oozeBackSoon(MORPH_TIME + TAP_STAY_TIME);
         return;
       }
-      // the first screen's title still scrolls down when clicked (it lies over the big button)
+      // the first screen's title still scrolls down when clicked (it lies over the big button);
+      // the white title at the end (the next project's name) opens the next project
       if (!white) document.getElementById("lab-first-screen").click();
+      else if (nextPage && !upright) location.href = nextPage;
     });
   });
 }
 
-// Hovering the titles: their letters ooze into organic shapes (both titles are drawn by now)
-setUpMorph(false);   // the black title (first screen)
-setUpMorph(true);    // the white title
+// Hovering the title: its letters ooze into organic shapes
+setUpMorph(false, ORGANIC_LETTERS);   // the black title (first screen)
+
+// ----- The white title at the end: the next project's name -----
+// The projects in order (like the arrows, fold-count.js): after the last one comes the first.
+// Each has its page and its title file (the same file its own page draws its title from).
+const NEXT_PROJECT = {
+  "memory-lab.html": ["sense.html", "sense-title.js"],
+  "sense.html": ["israeli-movie-archive.html", "archive-title.js"],
+  "israeli-movie-archive.html": ["israeli-cactus.html", "cactus-title.js"],
+  "israeli-cactus.html": ["memory-lab.html", "lab-organic.js"],
+};
+const thisPage = location.pathname.split("/").pop() || "";
+const [nextPage, nextTitleFile] = NEXT_PROJECT[thisPage] || [null, null];
+
+// read the next project's title file (its TITLE_PIECES, TITLE_SCALE and ORGANIC_LETTERS)
+function readNextTitle() {
+  return fetch(nextTitleFile).then((r) => r.text()).then((text) => new Function(text +
+    "\nreturn { pieces: TITLE_PIECES, scale: TITLE_SCALE, organic: ORGANIC_LETTERS };")());
+}
+
+// (phones held upright keep this project's own title at the end, as before: their end has no Figma design yet)
+const upright = document.documentElement.classList.contains("is-phone-portrait");
+if (footerTitle && (!nextPage || upright)) {
+  makeShapes(TITLE_PIECES, TITLE_SCALE, true);
+  setUpMorph(true, ORGANIC_LETTERS);
+} else if (footerTitle) {
+  readNextTitle().then((next) => {
+    // its middle goes where this title's middle is (the middle of the screen at the end of the page)
+    const [l0, t0, r0, b0] = titleBox(TITLE_PIECES, TITLE_SCALE);
+    const [l1, t1, r1, b1] = titleBox(next.pieces, next.scale);
+    const dx = (l0 + r0) / 2 - (l1 + r1) / 2, dy = (t0 + b0) / 2 - (t1 + b1) / 2;
+    makeShapes(next.pieces.map(([n, w, x, y]) => [n, w, x + dx, y + dy]), next.scale, true);
+    setUpMorph(true, next.organic.map((letter) => ({ ...letter, x: letter.x + dx, y: letter.y + dy })));
+  }).catch(() => {
+    // (if it cannot be read: this project's own title, as before)
+    makeShapes(TITLE_PIECES, TITLE_SCALE, true);
+    setUpMorph(true, ORGANIC_LETTERS);
+  });
+
+  // "Next Project" (Figma: Helvetica Oblique 15.5, white, at x 1159, 330 under the screen's middle).
+  // It, and the white title, lead to the next project.
+  const label = document.createElement("a");
+  label.className = "lab-next-label";
+  label.href = nextPage;
+  label.textContent = "Next Project";
+  document.getElementById("lab-white").appendChild(label);
+}

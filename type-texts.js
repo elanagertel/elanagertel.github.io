@@ -11,7 +11,7 @@
 // so a word that goes on the next row is typed there from its first letter (it never jumps down).
 (function () {
   const PER_LETTER = 30;     // ms for each letter
-  const FIRST_WAIT = 600;    // ms the bars blink before the first letter
+  const FIRST_WAIT = 600;    // ms before the first letter (nothing shows meanwhile)
 
   function prepare(el) {
     const full = el.textContent.trim();
@@ -31,6 +31,7 @@
     live.append(typed, bar);
     el.append(ghost, live);
     el.classList.add("is-waiting");   // nothing shows until it starts
+    el.classList.add("is-prepared");  // (until now it was hidden, see "will-type" in styles.css)
     return { el, full, ghost, typed, shown: 0, withBreaks: full };
   }
 
@@ -54,17 +55,20 @@
   }
 
   // Types a group of texts together.
-  // wait: ms the bars blink before the first letter; already: letters that are typed right away
+  // wait: ms before the first letter (the bars stay hidden meanwhile); already: letters that are typed right away
   // (the first screen's texts started typing on the home page, while the title was being built)
   function typeGroup(group, wait = FIRST_WAIT, already = 0, onStart) {
     group.forEach((t) => {
-      t.el.classList.remove("is-waiting");
       t.shown = Math.min(t.full.length, already);
       t.typed.textContent = t.withBreaks.slice(0, t.shown);
     });
+    // (no blinking bars while they wait: the bars only show once the letters start coming)
     setTimeout(() => {
       if (onStart) onStart();
-      group.forEach((t) => t.el.classList.add(t.shown < t.full.length ? "is-typing" : "is-done"));
+      group.forEach((t) => {
+        t.el.classList.remove("is-waiting");
+        t.el.classList.add(t.shown < t.full.length ? "is-typing" : "is-done");
+      });
       const timer = setInterval(() => {
         let busy = false;
         group.forEach((t) => {

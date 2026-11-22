@@ -67,6 +67,24 @@
   const phone = document.documentElement.classList.contains("is-phone-portrait");
   now.dataset.project = String(number || 0);
   total.dataset.project = "/  " + twoDigits(PROJECTS.length);
+
+  // Big screens, project pages: this project's number beside the title belongs to the first screen, so it
+  // scrolls up and away with the title's texts (like the arrows). It is a copy that lies in the page; the
+  // counter that stays in place only shows once the pictures come, and counts them.
+  const lab = document.getElementById("lab");
+  const firstCopies = !phone && lab && document.body.classList.contains("lab-page");
+  if (firstCopies) {
+    [[now, String(number || 0)], [total, "/  " + twoDigits(PROJECTS.length)]].forEach(([counter, text]) => {
+      const copy = document.createElement("p");
+      copy.className = counter.className + " fold-count-first";
+      copy.setAttribute("aria-hidden", "true");
+      const span = document.createElement("span");
+      span.className = "fold-count-text";
+      span.textContent = text;
+      copy.appendChild(span);
+      lab.appendChild(copy);
+    });
+  }
   function update() {
     const middle = window.innerHeight / 2 + 2;
     const counted = pictures.filter((pic) => {
@@ -78,11 +96,14 @@
                                                              // even when the first picture already lies under the title
     if (seen === shown) return;
     const forward = shown === null || seen > shown;
-    const animate = shown !== null && !reduced;
+    // (coming from the first screen with its copies, the counter just appears: nothing rolls out of it)
+    const animate = shown !== null && !reduced && !(firstCopies && shown === 0);
     shown = seen;
+    // (with the copies, the counter that stays in place is hidden on the first screen)
+    [now, total].forEach((counter) => counter.classList.toggle("is-first-hidden", firstCopies && seen === 0));
     if (seen === 0) {
-      show(now, String(number || 0), forward, animate);
-      show(total, "/  " + twoDigits(PROJECTS.length), forward, animate);
+      show(now, String(number || 0), forward, animate && !firstCopies);
+      show(total, "/  " + twoDigits(PROJECTS.length), forward, animate && !firstCopies);
     } else {
       show(now, String(seen), forward, animate);
       show(total, "/  " + pictures.length, forward, animate);

@@ -956,6 +956,17 @@ a.flow-photo:focus-visible {
   grid-area: 1 / 1;
 }
 
+/* Project pages (big screens): this project's number beside the title is part of the first screen and
+   scrolls up with the texts (fold-count.js puts a copy in the page); the counter that stays in place
+   is hidden until the pictures come */
+.fold-count.fold-count-first {
+  position: absolute;
+}
+
+.fold-count.is-first-hidden {
+  visibility: hidden;
+}
+
 /* ----- Project pages: the arrows to the previous and the next project, on the first screen -----
    (Figma frame 83: a triangle 44 wide and 88 tall from y 451.5, the left one's tip at x 66, the right
    one's tip at x 1374). They scroll away with the first screen. The right one points right; the left
@@ -1337,6 +1348,14 @@ body.lab-page {
   visibility: hidden;
 }
 
+/* Until type-texts.js has got a text ready to type, it stays hidden (the project pages add "will-type"
+   at the very start), so the full text never shows for a moment before it types */
+.will-type .lab-intro:not(.is-prepared),
+.will-type .lab-info:not(.is-prepared),
+.will-type .lab-text-last .lab-text:not(.is-prepared) {
+  visibility: hidden;
+}
+
 .type-live {
   position: absolute;
   inset: 0;
@@ -1492,6 +1511,27 @@ body.lab-page {
   pointer-events: auto;
 }
 
+/* At the end the white title is the next project's name, and under it on the right "Next Project"
+   (Figma "Israeli Movie Archive": Helvetica Oblique 15.5, white, x 1159, 330 under the screen's middle).
+   Both lead to the next project (lab.js). */
+.lab-white .lab-title-hover {
+  cursor: pointer;
+}
+
+.lab-next-label {
+  position: absolute;
+  left: calc(1159 * var(--u));
+  top: calc((var(--title-mid) + 330) * var(--u));
+  font-family: var(--font-nav);
+  font-size: max(10px, calc(15.5 * var(--u)));
+  font-style: italic;
+  line-height: 1.24;
+  white-space: nowrap;
+  color: #ffffff;
+  text-decoration: none;
+  pointer-events: auto;
+}
+
 /* ===================================================================
    memory-lab.html — with its title turning white over the black end
    =================================================================== */
@@ -1584,8 +1624,10 @@ body.lab-page {
   mix-blend-mode: difference;
 }
 
+/* At the end the white title is the next project's name (lab.js), so it is needed here too. It lies inside
+   the inverted first screen, so it is inverted once more of its own: it stays white over the black end. */
 .cactus .lab-white {
-  display: none;
+  filter: invert(1);
 }
 
 /* The front cover: under the title (the other spreads are on layer 3, over it) */
