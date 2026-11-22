@@ -685,7 +685,7 @@ const EXTRA_MOVE = Math.max(0, TEXTS[LAST_TEXT].stripX + typingLength(LAST_TEXT)
 // first the bar blinks a moment, then the letters come at an uneven pace, with short stops after commas,
 // longer ones after full stops and between the two paragraphs, and now and then a little hesitation.
 // The bar stands still while letters come and blinks while it pauses; at the end it keeps blinking.
-// Scrolling back away from VISION hides it (the typing waits); coming back shows it again and it goes on.
+// Scrolling back away from VISION untypes it; coming back types it again.
 // The lines end exactly where they end in Figma ("Desktop - 6": one paragraph). [line, true = the paragraph ends here]
 const BIO_LINES = [
   ["I’m Elana, a designer working at the intersection of product, UI / UX, and branding.", false],
@@ -808,13 +808,35 @@ function bioNext() {
   bioWait(bioPause(BIO[bioShown - 1], BIO[bioShown], bioShown - 1));
 }
 // Called by draw(): on at the end (VISION in the middle), off when scrolled back
+// Scrolling back away from VISION untypes it, quickly (a few letters each frame), then it hides; coming
+// back types it again from where it got to
+const BIO_ERASE = 6;   // letters taken away each screen frame
+let bioEraseFrame = null;
+function bioErase() {
+  bioEraseFrame = null;
+  if (bioOn) return;
+  bioShown = Math.max(0, bioShown - BIO_ERASE);
+  writeBio(bioTyped, bioWithBreaks, bioShown);
+  bioStarted = bioShown > 0;
+  hidePassedBars();
+  if (bioShown > 0) bioEraseFrame = requestAnimationFrame(bioErase);
+  else bioEl.classList.remove("is-shown", "is-typing");
+}
 function bioAt(atEnd) {
   if (atEnd === bioOn) return;
   bioOn = atEnd;
-  bioEl.classList.toggle("is-shown", atEnd);
   clearTimeout(bioTimer);
   bioTimer = null;
-  if (atEnd && bioShown < BIO.length) bioWait(bioShown === 0 ? BIO_FIRST_WAIT : 400);
+  if (bioEraseFrame !== null) { cancelAnimationFrame(bioEraseFrame); bioEraseFrame = null; }
+  if (atEnd) {
+    bioEl.classList.add("is-shown");
+    if (bioShown < BIO.length) bioWait(bioShown === 0 ? BIO_FIRST_WAIT : 400);
+  } else if (bioShown > 0) {
+    bioEl.classList.add("is-typing");   // (the bar stands still while it untypes)
+    bioErase();
+  } else {
+    bioEl.classList.remove("is-shown");
+  }
 }
 
 // Draw again on every scroll and resize (at most once per screen frame)
@@ -829,6 +851,15 @@ function drawSoon() {
 }
 
 window.addEventListener("scroll", drawSoon, { passive: true });
+
+// Scrolling sideways (a trackpad's sideways swipe, or shift + the wheel) moves the page too, both ways:
+// to the left goes on like scrolling down, to the right goes back (it stops at the start and at the end).
+// (Phones: a sideways swipe does the same, phone.js.)
+window.addEventListener("wheel", (event) => {
+  if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;   // (up and down: the page scrolls as usual)
+  event.preventDefault();   // (so the browser does not go back a page instead)
+  window.scrollBy(0, event.deltaX);
+}, { passive: false });
 window.addEventListener("resize", () => {
   setPageHeight();
   drawSoon();
