@@ -106,12 +106,18 @@
   }
 
   // Clicking a link in the bar: everything on the screen slides out first, then the page opens
-  function slideOutTo(link, page, always = false) {
+  // (outFirst false: the page opens at once, with no sliding out first; the new page still slides in)
+  function slideOutTo(link, page, always = false, outFirst = true) {
     if (!link || (page === PAGE && !always)) return;   // (the link to the page you are on: nothing changes)
     link.addEventListener("click", (event) => {
       // (on a phone the first tap only shows the link's name: mobile.js stops that tap)
       if (event.defaultPrevented || REDUCED) return;
       event.preventDefault();
+      if (!outFirst) {
+        try { sessionStorage.setItem(KEY, JSON.stringify({ page, at: Date.now() })); } catch (e) {}
+        window.location.href = link.href;
+        return;
+      }
       // (phones: the menu closes, so the page shows while its things slide out)
       const menuButton = document.querySelector(".phone-menu-button");
       if (menuButton && document.documentElement.classList.contains("phone-menu-open")) menuButton.click();
@@ -127,7 +133,8 @@
   // phones held upright: the links in the menu and the name at the top left (phone.js)
   slideOutTo(document.querySelector(".phone-menu-home"), "home");
   slideOutTo(document.querySelector(".phone-name"), "home");
-  slideOutTo(document.querySelector(".phone-menu-about"), "about");
+  // (About Me on the phone: no sliding out, the About page just slides in)
+  slideOutTo(document.querySelector(".phone-menu-about"), "about", false, false);
   // the arrows on a project page: to the previous / next project (they slide out the same way)
   document.querySelectorAll(".project-arrow").forEach((arrow) => slideOutTo(arrow, "project", true));
 })();
