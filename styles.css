@@ -2815,7 +2815,7 @@ body.lab-page {
 .is-phone-portrait .about-bio {
   left: var(--phone-margin);
   right: auto;
-  top: calc(46.175% - 67.93 * var(--u) + 196.16 * var(--p));   /* (the words' middle at 393.41 of 852, about.js; Figma y 561) */
+  top: calc(46.175% - 67.93 * var(--u) + 132.15 * var(--p));   /* (the words' middle at 393.41 of 852, about.js; its top level with the photos' tops: 75 under the words) */
   bottom: auto;
   width: min(calc(457 * var(--p)), calc(100vw - 2 * var(--phone-margin)));
   font-size: var(--phone-text);

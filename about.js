@@ -235,11 +235,19 @@ const PHOTOS = [
   // a photo that spans the end of its word (from fromX to the word's end): its width in about units, and
   // its height keeping the photo's shape
   const spanW = p.fromX !== undefined ? ABOUT_WORDS[p.word].width - p.fromX : null;
-  // Phones held upright (Figma "iPhone 16 - 8"): both under the words, 75 below them: the profile under
-  // ELANA, at its left edge (295 × 308), the other under DESIGNER, 88.35 in from its left edge (244 × 320)
-  const phone = ON_PHONE ? (p.word === 1 ? [295, 308, 0] : [244, 320, 88.35]) : null;
-  const w = phone ? phone[0] * PHONE_SCALE : spanW !== null ? spanW : p.w * PHOTO_SCALE;
-  const h = phone ? phone[1] * PHONE_SCALE : spanW !== null ? spanW * p.h / p.w : p.h * PHOTO_SCALE;
+  // Phones held upright (Figma "iPhone 16 - 8"): both under the words, 75 below them (their tops level with
+  // the paragraph's top): the profile under ELANA, exactly as wide as ELANA (its height keeping Figma's
+  // 295 × 308); the other (244 × 320) in the middle under DESIGNER
+  let phone = null;
+  if (ON_PHONE && p.word === 1) {
+    const wordW = ABOUT_WORDS[1].width;
+    phone = { w: wordW, h: wordW * 308 / 295, dx: 0 };
+  } else if (ON_PHONE) {
+    const photoW = 244 * PHONE_SCALE;
+    phone = { w: photoW, h: 320 * PHONE_SCALE, dx: (ABOUT_WORDS[p.word].width - photoW) / 2 };
+  }
+  const w = phone ? phone.w : spanW !== null ? spanW : p.w * PHOTO_SCALE;
+  const h = phone ? phone.h : spanW !== null ? spanW * p.h / p.w : p.h * PHOTO_SCALE;
   const ownH = h;
   const el = document.createElement("img");
   el.className = "about-photo";
@@ -255,7 +263,7 @@ const PHOTOS = [
   const y = ON_PHONE ? WORD_Y + 2 * WORD_MID + 75 * PHONE_SCALE : above ? ownY + ownH - h : ownY;
   // a photo that does not fit on a short screen is drawn smaller, keeping the corner next to the words
   el.style.transformOrigin = above ? "left bottom" : "left top";
-  const x = WORD_STRIP_X[p.word] + (ON_PHONE ? phone[2] * PHONE_SCALE : spanW !== null ? p.fromX : p.dx * PHOTO_SCALE);
+  const x = WORD_STRIP_X[p.word] + (ON_PHONE ? phone.dx : spanW !== null ? p.fromX : p.dx * PHOTO_SCALE);
   return { el, x, y, h, above };
 });
 
