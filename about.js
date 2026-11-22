@@ -51,10 +51,9 @@ const PHONE_TEXT_X = [110.39, 325.46, 1004, 2037.69];           // come scrollâ€
 const WORD_STRIP_X = ABOUT_WORDS.map((w, k) => ON_PHONE ? START_X + (PHONE_WORD_X[k] - 18) * PHONE_SCALE : START_X + w.x);
 
 // The page has moved all the way once the last word (VISION) stands in the middle of the screen
-// (on a phone: with its left edge on the left margin, like HI at the start)
-// (or a little further, if its last shape lands later: see the end of the plan)
+// (also on a phone) (or a little further, if its last shape lands later: see the end of the plan)
 const LAST = ABOUT_WORDS.length - 1;
-const VISION_PLACE = ON_PHONE ? WORD_STRIP_X[LAST] - START_X : WORD_STRIP_X[LAST] + ABOUT_WORDS[LAST].width / 2 - SCREEN_W / 2;
+const VISION_PLACE = WORD_STRIP_X[LAST] + ABOUT_WORDS[LAST].width / 2 - SCREEN_W / 2;
 let TOTAL_MOVE = VISION_PLACE;
 
 // Each small text belongs to the word before it (it shows up once that word is built)
