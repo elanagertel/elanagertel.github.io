@@ -141,11 +141,10 @@ const STAY_TIME = 700;                   // ms a letter stays organic after the 
 const GOO = 7;                           // how soft the shapes melt together halfway (Figma pixels)
 const TAP_STAY_TIME = 900;               // phones: ms a tapped letter stays organic before it oozes back
 
-// The project's picture (from the home page) shows only inside a letter while it is organic (hovered)
-// (Figma "Frame 219": the picture lies over the organic letters on "Hard light", at x 297, y 96, 846 × 832):
-// blended with the black letter it shows dark and strong, and nothing shows outside the letter.
-// The normal letters stay black: the picture fades in as a letter oozes into its organic shape.
-const ORGANIC_PICTURE = document.getElementById("lab").dataset.organicPicture;
+// The project's picture inside the organic letters is turned off: a hovered letter just turns organic,
+// with no picture in it. (To bring it back: use the page's data-organic-picture here instead of null.
+// It showed the picture from the home page inside a letter while it was organic, Figma "Frame 219".)
+const ORGANIC_PICTURE = null;
 const PICTURE_BOX = [297, 96, 846, 832];   // Figma pixels: x, y, width, height
 
 // Phones: a tap also sends "mouse" events; they are ignored right after a finger touched the screen (mobile.js)
