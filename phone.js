@@ -647,9 +647,9 @@
       ], { duration: 2 * SLIDE, delay: i * 70, easing: "linear", fill: "backwards" });
       setTimeout(() => put(l, to, l.scale), i * 70);
     });
-    await wait(named.length * 70 + 2 * SLIDE);
-
-    // 4. The pictures slide in from the sides, then their numbers and names type themselves out
+    // 4. While the letters spread (like on the big version: one slide after they set off), the pictures
+    //    slide in from the sides; once they are in, their numbers and names type themselves out
+    await wait(SLIDE);
     pictures.forEach((ph, i) => {
       ph.item.animate([{ translate: ph.outside + "px 0" }, { translate: "0 0" }],
         { duration: 2 * SLIDE, delay: i * 90, easing: EASE, fill: "backwards" });
