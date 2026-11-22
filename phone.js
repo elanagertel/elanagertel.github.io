@@ -606,22 +606,30 @@
       return;
     }
     if (skip) {
-      // Coming back through "Home" (index.html?gallery): no puzzle; the page's letters and pictures slide
-      // in from the nearest side, one slide each, on three beats (some letters and some pictures on each),
-      // then the numbers and names type themselves out
+      // Coming back through "Home" (index.html?gallery): no puzzle; like the big version, every piece of
+      // the letters on the screen and every picture slides in from the nearest edge of the screen
+      // (the things on the left first), then the numbers and names type themselves out
       home.classList.add("is-opening", "is-ready");   // (is-ready: the letters show)
-      const sideOut = (x, w) => (x + w / 2 < 393 / 2 ? -(x + w + 40) * p : (393 - x + 40) * p);
-      const comeIn = (el, out, beat) => {
-        el.animate([{ translate: out + "px 0" }, { translate: "0 0" }],
-          { duration: SLIDE, delay: 150 + beat * SLIDE, easing: EASE, fill: "backwards" });
-      };
       letters.forEach((l) => put(l, g(l.at), l.scale));
-      // the letters on the screen (E L A N A G), taking turns over the three beats
-      letters.filter((l) => l.at[0] + l.size > 0 && l.at[0] < 393 && l.at[1] < PAGE_H)
-        .forEach((l, i) => comeIn(l.el, sideOut(l.at[0], l.size), [1, 0, 2, 2, 0, 1][i % 6]));
-      const PICTURE_BEATS = { 1: 0, 2: 1, 3: 2, 4: 2, 5: 0, 6: 1 };
-      pictures.forEach((ph) => comeIn(ph.item, ph.outside, PICTURE_BEATS[ph.pr.number]));
-      await wait(150 + 3 * SLIDE);
+      // (like page-change.js, but each piece is measured by its own shape: a piece is drawn in a box as
+      // big as its letter, and the letter is scaled, so its slide is in the letter's own pixels)
+      const IN_TIME = 650, IN_SPREAD = 300, GAP = 20;   // (page-change.js: SLIDE, SPREAD, GAP)
+      const W = window.innerWidth, H = window.innerHeight;
+      const things = letters.flatMap((l) => l.pieces.map((piece) => ({ el: piece, box: shapeIn(piece), scale: l.scale })))
+        .concat(pictures.map((ph) => ({ el: ph.item, box: ph.item, scale: 1 })));
+      things.forEach(({ el, box, scale }) => {
+        const r = box.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W) return;   // (only what is on the screen)
+        const ways = [
+          { move: [-(r.right + GAP), 0], room: r.left }, { move: [W - r.left + GAP, 0], room: W - r.right },
+          { move: [0, -(r.bottom + GAP)], room: r.top }, { move: [0, H - r.top + GAP], room: H - r.bottom },
+        ];
+        const [dx, dy] = ways.sort((a, b) => a.room - b.room)[0].move;
+        const delay = IN_SPREAD * Math.min(1, Math.max(0, (r.left + r.width / 2) / W));
+        el.animate([{ translate: `${dx / scale}px ${dy / scale}px` }, { translate: "0 0" }],
+          { duration: IN_TIME, delay, easing: EASE, fill: "backwards" });
+      });
+      await wait(IN_TIME + IN_SPREAD + 50);
       pictures.forEach((ph) => ph.texts.forEach((t) => t.type(30, 0)));
       home.classList.remove("is-opening");
       home.classList.add("is-done");
