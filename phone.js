@@ -299,11 +299,12 @@
   //   1. the black pieces slide in from the edges and puzzle their way into "ELANA GERTEL"
   //      (Figma "iPhone 16 - 3": two rows in the middle of the screen), each in two straight slides;
   //   2. the whole name grows a little;
-  //   3. it breaks apart: each letter slides (as one block, in two straight slides) to its place in the
-  //      gallery, while the pictures slide in from the sides to theirs.
-  // The gallery (Figma "iPhone 16 - 6"): the big version's gallery, made small; it scrolls up and down.
-  // Tapping a picture breaks the letters apart and shows its name (typing itself out); tapping the picture
-  // again puts the letters back, and tapping its name opens the project.
+  //   3. it breaks apart: each letter slides (as one block, in two straight slides) out past the edges of
+  //      the screen, to its place around the page (Figma "iPhone 16 - 11");
+  //   4. then the pictures slide in from the sides, and their numbers and names type themselves out.
+  // The page (Figma "iPhone 16 - 11"): the pictures two by two, each with its number above it and its
+  // name under it. Tapping a picture: the letters' pieces come back in from the edges and puzzle into
+  // the project's title, then the project page opens.
   // Everything is placed in pixels of the Figma phone (393 wide); p = one of them on this screen.
   const p = window.innerWidth / 393;
   const screenH = window.innerHeight;
@@ -314,49 +315,43 @@
   const GROW = 1.08;                 // how much the name grows before it breaks apart (it just fits the screen)
   const LETTER = 57.21;              // a letter's size in the name (Figma: 2 × 2 pieces)
 
-  // The gallery (Figma "Component 2" in frame 6): 592.75 × 803, its left edge 40 outside the screen and
-  // its top 37 from the top. It only scrolls up and down: what lies outside the screen at the sides stays
-  // cut off (like in Figma).
-  const GALLERY = { w: 592.75, h: 803, left: 40, top: 37 };
-  const g = ([x, y]) => [x - GALLERY.left, y + GALLERY.top];   // gallery → screen (Figma phone px)
+  // Places are in Figma phone px, on the page (Figma frame 11)
+  const g = (place) => place;
 
-  // The letters, in the order of the name (row, column), and their places in the gallery (Figma frame 6)
-  const IN_GALLERY = 56.99;          // a letter's size in the gallery
+  // The letters, in the order of the name (row, column), and where they wait around the page, outside
+  // the screen (Figma frame 11: each one pushed out past the nearest edge)
+  const IN_GALLERY = 56.99;          // a letter's size around the page
   const LETTERS = [
-    { file: "phone-e1", row: 0, col: 0, at: [57, 196.67] },
-    { file: "phone-l1", row: 0, col: 1, at: [117, 0] },
-    { file: "phone-a1", row: 0, col: 2, at: [239, 327.62] },
-    { file: "phone-n",  row: 0, col: 3, at: [359.5, 66] },
-    { file: "phone-a2", row: 0, col: 4, at: [500, 605] },
-    { file: "phone-g",  row: 1, col: 0, at: [57, 393.8] },
-    { file: "phone-e2", row: 1, col: 1, at: [359.8, 459.07] },
-    { file: "phone-r",  row: 1, col: 2, at: [179, 721.31] },
-    { file: "phone-t",  row: 1, col: 3, at: [121, 523.91] },
-    { file: "phone-e3", row: 1, col: 4, at: [58.79, 659] },
-    { file: "phone-l2", row: 1, col: 5, at: [360, 659] },
+    { file: "phone-e1", row: 0, col: 0, at: [-73, 233.67] },
+    { file: "phone-l1", row: 0, col: 1, at: [77, -63] },
+    { file: "phone-a1", row: 0, col: 2, at: [429, 364.62] },
+    { file: "phone-n",  row: 0, col: 3, at: [419.5, 103] },
+    { file: "phone-a2", row: 0, col: 4, at: [460, 642] },
+    { file: "phone-g",  row: 1, col: 0, at: [-73, 430.8] },
+    { file: "phone-e2", row: 1, col: 1, at: [429.8, 496.07] },
+    { file: "phone-r",  row: 1, col: 2, at: [139, 858.31] },
+    { file: "phone-t",  row: 1, col: 3, at: [-79, 560.91] },
+    { file: "phone-e3", row: 1, col: 4, at: [18.79, 866] },
+    { file: "phone-l2", row: 1, col: 5, at: [430, 696] },
   ];
-  // The pictures (Figma frame 6): place, size, and how the picture lies in its window (the same crops
-  // as the big version: [left, top, width, height] of the picture, in % of the window).
-  // number: the project's number, on the picture's left (only on one picture of each project).
-  // caption: its name, one word on each row (Figma: "The / Israeli / Cactus").
+  // The pictures (Figma frame 11): place, size, how the picture lies in its window ([left, top, width,
+  // height] of the picture, in % of the window, from Figma's crop), the number above it ("1  /") and
+  // the name under it (both Helvetica Oblique 12, at their Figma places).
   const PICTURES = [
-    { file: "gallery-sense.jpg", at: [235, -0.46], size: [58.25, 57.43], crop: [0, 0, 100, 100],
-      number: 2, caption: "Sense\nShopping", alt: "Sense Shopping", href: "sense.html" },
-    { file: "gallery-archive.jpg", at: [360, 330], size: [57.63, 56.71], crop: [-19.53, -4.56, 159.77, 104.94],
-      number: 3, caption: "The\nIsraeli\nMovie\nArchive", alt: "The Israeli Movie Archive", href: "israeli-movie-archive.html" },
-    { file: "gallery-brain.png", at: [178.15, 131.05], size: [57.63, 56.71], crop: [0.68, -36.51, 99.32, 148.21],
-      number: 1, caption: "The\nMemory\nLab", alt: "The Memory Lab", href: "memory-lab.html" },
-    { file: "gallery-house.png?v=2", at: [293, 181], size: [64.03, 75], crop: [-0.01, -6.59, 99.99, 111.53],
-      number: 5, caption: "The\nDouble\nFamily", alt: "The Double Family", href: null },
-    { file: "gallery-cactus.png", at: [118.7, 263.23], size: [57.04, 55.8], crop: [-0.11, -51.11, 100.22, 151.11],
-      number: 4, caption: "The\nIsraeli\nCactus", alt: "The Israeli Cactus", href: "israeli-cactus.html" },
-    { file: "gallery-watercolor.png?v=2", at: [174, 393.31], size: [64.94, 57.17], crop: [-2.11, -9.59, 102.45, 164.6],
-      caption: "The\nMemory\nLab", alt: "The Memory Lab", href: "memory-lab.html" },
-    { file: "gallery-archive.jpg", at: [296, 524], size: [57.63, 56.71], crop: [-19.53, -4.56, 159.77, 104.94],
-      caption: "The\nIsraeli\nMovie\nArchive", alt: "The Israeli Movie Archive", href: "israeli-movie-archive.html" },
-    { file: "gallery-house.png?v=2", at: [175, 581], size: [64.03, 75], crop: [-0.01, -6.59, 99.99, 111.53],
-      caption: "The\nDouble\nFamily", alt: "The Double Family", href: null },
+    { file: "gallery-brain.png", at: [18, 102], size: [177, 188], crop: [-1.86, -31.52, 101.86, 141.06],
+      number: 1, numberAt: [18, 81], name: "The Memory Lab", nameAt: [18, 297], href: "memory-lab.html" },
+    { file: "gallery-sense.jpg", at: [199, 102], size: [176, 188], crop: [-5.39, 0, 109.48, 101.06],
+      number: 2, numberAt: [198, 81], name: "Sense Shopping", nameAt: [198, 297], href: "sense.html" },
+    { file: "gallery-archive.jpg", at: [18, 365], size: [176, 188], crop: [-26.31, -3.59, 170.83, 103.59],
+      number: 3, numberAt: [18, 344], name: "Israeli Movie Archive", nameAt: [18, 562], href: "israeli-movie-archive.html" },
+    { file: "gallery-cactus.png", at: [198, 365], size: [177, 188], crop: [-2.7, -49.29, 107.13, 149.5],
+      number: 4, numberAt: [198, 344], name: "The Israeli Cactus", nameAt: [198, 562], href: "israeli-cactus.html" },
+    { file: "gallery-house.png?v=2", at: [17, 616], size: [178, 209], crop: [-0.01, -6.59, 99.99, 111.53],
+      number: 5, numberAt: [18, 607], name: "The Double Family", nameAt: [18, 825], href: null },
+    { file: "gallery-watercolor.png?v=2", at: [198.5, 628], size: [177, 188], crop: [-4.52, -24.38, 110.73, 147.45],
+      number: 6, numberAt: [198, 607], name: "Shintana", nameAt: [198, 825], href: null },
   ];
+  const PAGE_H = 852;   // the page's height (Figma frame 11; the letters below it stay hidden)
 
   // The scrolling box (the whole screen) and the gallery in it
   const home = document.createElement("section");
@@ -365,7 +360,7 @@
   const flowBox = document.createElement("div");
   flowBox.className = "phone-flow";
   flowBox.style.width = 393 * p + "px";   // (as wide as the screen: what lies outside it is cut off)
-  flowBox.style.height = Math.max((GALLERY.top + GALLERY.h + 70) * p, screenH) + "px";
+  flowBox.style.height = PAGE_H * p + "px";
   home.appendChild(flowBox);
 
   // Where each letter stands in the name (Figma Frame 220: rows of 57.2 letters, 2.75 apart, 9.16 between
@@ -423,7 +418,6 @@
   const SMALL = IN_GALLERY / LETTER;
 
   // ----- The pictures, numbers and names -----
-  let shownName = null;   // the picture whose name shows (after a first tap)
   const pictures = PICTURES.map((pr) => {
     const item = document.createElement(pr.href ? "a" : "div");
     item.className = "phone-flow-photo";
@@ -437,40 +431,32 @@
     window_.className = "phone-photo-window";
     const picture = document.createElement("img");
     picture.src = "images/" + pr.file;
-    picture.alt = pr.alt;
+    picture.alt = pr.name;
     picture.style.left = pr.crop[0] + "%";
     picture.style.top = pr.crop[1] + "%";
     picture.style.width = pr.crop[2] + "%";
     picture.style.height = pr.crop[3] + "%";
     window_.appendChild(picture);
     item.appendChild(window_);
-    if (pr.number) {
-      const number = document.createElement("span");
-      number.className = "phone-project-number";
-      number.setAttribute("aria-hidden", "true");
-      number.textContent = pr.number + "  /";
-      item.appendChild(number);
-    }
-    const caption = document.createElement("span");
-    caption.className = "phone-project-caption";
-    caption.setAttribute("aria-hidden", "true");
-    const typer = typed(caption, pr.caption);
-    typer.clear();
-    item.appendChild(caption);
     flowBox.appendChild(item);
-    // Pressing a picture (like hovering it on the big version): the letters spread away from it and
-    // its name types itself out under it. Pressing it again opens the project; pressing anywhere else
-    // puts the letters back.
-    const entry = { item, typer, pr };
+    // the number above it and the name under it (they type themselves out when the pictures come in)
+    const texts = [[pr.number + "  /", pr.numberAt], [pr.name, pr.nameAt]].map(([words, [tx, ty]]) => {
+      const text = document.createElement("span");
+      text.className = "phone-grid-text";
+      text.setAttribute("aria-hidden", "true");
+      text.style.left = tx * p + "px";
+      text.style.top = ty * p + "px";
+      flowBox.appendChild(text);
+      const typer = typed(text, words);
+      typer.clear();
+      return typer;
+    });
+    const entry = { item, texts, pr };
+    // Tapping a picture: the letters' pieces build the project's title, then the project opens
     item.addEventListener("click", (event) => {
       event.preventDefault();
-      event.stopPropagation();
-      if (!home.classList.contains("is-done") || leaving) return;
-      const onName = event.target.closest(".phone-project-caption");
-      if (shownName === entry && onName && pr.href) goToProject(entry);   // tapping its name: the pieces
-                                                                         // build its title, then it opens
-      else if (shownName === entry) hidePicture();   // tapping it again: the letters come back together
-      else showPicture(entry);                        // the first tap: the letters break apart, its name shows
+      if (!home.classList.contains("is-done") || leaving || !pr.href) return;
+      goToProject(entry);
     });
     // it waits outside the screen on the side it is nearest to, and slides in from there
     const fromLeft = x + pr.size[0] / 2 < 393 / 2;
@@ -480,55 +466,9 @@
 
   document.body.appendChild(home);
 
-  // ----- Pressing a picture: the letters break apart, and its name shows -----
-  // Like the big version: each letter breaks along its grid. Half of it (a column or a row of its 2 × 2
-  // squares) slides exactly one square, straight away from the picture (sideways or up/down, whichever
-  // the letter is more off to), so the pieces stay neat. Which half moves differs from letter to letter
-  // and from picture to picture. Tapping anywhere else, they slide back.
-  const CELL = LETTER / 2;     // one square of a letter (its own units)
   let leaving = false;
-  function spreadFrom(entry) {
-    const [px, py] = g(entry.pr.at);
-    const cx = px + entry.pr.size[0] / 2, cy = py + entry.pr.size[1] / 2;
-    const pictureIndex = pictures.indexOf(entry);
-    letters.forEach((l, k) => {
-      const [lx, ly] = g(l.at);
-      const dx = lx + IN_GALLERY / 2 - cx, dy = ly + IN_GALLERY / 2 - cy;
-      const across = Math.abs(dx) > Math.abs(dy);          // it moves sideways (or up/down)
-      const away = across ? Math.sign(dx || 1) : Math.sign(dy || 1);
-      const kind = (k + pictureIndex) % 3;                 // which half of the letter moves
-      l.pieces.forEach((piece) => {
-        const b = shapeIn(piece).getBBox();
-        const col = b.x + b.width / 2 < CELL ? 0 : 1, row = b.y + b.height / 2 < CELL ? 0 : 1;
-        const far = away > 0 ? 1 : 0;                      // the column / row on the side away from the picture
-        let moves;
-        if (kind === 0) moves = across ? col === far : row === far;   // the far half slides further away
-        else if (kind === 1) moves = across ? row === 0 : col === 0;  // the top (or left) half slides
-        else moves = across ? row === 1 : col === 1;                  // the bottom (or right) half slides
-        const step = moves ? away * CELL * p : 0;          // (one square, in screen px before the letter's size)
-        piece.style.transform = across ? `translate(${step}px, 0px)` : `translate(0px, ${step}px)`;
-      });
-    });
-  }
-  function gatherPieces() {
-    letters.forEach((l) => l.pieces.forEach((piece) => { piece.style.transform = ""; }));
-  }
-  function showPicture(entry) {
-    hidePicture();
-    shownName = entry;
-    entry.item.classList.add("is-named");
-    entry.typer.type(30, 0);
-    spreadFrom(entry);
-  }
-  function hidePicture() {
-    if (!shownName) return;
-    shownName.typer.clear();
-    shownName.item.classList.remove("is-named");
-    shownName = null;
-    gatherPieces();
-  }
 
-  // ----- Tapping the name: the pieces puzzle into the project's title, then the project page opens -----
+  // ----- Tapping a picture: the pieces puzzle into the project's title, then the project page opens -----
   // The title is built exactly where the project page shows it (Figma "iPhone 16 - 7": across the width,
   // its middle 37.5% + 15.3 down the screen, its letters 52.51 wide), so the page opens with it in place.
   // Each place in the title is taken by the nearest piece, which slides there in two straight slides
@@ -630,7 +570,7 @@
     });
     // the pictures slide out to their sides, and the names go away
     pictures.forEach((ph) => {
-      ph.typer.clear();
+      ph.texts.forEach((t) => t.clear());
       ph.item.animate([{ translate: "0 0" }, { translate: ph.outside + "px 0" }],
         { duration: SLIDE, easing: EASE, fill: "forwards" });
     });
@@ -639,13 +579,13 @@
     await wait(BUILD + SPREAD_TIME + 250);
     location.href = href;
   }
-  home.addEventListener("click", (event) => { if (!event.target.closest(".phone-flow-photo")) hidePicture(); });
 
   // ----- The opening -----
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
   ready.then(async () => {
-    if (skip) {   // straight to the gallery
+    if (skip) {   // straight to the pictures
       letters.forEach((l) => put(l, g(l.at), SMALL));
+      pictures.forEach((ph) => ph.texts.forEach((t) => t.show()));
       home.classList.add("is-done");
       return;
     }
@@ -691,8 +631,8 @@
     });
     await wait(700 + 350);
 
-    // 3. It breaks apart: each letter slides across, then up or down, to its place in the gallery
-    //    (back to its own size on the way), one after the other; the pictures slide in from the sides
+    // 3. It breaks apart: each letter slides across, then up or down, out past the edges of the screen
+    //    (back to its own size on the way), one after the other
     letters.forEach((l, i) => {
       const from = grown(namePlace(l)), to = g(l.at), mid = [to[0], from[1]];
       l.el.animate([
@@ -702,12 +642,16 @@
       ], { duration: 2 * SLIDE, delay: i * 70, easing: "linear", fill: "backwards" });
       setTimeout(() => put(l, to, SMALL), i * 70);
     });
+    await wait(LETTERS.length * 70 + 2 * SLIDE);
+
+    // 4. The pictures slide in from the sides, then their numbers and names type themselves out
     pictures.forEach((ph, i) => {
       ph.item.animate([{ translate: ph.outside + "px 0" }, { translate: "0 0" }],
-        { duration: 2 * SLIDE, delay: 200 + i * 90, easing: EASE, fill: "backwards" });
-      setTimeout(() => { ph.item.style.translate = ""; }, 200 + i * 90);
+        { duration: 2 * SLIDE, delay: i * 90, easing: EASE, fill: "backwards" });
+      setTimeout(() => { ph.item.style.translate = ""; }, i * 90);
     });
-    await wait(200 + PICTURES.length * 90 + 2 * SLIDE);
+    await wait(PICTURES.length * 90 + 2 * SLIDE);
+    pictures.forEach((ph) => ph.texts.forEach((t) => t.type(30, 0)));
     home.classList.remove("is-opening");
     home.classList.add("is-done");
   });

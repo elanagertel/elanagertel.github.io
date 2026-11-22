@@ -2483,6 +2483,18 @@ body.lab-page {
   object-fit: cover;
 }
 
+/* The number above each picture and the name under it (Figma "iPhone 16 - 11": Helvetica Oblique 12),
+   placed by phone.js */
+.phone-grid-text {
+  position: absolute;
+  font-family: var(--font-nav);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.24;
+  white-space: pre;
+  color: var(--color-text);
+}
+
 /* the number: oblique, left of the picture, its bottom on the picture's bottom (like the home page) */
 .phone-project-number,
 .phone-project-caption {
