@@ -316,16 +316,16 @@
 
   // The gallery (Figma "iPhone 16 - 9"): the letters and pictures on the phone's layout grid (columns 57
   // wide with 3 between them, from 18 on the left; 12 rows from 36 at the top to 36 from the bottom, 9
-  // between them). It is wider than the screen and scrolls sideways only: the rows stretch to fill the
-  // screen's height (like Figma's grid), so it never scrolls up and down.
-  const FIGMA_ROW = (852 - 72 + 9) / 12;                 // a row and its gap in Figma (65.75)
-  const ROW = (screenH / p - 72 + 9) / 12;               // the same on this screen
-  const GALLERY_W = 554.21 + 18;                         // its right edge: the last letter, and the margin
-  const g = ([x, y]) => [x, 36 + (y - 36) / FIGMA_ROW * ROW];   // Figma place → place on this screen
+  // between them). It is wider than the screen and scrolls sideways only. On a screen shorter than the
+  // Figma frame (852), the whole gallery is made a little smaller, all of it evenly, so it fits the
+  // screen's height and everything keeps its place as in Figma.
+  const FIT = Math.min(1, screenH / (852 * p));          // 1 = Figma's size
+  const GALLERY_W = (554.21 + 18) * FIT;                 // its right edge: the last letter, and the margin
+  const g = ([x, y]) => [x * FIT, y * FIT];              // Figma place → place on this screen
 
   // The letters, in the order of the name (row, column), and their places in the gallery (Figma frame 9).
   // The gallery has only 8 of the 11 letters: the other three (at: null) slide away when the name breaks.
-  const IN_GALLERY = 56.99;          // a letter's size in the gallery
+  const IN_GALLERY = 56.99 * FIT;    // a letter's size in the gallery
   const LETTERS = [
     { file: "phone-e1", row: 0, col: 0, at: [198, 36] },
     { file: "phone-l1", row: 0, col: 1, at: [80, 233] },
@@ -356,6 +356,8 @@
     { file: "gallery-house.png?v=2", at: [251, 670], size: [130.29, 152.62], crop: [-0.01, -6.59, 99.99, 111.53],
       number: 5, caption: "The\nDouble\nFamily", alt: "The Double Family", href: null },
   ];
+
+  PICTURES.forEach((pr) => { pr.size = pr.size.map((v) => v * FIT); });
 
   // The scrolling box (the whole screen) and the gallery in it
   const home = document.createElement("section");
