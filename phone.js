@@ -301,7 +301,7 @@
   //   2. the whole name grows a little;
   //   3. it breaks apart: each letter slides (as one block, in two straight slides) to its place in the
   //      gallery, while the pictures slide in from the sides to theirs.
-  // The gallery (Figma "iPhone 16 - 6"): the letters and pictures on the phone's layout grid; it scrolls sideways.
+  // The gallery (Figma "iPhone 16 - 6"): the big version's gallery, made small; it scrolls up and down.
   // Tapping a picture breaks the letters apart and shows its name (typing itself out); tapping the picture
   // again puts the letters back, and tapping its name opens the project.
   // Everything is placed in pixels of the Figma phone (393 wide); p = one of them on this screen.
@@ -314,53 +314,49 @@
   const GROW = 1.08;                 // how much the name grows before it breaks apart (it just fits the screen)
   const LETTER = 57.21;              // a letter's size in the name (Figma: 2 × 2 pieces)
 
-  // The gallery (Figma "iPhone 16 - 9"): the letters and pictures on the phone's layout grid (columns 57
-  // wide with 3 between them, from 18 on the left; 12 rows from 36 at the top to 36 from the bottom, 9
-  // between them). It is wider than the screen and scrolls sideways only. On a screen shorter than the
-  // Figma frame (852), the whole gallery is made a little smaller, all of it evenly, so it fits the
-  // screen's height and everything keeps its place as in Figma.
-  const FIT = Math.min(1, screenH / (852 * p));          // 1 = Figma's size
-  const GALLERY_W = (682.29 + 18) * FIT;                 // its right edge: the last picture, and the margin
-  const g = ([x, y]) => [x * FIT, y * FIT];              // Figma place → place on this screen
+  // The gallery (Figma "Component 2" in frame 6): 592.75 × 803, its left edge 40 outside the screen and
+  // its top 37 from the top. It only scrolls up and down: what lies outside the screen at the sides stays
+  // cut off (like in Figma).
+  const GALLERY = { w: 592.75, h: 803, left: 40, top: 37 };
+  const g = ([x, y]) => [x - GALLERY.left, y + GALLERY.top];   // gallery → screen (Figma phone px)
 
-  // The letters, in the order of the name (row, column), and their places in the gallery (Figma frame 9)
-  const IN_GALLERY = 56.99 * FIT;    // a letter's size in the gallery
+  // The letters, in the order of the name (row, column), and their places in the gallery (Figma frame 6)
+  const IN_GALLERY = 56.99;          // a letter's size in the gallery
   const LETTERS = [
-    { file: "phone-e1", row: 0, col: 0, at: [198, 36] },
-    { file: "phone-l1", row: 0, col: 1, at: [80, 233] },
-    { file: "phone-a1", row: 0, col: 2, at: [497, 101] },
-    { file: "phone-n",  row: 0, col: 3, at: [378, 233] },
-    { file: "phone-a2", row: 0, col: 4, at: [439, 563] },
-    { file: "phone-g",  row: 1, col: 0, at: [18, 562] },
-    { file: "phone-e2", row: 1, col: 1, at: [258, 365] },
-    { file: "phone-r",  row: 1, col: 2, at: [138, 759] },
-    { file: "phone-t",  row: 1, col: 3, at: [258, 562] },
-    { file: "phone-e3", row: 1, col: 4, at: [617, 496] },
-    { file: "phone-l2", row: 1, col: 5, at: [439, 759] },
+    { file: "phone-e1", row: 0, col: 0, at: [57, 196.67] },
+    { file: "phone-l1", row: 0, col: 1, at: [117, 0] },
+    { file: "phone-a1", row: 0, col: 2, at: [239, 327.62] },
+    { file: "phone-n",  row: 0, col: 3, at: [359.5, 66] },
+    { file: "phone-a2", row: 0, col: 4, at: [500, 605] },
+    { file: "phone-g",  row: 1, col: 0, at: [57, 393.8] },
+    { file: "phone-e2", row: 1, col: 1, at: [359.8, 459.07] },
+    { file: "phone-r",  row: 1, col: 2, at: [179, 721.31] },
+    { file: "phone-t",  row: 1, col: 3, at: [121, 523.91] },
+    { file: "phone-e3", row: 1, col: 4, at: [58.79, 659] },
+    { file: "phone-l2", row: 1, col: 5, at: [360, 659] },
   ];
-  // The pictures (Figma frame 9): place, size, and how the picture lies in its window (the same crops
+  // The pictures (Figma frame 6): place, size, and how the picture lies in its window (the same crops
   // as the big version: [left, top, width, height] of the picture, in % of the window).
-  // number: the project's number, on the picture's left. caption: its name, one word on each row.
+  // number: the project's number, on the picture's left (only on one picture of each project).
+  // caption: its name, one word on each row (Figma: "The / Israeli / Cactus").
   const PICTURES = [
-    { file: "gallery-brain.png", at: [18, 43], size: [117.26, 115.4], crop: [0.68, -36.51, 99.32, 148.21],
-      number: 1, caption: "The\nMemory\nLab", alt: "The Memory Lab", href: "memory-lab.html" },
-    { file: "gallery-cactus.png", at: [197, 176], size: [116.06, 113.54], crop: [-0.11, -51.11, 100.22, 151.11],
-      number: 4, caption: "The\nIsraeli\nCactus", alt: "The Israeli Cactus", href: "israeli-cactus.html" },
-    { file: "gallery-sense.jpg", at: [18, 370], size: [118.52, 116.87], crop: [0, 0, 100, 100],
+    { file: "gallery-sense.jpg", at: [235, -0.46], size: [58.25, 57.43], crop: [0, 0, 100, 100],
       number: 2, caption: "Sense\nShopping", alt: "Sense Shopping", href: "sense.html" },
-    { file: "gallery-watercolor.png?v=2", at: [373, 371], size: [132.15, 116.33], crop: [-2.11, -9.59, 102.45, 164.6],
-      caption: "The\nMemory\nLab", alt: "The Memory Lab", href: "memory-lab.html" },
-    { file: "gallery-archive.jpg", at: [21, 635], size: [117.26, 115.4], crop: [-19.53, -4.56, 159.77, 104.94],
+    { file: "gallery-archive.jpg", at: [360, 330], size: [57.63, 56.71], crop: [-19.53, -4.56, 159.77, 104.94],
       number: 3, caption: "The\nIsraeli\nMovie\nArchive", alt: "The Israeli Movie Archive", href: "israeli-movie-archive.html" },
-    { file: "gallery-house.png?v=2", at: [251, 670], size: [130.29, 152.62], crop: [-0.01, -6.59, 99.99, 111.53],
+    { file: "gallery-brain.png", at: [178.15, 131.05], size: [57.63, 56.71], crop: [0.68, -36.51, 99.32, 148.21],
+      number: 1, caption: "The\nMemory\nLab", alt: "The Memory Lab", href: "memory-lab.html" },
+    { file: "gallery-house.png?v=2", at: [293, 181], size: [64.03, 75], crop: [-0.01, -6.59, 99.99, 111.53],
       number: 5, caption: "The\nDouble\nFamily", alt: "The Double Family", href: null },
-    { file: "gallery-house.png?v=2", at: [552, 210], size: [130.29, 152.62], crop: [-0.01, -6.59, 99.99, 111.53],
-      caption: "The\nDouble\nFamily", alt: "The Double Family", href: null },
-    { file: "gallery-archive.jpg", at: [557, 635], size: [117.26, 115.4], crop: [-19.53, -4.56, 159.77, 104.94],
+    { file: "gallery-cactus.png", at: [118.7, 263.23], size: [57.04, 55.8], crop: [-0.11, -51.11, 100.22, 151.11],
+      number: 4, caption: "The\nIsraeli\nCactus", alt: "The Israeli Cactus", href: "israeli-cactus.html" },
+    { file: "gallery-watercolor.png?v=2", at: [174, 393.31], size: [64.94, 57.17], crop: [-2.11, -9.59, 102.45, 164.6],
+      caption: "The\nMemory\nLab", alt: "The Memory Lab", href: "memory-lab.html" },
+    { file: "gallery-archive.jpg", at: [296, 524], size: [57.63, 56.71], crop: [-19.53, -4.56, 159.77, 104.94],
       caption: "The\nIsraeli\nMovie\nArchive", alt: "The Israeli Movie Archive", href: "israeli-movie-archive.html" },
+    { file: "gallery-house.png?v=2", at: [175, 581], size: [64.03, 75], crop: [-0.01, -6.59, 99.99, 111.53],
+      caption: "The\nDouble\nFamily", alt: "The Double Family", href: null },
   ];
-
-  PICTURES.forEach((pr) => { pr.size = pr.size.map((v) => v * FIT); });
 
   // The scrolling box (the whole screen) and the gallery in it
   const home = document.createElement("section");
@@ -368,8 +364,8 @@
   home.setAttribute("aria-label", "Projects");
   const flowBox = document.createElement("div");
   flowBox.className = "phone-flow";
-  flowBox.style.width = GALLERY_W * p + "px";
-  flowBox.style.height = screenH + "px";   // (exactly the screen's height: no scrolling up and down)
+  flowBox.style.width = 393 * p + "px";   // (as wide as the screen: what lies outside it is cut off)
+  flowBox.style.height = Math.max((GALLERY.top + GALLERY.h + 70) * p, screenH) + "px";
   home.appendChild(flowBox);
 
   // Where each letter stands in the name (Figma Frame 220: rows of 57.2 letters, 2.75 apart, 9.16 between
@@ -478,7 +474,7 @@
     });
     // it waits outside the screen on the side it is nearest to, and slides in from there
     const fromLeft = x + pr.size[0] / 2 < 393 / 2;
-    entry.outside = fromLeft ? -(x + pr.size[0] + 40) * p : (Math.max(393 - x, pr.size[0]) + 40) * p;
+    entry.outside = fromLeft ? -(x + pr.size[0] + 40) * p : (393 - x + 40) * p;
     return entry;
   });
 
@@ -635,9 +631,7 @@
     // the pictures slide out to their sides, and the names go away
     pictures.forEach((ph) => {
       ph.typer.clear();
-      const box = ph.item.getBoundingClientRect();   // (where it is on the screen now: the gallery may be scrolled)
-      const out = box.left + box.width / 2 < W / 2 ? -(box.right + 40) : (W - box.left + 40);
-      ph.item.animate([{ translate: "0 0" }, { translate: out + "px 0" }],
+      ph.item.animate([{ translate: "0 0" }, { translate: ph.outside + "px 0" }],
         { duration: SLIDE, easing: EASE, fill: "forwards" });
     });
 

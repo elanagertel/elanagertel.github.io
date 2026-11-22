@@ -2394,14 +2394,14 @@ body.lab-page {
   display: none;
 }
 
-/* The gallery scrolls sideways only (it is exactly as high as the screen): the whole screen is its
-   scrolling box */
+/* The gallery scrolls up and down (what is wider than the screen is cut off at the sides):
+   the whole screen is its scrolling box */
 .is-phone-portrait .phone-home {
   display: block;
   position: fixed;
   inset: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: none;
   scrollbar-width: none;
 }
