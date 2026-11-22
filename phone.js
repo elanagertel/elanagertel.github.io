@@ -298,10 +298,9 @@
   // Like the big version:
   //   1. the black pieces slide in from the edges and puzzle their way into "ELANA GERTEL"
   //      (Figma "iPhone 16 - 3": two rows in the middle of the screen), each in two straight slides;
-  //   2. the whole name grows a little;
-  //   3. it breaks apart: each letter slides (as one block, in two straight slides) to its place: E L A N A G
+  //   2. it breaks apart: each letter slides (as one block, in two straight slides, growing to its size on the way) to its place: E L A N A G
   //      between the pictures, the others out past the edges of the screen (Figma "iPhone 16 - 12");
-  //   4. then the pictures slide in from the sides, and their numbers and names type themselves out.
+  //   3. meanwhile the pictures slide in from the sides, and their numbers and names type themselves out.
   // The page (Figma "iPhone 16 - 12"): the pictures in a zigzag between the letters, each with its number above it and its
   // name under it. Tapping a picture: the letters' pieces come back in from the edges and puzzle into
   // the project's title, then the project page opens.
@@ -312,7 +311,6 @@
 
   const SLIDE = 550;                 // ms for one straight slide (like the big version)
   const EASE = "cubic-bezier(0.65, 0, 0.35, 1)";
-  const GROW = 1.08;                 // how much the name grows before it breaks apart (it just fits the screen)
   const LETTER = 57.21;              // a letter's size in the name (Figma: 2 × 2 pieces)
 
   // Places are in Figma phone px, on the page (Figma frame 12)
@@ -377,8 +375,6 @@
     const y = nameMid[1] - (2 * LETTER + 9.16) / 2 + l.row * (LETTER + 9.16);
     return [x, y];
   }
-  // the same place once the name has grown (around its middle)
-  const grown = ([x, y]) => [nameMid[0] + (x - nameMid[0]) * GROW, nameMid[1] + (y - nameMid[1]) * GROW];
 
   // ----- The letters: one <svg> each, every piece in its own group (so each piece can slide) -----
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -626,30 +622,28 @@
       ], { duration: 2 * SLIDE, delay: START_PAUSE + (i / all.length) * SPREAD, easing: "linear", fill: "backwards" });
     });
     home.classList.add("is-ready");   // (the pieces are placed: show them)
-    await wait(START_PAUSE + SPREAD + 2 * SLIDE + 500);
+    await wait(START_PAUSE + SPREAD + 2 * SLIDE + 100);   // (just a moment after the last piece lands)
 
-    // 2. The name grows
-    named.forEach((l) => {
-      const from = namePlace(l), to = grown(from);
-      l.el.animate([{ transform: at(from, 1) }, { transform: at(to, GROW) }], { duration: 700, easing: EASE });
-      put(l, to, GROW);
-    });
-    await wait(700 + 350);
-
-    // 3. It breaks apart: each letter slides across, then up or down, out past the edges of the screen
-    //    (back to its own size on the way), one after the other
+    // 2. It breaks apart: each letter slides across, then up or down, to its place (one after the other),
+    //    and grows (or shrinks) to its size gradually along the whole way. The two slides are drawn as
+    //    many small steps, so the size can change smoothly through both of them.
+    const ease = (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);   // slow start, soft stop
+    const STEPS = 30;
     named.forEach((l, i) => {
-      const from = grown(namePlace(l)), to = g(l.at), mid = [to[0], from[1]];
-      l.el.animate([
-        { transform: at(from, GROW) },
-        { transform: at(mid, (GROW + l.scale) / 2), offset: 0.5, easing: EASE },
-        { transform: at(to, l.scale) },
-      ], { duration: 2 * SLIDE, delay: i * 70, easing: "linear", fill: "backwards" });
+      const from = namePlace(l), to = g(l.at), mid = [to[0], from[1]];
+      const frames = [];
+      for (let k = 0; k <= STEPS; k++) {
+        const t = k / STEPS;
+        const [a, b, part] = t < 0.5 ? [from, mid, ease(t * 2)] : [mid, to, ease(t * 2 - 1)];
+        const place = [a[0] + (b[0] - a[0]) * part, a[1] + (b[1] - a[1]) * part];
+        frames.push({ transform: at(place, 1 + (l.scale - 1) * ease(t)) });
+      }
+      l.el.animate(frames, { duration: 2 * SLIDE, delay: i * 70, easing: "linear", fill: "backwards" });
       setTimeout(() => put(l, to, l.scale), i * 70);
     });
-    // 4. While the letters spread (like on the big version: one slide after they set off), the pictures
-    //    slide in from the sides; once they are in, their numbers and names type themselves out
-    await wait(SLIDE);
+    // 3. While the letters spread (like on the big version), the pictures
+    //    slide in from the sides (almost together with the letters); once they are in, their numbers and names type themselves out
+    await wait(150);   // (the pictures set off almost together with the letters)
     pictures.forEach((ph, i) => {
       ph.item.animate([{ translate: ph.outside + "px 0" }, { translate: "0 0" }],
         { duration: 2 * SLIDE, delay: i * 90, easing: EASE, fill: "backwards" });
