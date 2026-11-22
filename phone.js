@@ -133,10 +133,10 @@
   //   counter under it, and the short texts; then the pictures and the story paragraphs in the order the
   //   big version shows them, and at the end the black end with the title in white.
   if (document.getElementById("lab")) {
-    // the school's text is shorter on the phone (Figma "iPhone 16 - 7": only "Bezalel - Academy of Art and
+    // the school's text is shorter on the phone (Figma "iPhone 16 - 7": "Bezalel, Academy / of Art and
     // Design"); done now, before type-texts.js gets the texts ready to type
     document.querySelectorAll(".lab-intro").forEach((el) => {
-      if (el.textContent.trim().startsWith("Bezalel")) el.textContent = el.textContent.trim().split("\n").slice(0, 2).join("\n");
+      if (el.textContent.trim().startsWith("Bezalel")) el.textContent = "Bezalel, Academy\nof Art and Design";
     });
     window.addEventListener("DOMContentLoaded", buildProjectPage);
   }
@@ -155,10 +155,11 @@
     root.classList.add("is-phone-portrait");
     parts.sort((a, b) => a.y - b.y).forEach((part, i) => { part.el.style.order = 10 + i; });
 
-    // The short texts, on the first screen (Figma "iPhone 16 - 7"): the project's name and the year side
-    // by side at y 607, the school and the technique under them at y 625, and the brief and the solution
-    // lower down (y 734 and 755). The name, the year and the school are 12; the technique, the brief and
-    // the solution 16 (.phone-intro-big in styles.css). Each one is found by its place on the big version (--x, --y).
+    // The short texts, on the first screen (Figma "iPhone 16 - 7"): the school at the top left (y 592) and
+    // the year beside it (x 200, y 607); under them the project's name and the technique side by side
+    // (y 628); and the brief and the solution lower down (y 734 and 759). The school and the year are 12;
+    // the name, the technique, the brief and the solution 16 (.phone-intro-big in styles.css; the name and
+    // the technique bold). Each one is found by its place on the big version (--x, --y).
     root.classList.add("phone-project");
 
     // the pictures beside a paragraph lie in one row, the same height: each one's share of the row is its
@@ -170,10 +171,10 @@
     lab.querySelectorAll(".lab-intro").forEach((el) => {
       const x = parseFloat(el.style.getPropertyValue("--x")), y = parseFloat(el.style.getPropertyValue("--y"));
       let place, big = false;
-      if (x < 200) place = [18, 607];                       // the project's name
-      else if (x < 450) place = y < 860 ? [200, 607] : [18, 625];   // the year / the school
-      else if (x < 800) { place = [198, 625]; big = true; } // the technique
-      else { place = y < 860 ? [18, 734] : [18, 755]; big = true; }   // the brief / the solution
+      if (x < 200) { place = [18, 628]; big = true; }       // the project's name
+      else if (x < 450) place = y < 860 ? [200, 607] : [18, 592];   // the year / the school
+      else if (x < 800) { place = [198, 628]; big = true; } // the technique
+      else { place = y < 860 ? [18, 734] : [18, 759]; big = true; }   // the brief / the solution
       el.style.setProperty("--px", place[0]);
       el.style.setProperty("--py", place[1]);
       el.classList.toggle("phone-intro-big", big);
