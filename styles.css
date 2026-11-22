@@ -2394,13 +2394,13 @@ body.lab-page {
   display: none;
 }
 
-/* The gallery scrolls up and down (what is wider than the screen is cut off at the sides):
-   the whole screen is its scrolling box */
+/* The gallery scrolls sideways (it fills the screen's height; only on a very short screen does it
+   also scroll a little up and down): the whole screen is its scrolling box */
 .is-phone-portrait .phone-home {
   display: block;
   position: fixed;
   inset: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   overscroll-behavior: none;
   scrollbar-width: none;
@@ -2586,6 +2586,7 @@ body.lab-page {
 /* the arrows to the other projects: under the title, on the margins (Figma: y 50% + 20, 20.3 × 40.6) */
 .is-phone-portrait .lab > .project-arrow {
   position: absolute;
+  grid-area: auto;   /* (placed from the page's edge, not inside the grid's 18px margin) */
   top: calc(50svh + 20 * var(--p));
   width: var(--phone-arrow-w);
   z-index: 6;
@@ -2594,12 +2595,12 @@ body.lab-page {
 .is-phone-portrait .lab > .project-arrow-prev { left: var(--phone-margin); right: auto; }
 .is-phone-portrait .lab > .project-arrow-next { right: var(--phone-margin); left: auto; }
 
-/* The counter under the arrows (Figma: "3  /" at x 17 and "/  07" on the right margin, y 58.33% - 6,
-   Helvetica 16): it stays on the screen while you scroll, like on the big version */
+/* The counter right under the arrows (Figma: "3  /" at x 17 and "/  07" on the right margin, 4.4 under
+   the arrows' bottom, so 65 under their top on every screen): it stays on the screen while you scroll */
 .is-phone-portrait.phone-project .fold-count {
   display: grid !important;   /* (the old and the new number lie in the same spot while one rolls in) */
   position: fixed;
-  top: calc(58.33svh - 6 * var(--p));
+  top: calc(50svh + 65 * var(--p));
   font-size: 12px;   /* (like the numbers beside the pictures on the home page) */
   font-style: italic;
 }
@@ -2608,7 +2609,8 @@ body.lab-page {
    the first screen, so it scrolls away with it (the counter above then counts the pictures) */
 .phone-first-count {
   position: absolute !important;
-  top: calc(58.33svh - 6 * var(--p)) !important;
+  grid-area: auto !important;   /* (placed from the page's edge, not inside the grid's 18px margin) */
+  top: calc(50svh + 65 * var(--p)) !important;
   margin: 0;
   font-family: var(--font-nav);
   font-size: 12px;
