@@ -297,7 +297,7 @@
   function buildHome() {
   // Like the big version:
   //   1. the black pieces slide in from the edges and puzzle their way into "ELANA GERTEL"
-  //      (Figma "iPhone 16 - 3": two rows in the middle of the screen), each in two straight slides;
+  //      (Figma "iPhone 16 - 3": two rows in the middle of the screen), each in 2 to 4 straight slides on a beat;
   //   2. it breaks apart: each letter slides (as one block, in two straight slides, growing to its size on the way) to its place: E L A N A G
   //      between the pictures, the others out past the edges of the screen (Figma "iPhone 16 - 12");
   //   3. meanwhile the pictures slide in from the sides, and their numbers and names type themselves out.
@@ -594,42 +594,57 @@
     pictures.forEach((ph) => { ph.item.style.translate = ph.outside + "px 0"; });
     home.classList.add("is-opening");
 
-    // 1. The puzzle: every piece starts outside the screen, behind one of its four edges (left, right,
-    //    top or bottom, a little off to one side), and comes in with two straight slides: first straight
-    //    in from its edge, then sideways (or up/down) into its place
+    // Like the big version, everything moves in straight slides of SLIDE ms, one right after the other,
+    // on a beat (every 110 ms); a shape turns only between slides. `slides` turns a path (a list of
+    // places) into such a movement: each part is one slide, slow at the start and soft at the end.
+    const BEAT = 110;
+    const slides = (path) => path.map((place, k) => ({
+      transform: place, offset: k / (path.length - 1), easing: EASE,
+    }));
+    const pick = (list) => list[Math.floor(Math.random() * list.length)];
+    const away = () => (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 110);   // a sideways step
+
+    // 1. The puzzle (like the big version): every piece waits outside the screen, on the line of its
+    //    first slide, and comes in with 2 to 4 straight slides (across, up or down, turning between
+    //    them) into its place in the name. Most set off together, the others a few beats later.
     const all = [];
     named.forEach((l) => {
       const [lx, ly] = namePlace(l);
       l.pieces.forEach((piece) => all.push({ piece, lx, ly }));
     });
-    all.sort(() => Math.random() - 0.5);
-    const START_PAUSE = 300, SPREAD = 1500;   // the pieces set off one after the other within SPREAD ms
+    const START_PAUSE = 300;
     const screenFigmaH = screenH / p;
-    all.forEach(({ piece, lx, ly }, i) => {
-      const edge = i % 4;                                    // 0 left, 1 right, 2 top, 3 bottom (taking turns)
-      const off = (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 120);   // how far off to one side
-      const beyond = 40 + Math.random() * 80;                // how far outside the edge it waits
-      let start, middle;
-      if (edge === 0) { start = [-(lx + LETTER + beyond), off]; middle = [0, off]; }
-      else if (edge === 1) { start = [393 - lx + beyond, off]; middle = [0, off]; }
-      else if (edge === 2) { start = [off, -(ly + LETTER + beyond)]; middle = [off, 0]; }
-      else { start = [off, screenFigmaH - ly + beyond]; middle = [off, 0]; }
-      const px_ = ([x, y]) => `translate(${x * p}px, ${y * p}px)`;   // (Figma phone px → screen px)
-      piece.animate([
-        { transform: px_(start) },
-        { transform: px_(middle), offset: 0.5, easing: EASE },
-        { transform: "translate(0px, 0px)" },
-      ], { duration: 2 * SLIDE, delay: START_PAUSE + (i / all.length) * SPREAD, easing: "linear", fill: "backwards" });
+    const px_ = ([x, y]) => `translate(${x * p}px, ${y * p}px)`;   // (Figma phone px → screen px)
+    let puzzleEnd = 0;
+    all.forEach(({ piece, lx, ly }) => {
+      // the path, from the end back to the start: [0, 0] is its place in the name
+      const count = pick([2, 2, 3, 3, 3, 4]);
+      let axis = Math.random() < 0.5 ? 0 : 1;   // the last slide: 0 across, 1 up or down
+      const path = [[0, 0]];
+      for (let k = 1; k < count; k++) {
+        const [x, y] = path[0];
+        path.unshift(axis === 0 ? [x + away(), y] : [x, y + away()]);
+        axis = 1 - axis;
+      }
+      // the first slide comes straight in from beyond the nearest edge on its line
+      const [x, y] = path[0], beyond = 40 + Math.random() * 60;
+      if (axis === 0) path.unshift([lx + x < 393 / 2 ? -(lx + LETTER + beyond) : 393 - lx + beyond, y]);
+      else path.unshift([x, ly + y < screenFigmaH / 2 ? -(ly + LETTER + beyond) : screenFigmaH - ly + beyond]);
+      const delay = Math.random() < 0.6 ? 0 : (1 + Math.floor(Math.random() * 9)) * BEAT;
+      const duration = (path.length - 1) * SLIDE;
+      piece.animate(slides(path.map(px_)), { duration, delay: START_PAUSE + delay, fill: "backwards" });
+      puzzleEnd = Math.max(puzzleEnd, START_PAUSE + delay + duration);
     });
     home.classList.add("is-ready");   // (the pieces are placed: show them)
-    await wait(START_PAUSE + SPREAD + 2 * SLIDE + 100);   // (just a moment after the last piece lands)
+    await wait(puzzleEnd + 400);      // (a short moment with the whole name)
 
-    // 2. It breaks apart: each letter slides across, then up or down, to its place (one after the other),
-    //    and grows (or shrinks) to its size gradually along the whole way. The two slides are drawn as
-    //    many small steps, so the size can change smoothly through both of them.
+    // 2. It breaks apart (like the big version): all the letters move together, each as one block, in
+    //    two slides (across, then up or down) to its place, and grows (or shrinks) to its size gradually
+    //    along the whole way. The two slides are drawn as many small steps, so the size can change
+    //    smoothly through both of them.
     const ease = (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);   // slow start, soft stop
     const STEPS = 30;
-    named.forEach((l, i) => {
+    named.forEach((l) => {
       const from = namePlace(l), to = g(l.at), mid = [to[0], from[1]];
       const frames = [];
       for (let k = 0; k <= STEPS; k++) {
@@ -638,18 +653,20 @@
         const place = [a[0] + (b[0] - a[0]) * part, a[1] + (b[1] - a[1]) * part];
         frames.push({ transform: at(place, 1 + (l.scale - 1) * ease(t)) });
       }
-      l.el.animate(frames, { duration: 2 * SLIDE, delay: i * 70, easing: "linear", fill: "backwards" });
-      setTimeout(() => put(l, to, l.scale), i * 70);
+      l.el.animate(frames, { duration: 2 * SLIDE, easing: "linear" });
+      put(l, to, l.scale);
     });
-    // 3. While the letters spread (like on the big version), the pictures
-    //    slide in from the sides (almost together with the letters); once they are in, their numbers and names type themselves out
-    await wait(150);   // (the pictures set off almost together with the letters)
-    pictures.forEach((ph, i) => {
+    // 3. Meanwhile the pictures slide in from the sides in one slide each, on two beats (like the big
+    //    version): the ones in the corners with the letters, the two in the middle once the letters have
+    //    passed. Once they are all in, their numbers and names type themselves out.
+    const LATER = ["gallery-archive.jpg", "gallery-watercolor.png?v=2"];
+    pictures.forEach((ph) => {
+      const delay = LATER.includes(ph.pr.file) ? 2 * SLIDE : 0;
       ph.item.animate([{ translate: ph.outside + "px 0" }, { translate: "0 0" }],
-        { duration: 2 * SLIDE, delay: i * 90, easing: EASE, fill: "backwards" });
-      setTimeout(() => { ph.item.style.translate = ""; }, i * 90);
+        { duration: SLIDE, delay, easing: EASE, fill: "backwards" });
+      ph.item.style.translate = "";
     });
-    await wait(PICTURES.length * 90 + 2 * SLIDE);
+    await wait(3 * SLIDE);
     pictures.forEach((ph) => ph.texts.forEach((t) => t.type(30, 0)));
     home.classList.remove("is-opening");
     home.classList.add("is-done");
