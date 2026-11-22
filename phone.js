@@ -299,10 +299,10 @@
   //   1. the black pieces slide in from the edges and puzzle their way into "ELANA GERTEL"
   //      (Figma "iPhone 16 - 3": two rows in the middle of the screen), each in two straight slides;
   //   2. the whole name grows a little;
-  //   3. it breaks apart: each letter slides (as one block, in two straight slides) out past the edges of
-  //      the screen, to its place around the page (Figma "iPhone 16 - 11");
+  //   3. it breaks apart: each letter slides (as one block, in two straight slides) to its place: E L A N A G
+  //      between the pictures, the others out past the edges of the screen (Figma "iPhone 16 - 12");
   //   4. then the pictures slide in from the sides, and their numbers and names type themselves out.
-  // The page (Figma "iPhone 16 - 11"): the pictures two by two, each with its number above it and its
+  // The page (Figma "iPhone 16 - 12"): the pictures in a zigzag between the letters, each with its number above it and its
   // name under it. Tapping a picture: the letters' pieces come back in from the edges and puzzle into
   // the project's title, then the project page opens.
   // Everything is placed in pixels of the Figma phone (393 wide); p = one of them on this screen.
@@ -315,43 +315,48 @@
   const GROW = 1.08;                 // how much the name grows before it breaks apart (it just fits the screen)
   const LETTER = 57.21;              // a letter's size in the name (Figma: 2 × 2 pieces)
 
-  // Places are in Figma phone px, on the page (Figma frame 11)
+  // Places are in Figma phone px, on the page (Figma frame 12)
   const g = (place) => place;
 
-  // The letters, in the order of the name (row, column), and where they wait around the page, outside
-  // the screen (Figma frame 11: each one pushed out past the nearest edge)
-  const IN_GALLERY = 56.99;          // a letter's size around the page
+  // The letters, in the order of the name (row, column), and where they stand around the page (Figma
+  // "iPhone 16 - 12"): E L A N A G inside the page between the pictures (big, 74), the others pushed out
+  // past the edges (size = their Figma size). The last four are extra copies that only wait outside the
+  // screen (they are not in the name; their pieces help build the project titles).
   const LETTERS = [
-    { file: "phone-e1", row: 0, col: 0, at: [-73, 233.67] },
-    { file: "phone-l1", row: 0, col: 1, at: [77, -63] },
-    { file: "phone-a1", row: 0, col: 2, at: [429, 364.62] },
-    { file: "phone-n",  row: 0, col: 3, at: [419.5, 103] },
-    { file: "phone-a2", row: 0, col: 4, at: [460, 642] },
-    { file: "phone-g",  row: 1, col: 0, at: [-73, 430.8] },
-    { file: "phone-e2", row: 1, col: 1, at: [429.8, 496.07] },
-    { file: "phone-r",  row: 1, col: 2, at: [139, 858.31] },
-    { file: "phone-t",  row: 1, col: 3, at: [-79, 560.91] },
-    { file: "phone-e3", row: 1, col: 4, at: [18.79, 866] },
-    { file: "phone-l2", row: 1, col: 5, at: [430, 696] },
+    { file: "phone-e1", row: 0, col: 0, at: [159, 126], size: 74 },
+    { file: "phone-l1", row: 0, col: 1, at: [39, 316], size: 74 },
+    { file: "phone-a1", row: 0, col: 2, at: [284, 322], size: 74 },
+    { file: "phone-n",  row: 0, col: 3, at: [163, 527], size: 74 },
+    { file: "phone-a2", row: 0, col: 4, at: [39, 716], size: 74 },
+    { file: "phone-g",  row: 1, col: 0, at: [278, 716], size: 74 },
+    { file: "phone-e2", row: 1, col: 1, at: [429.8, 496.07], size: 56.99 },
+    { file: "phone-r",  row: 1, col: 2, at: [139, 858.31], size: 74 },
+    { file: "phone-t",  row: 1, col: 3, at: [-96.1, 560.91], size: 74 },
+    { file: "phone-e3", row: 1, col: 4, at: [18.79, 866], size: 74 },
+    { file: "phone-l2", row: 1, col: 5, at: [430, 696], size: 56.99 },
+    { file: "phone-n",  extra: true, at: [419.5, 103], size: 56.99 },
+    { file: "phone-a1", extra: true, at: [429, 364.62], size: 56.99 },
+    { file: "phone-a2", extra: true, at: [460, 642], size: 56.99 },
+    { file: "phone-g",  extra: true, at: [-90.2, 430.8], size: 74.2 },
   ];
-  // The pictures (Figma frame 11): place, size, how the picture lies in its window ([left, top, width,
-  // height] of the picture, in % of the window, from Figma's crop), the number above it ("1  /") and
-  // the name under it (both Helvetica Oblique 12, at their Figma places).
+  // The pictures (Figma "iPhone 16 - 12"): place, size, how the picture lies in its window ([left, top,
+  // width, height] of the picture, in % of the window, from Figma's crop), the number above it ("1  /")
+  // and the name under it (both Helvetica Oblique 12, at their Figma places).
   const PICTURES = [
-    { file: "gallery-brain.png", at: [18, 102], size: [177, 188], crop: [-1.86, -31.52, 101.86, 141.06],
-      number: 1, numberAt: [18, 81], name: "The Memory Lab", nameAt: [18, 297], href: "memory-lab.html" },
-    { file: "gallery-sense.jpg", at: [199, 102], size: [176, 188], crop: [-5.39, 0, 109.48, 101.06],
-      number: 2, numberAt: [198, 81], name: "Sense Shopping", nameAt: [198, 297], href: "sense.html" },
-    { file: "gallery-archive.jpg", at: [18, 365], size: [176, 188], crop: [-26.31, -3.59, 170.83, 103.59],
-      number: 3, numberAt: [18, 344], name: "Israeli Movie Archive", nameAt: [18, 562], href: "israeli-movie-archive.html" },
-    { file: "gallery-cactus.png", at: [198, 365], size: [177, 188], crop: [-2.7, -49.29, 107.13, 149.5],
-      number: 4, numberAt: [198, 344], name: "The Israeli Cactus", nameAt: [198, 562], href: "israeli-cactus.html" },
-    { file: "gallery-house.png?v=2", at: [17, 616], size: [178, 209], crop: [-0.01, -6.59, 99.99, 111.53],
-      number: 5, numberAt: [18, 607], name: "The Double Family", nameAt: [18, 825], href: null },
-    { file: "gallery-watercolor.png?v=2", at: [198.5, 628], size: [177, 188], crop: [-4.52, -24.38, 110.73, 147.45],
-      number: 6, numberAt: [198, 607], name: "Shintana", nameAt: [198, 825], href: null },
+    { file: "gallery-brain.png", at: [18, 102], size: [117, 122], crop: [-1.86, -32.04, 101.86, 143.37],
+      number: 1, numberAt: [18, 81], name: "The Memory Lab", nameAt: [16, 230], href: "memory-lab.html" },
+    { file: "gallery-sense.jpg", at: [258, 102], size: [117, 122], crop: [-5.3, 0, 107.61, 101.89],
+      number: 2, numberAt: [258, 81], name: "Sense Shopping", nameAt: [257, 230], href: "sense.html" },
+    { file: "gallery-archive.jpg", at: [138, 300], size: [117, 122], crop: [-25.64, -3.59, 166.45, 103.59],
+      number: 3, numberAt: [137, 279], name: "Israeli Movie Archive", nameAt: [138, 428], href: "israeli-movie-archive.html" },
+    { file: "gallery-cactus.png", at: [18, 496], size: [116, 123], crop: [-2.7, -49.29, 107.13, 149.5],
+      number: 4, numberAt: [18, 475], name: "The Israeli Cactus", nameAt: [16, 625], href: "israeli-cactus.html" },
+    { file: "gallery-house.png?v=2", at: [253, 478], size: [126, 148], crop: [-0.01, -6.59, 99.99, 111.53],
+      number: 5, numberAt: [258, 475], name: "The Double Family", nameAt: [256, 625], href: null },
+    { file: "gallery-watercolor.png?v=2", at: [138, 694], size: [117, 122], crop: [-3.02, -38.91, 120, 162.76],
+      number: 6, numberAt: [139, 672], name: "Shintana", nameAt: [137, 821], href: null },
   ];
-  const PAGE_H = 852;   // the page's height (Figma frame 11; the letters below it stay hidden)
+  const PAGE_H = 852;   // the page's height (Figma frame 12; the letters below it stay hidden)
 
   // The scrolling box (the whole screen) and the gallery in it
   const home = document.createElement("section");
@@ -388,7 +393,7 @@
     el.className = "phone-flow-letter";
     el.setAttribute("aria-hidden", "true");
     flowBox.appendChild(el);
-    return { ...l, el, pieces: [] };
+    return { ...l, el, pieces: [], scale: l.size / LETTER };
   });
   const ready = Promise.all(letters.map((l) => {
     const files = l.file === "phone-g" ? ["phone-g-base", "phone-g-corner"] : [l.file];
@@ -415,7 +420,6 @@
   // Put a letter at [x, y] (Figma phone px, on the page) at a size (1 = the name's 57.2)
   const at = ([x, y], size) => `translate(${x * p}px, ${y * p}px) scale(${size})`;
   const put = (l, place, size) => { l.el.style.transform = at(place, size); };
-  const SMALL = IN_GALLERY / LETTER;
 
   // ----- The pictures, numbers and names -----
   const pictures = PICTURES.map((pr) => {
@@ -496,8 +500,15 @@
     leaving = true;
     home.classList.add("is-leaving");
     const href = entry.pr.href;
+    // first the pictures slide out to their sides and their numbers and names go away; only then do
+    // the pieces come in from beyond the edges to write the title
+    pictures.forEach((ph) => {
+      ph.texts.forEach((t) => t.clear());
+      ph.item.animate([{ translate: "0 0" }, { translate: ph.outside + "px 0" }],
+        { duration: SLIDE, easing: EASE, fill: "forwards" });
+    });
     let title;
-    try { title = await readTitle(href); } catch (e) { location.href = href; return; }
+    try { [title] = await Promise.all([readTitle(href), wait(SLIDE + 100)]); } catch (e) { location.href = href; return; }
     const shapes = await Promise.all(title.pieces.map(([number]) => shapeOf(number)));
 
     // where each title piece goes on the screen (as the project page draws it)
@@ -522,7 +533,7 @@
     const sources = [];
     letters.forEach((l) => l.pieces.forEach((piece) => {
       const r = shapeIn(piece).getBoundingClientRect();
-      sources.push({ piece, x: r.left + r.width / 2, y: r.top + r.height / 2, used: false });
+      sources.push({ piece, scale: l.scale, x: r.left + r.width / 2, y: r.top + r.height / 2, used: false });
     }));
     const order = targets.map((t, i) => i).sort(() => Math.random() - 0.5);
     const from = [];
@@ -565,16 +576,9 @@
     // the pieces that are not needed leave through the nearest side
     sources.filter((src) => !src.used).forEach((src) => {
       const out = src.x < W / 2 ? -(src.x + 80) : (W - src.x + 80);
-      src.piece.animate([{ translate: "0 0" }, { translate: `${out / SMALL}px 0` }],
+      src.piece.animate([{ translate: "0 0" }, { translate: `${out / src.scale}px 0` }],
         { duration: SLIDE, easing: EASE, fill: "forwards" });
     });
-    // the pictures slide out to their sides, and the names go away
-    pictures.forEach((ph) => {
-      ph.texts.forEach((t) => t.clear());
-      ph.item.animate([{ translate: "0 0" }, { translate: ph.outside + "px 0" }],
-        { duration: SLIDE, easing: EASE, fill: "forwards" });
-    });
-
     // the finished title stays a moment, then the project page opens (with the title in the same place)
     await wait(BUILD + SPREAD_TIME + 250);
     location.href = href;
@@ -584,12 +588,13 @@
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
   ready.then(async () => {
     if (skip) {   // straight to the pictures
-      letters.forEach((l) => put(l, g(l.at), SMALL));
+      letters.forEach((l) => put(l, g(l.at), l.scale));
       pictures.forEach((ph) => ph.texts.forEach((t) => t.show()));
       home.classList.add("is-done");
       return;
     }
-    letters.forEach((l) => put(l, namePlace(l), 1));
+    const named = letters.filter((l) => !l.extra);   // the letters of the name (the extras just wait outside)
+    letters.forEach((l) => l.extra ? put(l, g(l.at), l.scale) : put(l, namePlace(l), 1));
     pictures.forEach((ph) => { ph.item.style.translate = ph.outside + "px 0"; });
     home.classList.add("is-opening");
 
@@ -597,7 +602,7 @@
     //    top or bottom, a little off to one side), and comes in with two straight slides: first straight
     //    in from its edge, then sideways (or up/down) into its place
     const all = [];
-    letters.forEach((l) => {
+    named.forEach((l) => {
       const [lx, ly] = namePlace(l);
       l.pieces.forEach((piece) => all.push({ piece, lx, ly }));
     });
@@ -624,7 +629,7 @@
     await wait(START_PAUSE + SPREAD + 2 * SLIDE + 500);
 
     // 2. The name grows
-    letters.forEach((l) => {
+    named.forEach((l) => {
       const from = namePlace(l), to = grown(from);
       l.el.animate([{ transform: at(from, 1) }, { transform: at(to, GROW) }], { duration: 700, easing: EASE });
       put(l, to, GROW);
@@ -633,16 +638,16 @@
 
     // 3. It breaks apart: each letter slides across, then up or down, out past the edges of the screen
     //    (back to its own size on the way), one after the other
-    letters.forEach((l, i) => {
+    named.forEach((l, i) => {
       const from = grown(namePlace(l)), to = g(l.at), mid = [to[0], from[1]];
       l.el.animate([
         { transform: at(from, GROW) },
-        { transform: at(mid, (GROW + SMALL) / 2), offset: 0.5, easing: EASE },
-        { transform: at(to, SMALL) },
+        { transform: at(mid, (GROW + l.scale) / 2), offset: 0.5, easing: EASE },
+        { transform: at(to, l.scale) },
       ], { duration: 2 * SLIDE, delay: i * 70, easing: "linear", fill: "backwards" });
-      setTimeout(() => put(l, to, SMALL), i * 70);
+      setTimeout(() => put(l, to, l.scale), i * 70);
     });
-    await wait(LETTERS.length * 70 + 2 * SLIDE);
+    await wait(named.length * 70 + 2 * SLIDE);
 
     // 4. The pictures slide in from the sides, then their numbers and names type themselves out
     pictures.forEach((ph, i) => {
