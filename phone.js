@@ -156,7 +156,7 @@
     parts.sort((a, b) => a.y - b.y).forEach((part, i) => { part.el.style.order = 10 + i; });
 
     // The short texts, on the first screen (Figma "iPhone 16 - 7"): the school at the top left, its bottom
-    // level with the year's bottom, and the year beside it (x 198, y 611, 8.26 big); under them the project's name and the technique side by side
+    // level with the year's bottom, and the year beside it (x 200, y 607, 12); under them the project's name and the technique side by side
     // (y 628); and the brief and the solution lower down (y 734 and 759). The school and the year are 12;
     // the name, the technique, the brief and the solution 16 (.phone-intro-big in styles.css; the name and
     // the technique bold). Each one is found by its place on the big version (--x, --y).
@@ -172,14 +172,13 @@
       const x = parseFloat(el.style.getPropertyValue("--x")), y = parseFloat(el.style.getPropertyValue("--y"));
       let place, big = false;
       if (x < 200) { place = [18, 628]; big = true; }       // the project's name
-      else if (x < 450) place = y < 860 ? [198, 611] : [18, 592];   // the year / the school
+      else if (x < 450) place = y < 860 ? [200, 607] : [18, 592];   // the year / the school
       else if (x < 800) { place = [198, 628]; big = true; } // the technique
       else { place = y < 860 ? [18, 734] : [18, 759]; big = true; }   // the brief / the solution
       el.style.setProperty("--px", place[0]);
       el.style.setProperty("--py", place[1]);
       el.classList.toggle("phone-intro-big", big);
       el.classList.toggle("phone-intro-school", x >= 200 && x < 450 && y >= 860);   // (its bottom on the year's bottom, styles.css)
-      el.classList.toggle("phone-intro-year", x >= 200 && x < 450 && y < 860);      // (smaller, styles.css)
     });
 
     // The title's size: as wide as the room between the arrows, but never taller than about half the screen.
