@@ -1024,6 +1024,36 @@ a.flow-photo:focus-visible {
    moves it and cuts it to its outline with clip-path). It swaps the page's two colours in what is behind
    it: the light page shows dark (#252525), a dark letter shows the page's colour (#f8f9f4).
    (invert, then contrast and brightness: x → 1 − x, then moved up by 0.118, so 0.973 ↔ 0.145) */
+/* The cursor on every page (cursor.js; Figma: a square 31 × 31, one piece): white on "exclusion", so dark on
+   the light page and light over dark things; its middle on the mouse. The normal arrow hides. */
+.has-square-cursor,
+.has-square-cursor * {
+  cursor: none !important;
+}
+
+.square-cursor {
+  --size: calc(31 * 100vw / 1440);
+  position: fixed;
+  z-index: 3000;   /* over everything, also the black that slides away between projects */
+  left: calc(var(--size) / -2);
+  top: calc(var(--size) / -2);
+  width: var(--size);
+  height: var(--size);
+  background-color: #ffffff;
+  mix-blend-mode: exclusion;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.square-cursor.is-on {
+  opacity: 1;
+}
+
+/* on the home page the liquid blob takes its place while the mouse pushes a big letter (home-cursor.js) */
+body.has-blob-cursor .square-cursor {
+  opacity: 0;
+}
+
 .blob-cursor {
   position: fixed;
   left: 0;
@@ -2493,6 +2523,10 @@ body.lab-page {
 
 .phone-piece path {
   fill: #000000;   /* (Figma's letters are black) */
+  stroke: #000000;   /* a thin outline past the edge, so touching pieces look merged (no light line between them) */
+  stroke-width: 1px;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
 }
 
 /* A project picture (phone.js sets its size: --pic-w × --pic-h), with its number on its left and its name under it */
@@ -2918,7 +2952,9 @@ body.lab-page {
 .phone-title-piece path {
   fill: var(--color-shape);
   stroke: var(--color-shape);
-  stroke-width: 0.5px;
+  stroke-width: 2px;   /* (a little more than the shapes elsewhere: these pieces stand at uneven fractions of a
+                          pixel, so touching pieces always look merged, with no light line between them) */
+  stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
 }
 
