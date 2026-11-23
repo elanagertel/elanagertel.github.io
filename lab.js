@@ -205,6 +205,11 @@ function ooze(p) {
 }
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
+// Every title's letters, so they can all turn back into their pieces at once (when the page slides out:
+// page-change.js calls window.resetOrganic, so no organic letter stays behind on the screen)
+const morphResets = [];
+window.resetOrganic = () => morphResets.forEach((reset) => reset());
+
 function setUpMorph(white, organicLetters) {
   const container = white ? footerTitle : document.getElementById("lab-first");
   const top = white ? TITLE_TOP : 0;   // the white title's box starts at the title's top edge
@@ -357,6 +362,12 @@ function setUpMorph(white, organicLetters) {
     if (busy) requestAnimationFrame(frame);
     else { running = false; last = null; }
   }
+  morphResets.push(() => letters.forEach((letter) => {
+    clearTimeout(letter.leaveTimer);
+    letter.target = 0;
+    letter.t = 0;
+    draw(letter);
+  }));
   function goTo(letter, value) {
     letter.target = value;
     if (!running) { running = true; requestAnimationFrame(frame); }

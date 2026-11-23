@@ -534,6 +534,12 @@ function morphFrame(now) {
   if (busy) requestAnimationFrame(morphFrame);
   else { morphRunning = false; morphLast = null; }
 }
+// (page-change.js calls this when the page slides out: every soft letter is its sharp pieces again at once)
+window.resetOrganic = () => visionLetters.forEach((L) => {
+  L.target = 0;
+  L.t = 0;
+  drawLetter(L, performance.now());
+});
 function goTo(L, value) {
   L.target = value;
   if (!morphRunning) { morphRunning = true; requestAnimationFrame(morphFrame); }

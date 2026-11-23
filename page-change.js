@@ -121,6 +121,10 @@
       // (phones: the menu closes, so the page shows while its things slide out)
       const menuButton = document.querySelector(".phone-menu-button");
       if (menuButton && document.documentElement.classList.contains("phone-menu-open")) menuButton.click();
+      // letters that are organic (or soft) turn back into their pieces at once, so they slide out with the
+      // rest (lab.js, about.js); the cursor is the square again
+      if (window.resetOrganic) window.resetOrganic();
+      if (window.squareCursor) window.squareCursor.organic(false);
       const things = [...document.querySelectorAll(THINGS[PAGE])].filter(onScreen);
       things.forEach((el) => slide(el, [0, 0], wayOut(el), delayOf(el)));
       try { sessionStorage.setItem(KEY, JSON.stringify({ page, at: Date.now() })); } catch (e) {}

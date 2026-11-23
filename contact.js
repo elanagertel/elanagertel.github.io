@@ -93,9 +93,10 @@
   });
 })();
 
-// "Contact me  /", "About Me  /" and "Home  /" (in the bar at the top, on every page): hovering one types its own words
-// out again, letter by letter, with the same bar as the contact details (it stands still while typing and
-// goes away once the words are typed).
+// "Contact me  /", "About Me  /" and "Home  /" (in the bar at the top, on every page): hovering About Me or Home
+// types its own words out again, oblique, letter by letter, with the same bar as the contact details (it
+// stands still while typing and goes away once the words are typed). Hovering Contact me only tilts it
+// over to oblique (its details type out next to it).
 (function () {
   // The page you are on has its word oblique (Home on the home page, About Me on About)
   const page = location.pathname.split("/").pop() || "index.html";
@@ -158,11 +159,28 @@
       link.animate([{ transform: "skewX(-12deg)" }, { transform: "skewX(0deg)" }],
         { duration: 500, easing: "cubic-bezier(0.65, 0, 0.35, 1)" });
     }
+    // to oblique without typing: the letters tilt over smoothly (the oblique letters start straightened up
+    // the same way and lean over into their slant)
+    function tilt() {
+      if (oblique) return;
+      clearInterval(timer);
+      timer = null;
+      box.textContent = words;
+      bar.hidden = true;
+      oblique = true;
+      link.classList.add("is-oblique");
+      link.animate([{ transform: "skewX(12deg)" }, { transform: "skewX(0deg)" }],
+        { duration: 500, easing: "cubic-bezier(0.65, 0, 0.35, 1)" });
+    }
     const byFinger = () => typeof window.touchedJustNow === "function" && window.touchedJustNow();   // phones: no
     const isContact = link.classList.contains("flow-contact");
     const isHere = link.getAttribute("aria-current") === "page";
     // hovering: it types itself out oblique, so when it is clicked it is already oblique
-    link.addEventListener("mouseenter", () => { if (!byFinger() && !oblique) typeAgain(true); });
+    // (Contact me does not type again: it only tilts over to oblique, and its details type out next to it)
+    link.addEventListener("mouseenter", () => {
+      if (byFinger() || oblique) return;
+      if (isContact) tilt(); else typeAgain(true);
+    });
     // leaving: About Me / Home shift back to regular (the page you are on stays oblique);
     // Contact me shifts back once its details start erasing themselves
     if (isContact) link.addEventListener("contact-closing", () => { straighten(); });

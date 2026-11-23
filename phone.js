@@ -449,6 +449,7 @@
     item.appendChild(window_);
     flowBox.appendChild(item);
     // the number above it and the name under it (they type themselves out at the end of the opening)
+    const textEls = [];   // (the number and the name themselves: they move with their picture)
     const texts = [[pr.number + "  /", pr.numberAt], [pr.name, pr.nameAt]].map(([words, [tx, ty]]) => {
       const text = document.createElement("span");
       text.className = "phone-grid-text";
@@ -456,11 +457,12 @@
       text.style.left = tx * p + "px";
       text.style.top = ty * p + "px";
       flowBox.appendChild(text);
+      textEls.push(text);
       const typer = typed(text, words);
       typer.clear();
       return typer;
     });
-    const entry = { item, texts, pr };
+    const entry = { item, texts, textEls, pr };
     // Tapping a picture: the letters' pieces build the project's title, then the project opens
     item.addEventListener("click", (event) => {
       event.preventDefault();
@@ -475,32 +477,56 @@
 
   document.body.appendChild(home);
 
-  // ----- Scrolling the page: the letters spread (like the big version when the mouse is on a picture) -----
-  // As soon as you scroll, every piece of the letters on the screen makes one short straight slide (one or
-  // two pieces' width, across or up or down), all at once; once you stop scrolling, they glide straight
-  // back home together. Every new scroll spreads them a new way.
-  const SPREAD_OUT = 450, SPREAD_BACK = 400, SPREAD_STOP = 220;   // ms (the big version: 450 out, 400 back)
-  let spread = false, stopTimer = null;
-  function spreadLetters(on) {
-    spread = on;
-    letters.forEach((l) => l.pieces.forEach((piece) => {
-      if (on) {
-        const r = shapeIn(piece).getBoundingClientRect();
-        if (r.bottom < 0 || r.top > window.innerHeight || r.right < 0 || r.left > window.innerWidth) return;
-        const step = (Math.random() < 0.5 ? -1 : 1) * (LETTER * p / 2) * (Math.random() < 0.5 ? 1 : 2);
-        piece.style.transition = `translate ${SPREAD_OUT}ms ${EASE}`;
-        piece.style.translate = Math.random() < 0.5 ? `${step}px 0` : `0 ${step}px`;
-      } else if (piece.style.translate) {
-        piece.style.transition = `translate ${SPREAD_BACK}ms cubic-bezier(0.33, 1, 0.68, 1)`;   // quick start, soft stop
-        piece.style.translate = "";
-      }
-    }));
+  // ----- Scrolling the page: the big letters run away (like the big version, where the mouse pushes a big
+  // letter away like a magnet and the letters and pictures in its way are pushed along) -----
+  // As soon as you scroll, every big letter on the screen runs one step aside, in one quick straight slide:
+  // to the right while you scroll down, to the left while you scroll up. Everything after it in its row
+  // (the pictures with their numbers and names, other letters) is pushed along the same step. Once you
+  // stop scrolling, everything glides straight back home together.
+  const RUN_STEP = 46, RUN_TIME = 300, RUN_BACK = 400, RUN_STOP = 220;   // Figma phone px, ms
+  const RUN_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";   // (the big version's magnet push)
+  let running = 0, stopTimer = null, lastTop = 0;
+  const movers = () => letters.map((l) => l.el).concat(pictures.map((ph) => ph.item));
+  function runAway(direction) {   // direction: 1 = right, -1 = left, 0 = back home
+    running = direction;
+    if (!direction) {
+      movers().concat(pictures.flatMap((ph) => ph.textEls)).forEach((el) => {
+        if (!el.style.translate) return;
+        el.style.transition = `translate ${RUN_BACK}ms cubic-bezier(0.33, 1, 0.68, 1)`;   // quick start, soft stop
+        el.style.translate = "";
+      });
+      return;
+    }
+    const H = window.innerHeight, W = window.innerWidth;
+    const boxes = new Map(movers().map((el) => [el, el.getBoundingClientRect()]));
+    const pushed = new Set();
+    letters.forEach((l) => {
+      const r = l.pieces.map((piece) => shapeIn(piece).getBoundingClientRect())
+        .reduce((a, b) => ({ left: Math.min(a.left, b.left), right: Math.max(a.right, b.right),
+                             top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) }));
+      if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W) return;   // (only letters on the screen)
+      pushed.add(l.el);
+      // the rest of its row on the side it runs to
+      boxes.forEach((b, el) => {
+        const middle = (b.top + b.bottom) / 2;
+        if (middle < r.top - 20 || middle > r.bottom + 20) return;
+        if (direction > 0 ? b.left >= r.left : b.right <= r.right) pushed.add(el);
+      });
+    });
+    // (a picture's number and name go with it)
+    pictures.forEach((ph) => { if (pushed.has(ph.item)) ph.textEls.forEach((el) => pushed.add(el)); });
+    pushed.forEach((el) => {
+      el.style.transition = `translate ${RUN_TIME}ms ${RUN_EASE}`;
+      el.style.translate = `${direction * RUN_STEP * p}px 0`;
+    });
   }
   home.addEventListener("scroll", () => {
     if (!home.classList.contains("is-done") || leaving) return;   // (not during the opening or going to a project)
-    if (!spread) spreadLetters(true);
+    const direction = home.scrollTop >= lastTop ? 1 : -1;
+    lastTop = home.scrollTop;
+    if (running !== direction) runAway(direction);
     clearTimeout(stopTimer);
-    stopTimer = setTimeout(() => spreadLetters(false), SPREAD_STOP);
+    stopTimer = setTimeout(() => runAway(0), RUN_STOP);
   }, { passive: true });
 
   let leaving = false;
