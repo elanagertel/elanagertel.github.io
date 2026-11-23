@@ -100,10 +100,11 @@ if (whiteLayer) {
     const footerTop = footer.getBoundingClientRect().top;
     const cut = footerTop - whiteLayer.getBoundingClientRect().top;
     whiteLayer.style.clipPath = `inset(${Math.max(0, cut)}px 0 0 0)`;
-    // the bar at the top and the counter belong to the project, not to the black end with the next
-    // project's name: they stay where they are, and the black end comes up over them and covers them
+    // the bar at the top, the counter and the left arrow belong to the project, not to the black end with
+    // the next project's name: they stay where they are, and the black end comes up over them and covers
+    // them (only the right arrow stays: on the black it leads to the next project)
     // (everything of them below the top of the black end is cut off, like the black title)
-    const covered = keepBlack ? [] : [...document.querySelectorAll(".site-nav-item, .fold-count, .phone-name, .phone-menu-button")];
+    const covered = keepBlack ? [] : [...document.querySelectorAll(".site-nav-item, .fold-count, .project-arrow-prev, .phone-name, .phone-menu-button")];
     [...blackParts(), ...covered].forEach((el) => {
       const box = el.getBoundingClientRect();
       const below = box.bottom - footerTop;   // how much of it lies over the black end
@@ -414,8 +415,9 @@ function setUpMorph(white, organicLetters) {
     area.addEventListener("click", (event) => {
       // the white title at the end (the next project's name) opens the next project, also with a finger
       if (white && nextPage) {
-        const label = document.querySelector(".lab-next-label");   // (it slides the page out first, page-change.js)
-        if (label) label.click(); else location.href = nextPage;
+        // (the black stays and slides up on the next page: page-change.js)
+        if (window.pageChange && window.pageChange.nextFromEnd) window.pageChange.nextFromEnd(nextPage);
+        else location.href = nextPage;
         return;
       }
       if (byFinger()) {
@@ -490,12 +492,5 @@ if (footerTitle && !nextPage) {
   }
   if (upright) window.addEventListener("resize", placeEndTitle);
 
-  // "Next Project" (Figma: Helvetica Oblique 15.5, white, at x 1159, 330 under the screen's middle).
-  // It, and the white title, lead to the next project.
-  const label = document.createElement("a");
-  label.className = "lab-next-label";
-  label.href = nextPage;
-  label.textContent = "Next Project";
-  // (phones held upright: in the black end itself, at its bottom right; see .is-phone-portrait .lab-next-label)
-  (upright ? document.querySelector(".lab-footer") : document.getElementById("lab-white")).appendChild(label);
+  // (the white title, and the right arrow that stays on the screen, lead to the next project)
 }

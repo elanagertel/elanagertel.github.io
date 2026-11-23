@@ -22,7 +22,7 @@
   // texts; and on a project page a copy of the project's number under the title)
   const THINGS = {
     home: ".flow-piece, .flow-photo, .flow-name, .flow-year, .phone-piece, .phone-flow-photo, .phone-grid-text",
-    project: ".lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text, .project-arrow, .phone-first-count, .lab-next-label",
+    project: ".lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text",
     about: ".about-piece, .about-photo, .about-text, .about-bio",
   };
 
@@ -113,6 +113,8 @@
       // (on a phone the first tap only shows the link's name: mobile.js stops that tap)
       if (event.defaultPrevented || REDUCED) return;
       event.preventDefault();
+      // the right arrow on the black end of a project page: the next project opens under the same black
+      if (link.classList.contains("project-arrow-next") && atBlackEnd()) { nextFromEnd(link.href); return; }
       if (!outFirst) {
         try { sessionStorage.setItem(KEY, JSON.stringify({ page, at: Date.now() })); } catch (e) {}
         window.location.href = link.href;
@@ -142,20 +144,23 @@
   // the arrows on a project page: to the previous / next project (they slide out the same way)
   document.querySelectorAll(".project-arrow").forEach((arrow) => slideOutTo(arrow, "project", true));
   // ----- From the black end of a project page to the next project -----
-  // "Next Project" (and the white title, lab.js) opens the next project at once: it opens looking just like
-  // the black end you left (black, its name in white, "Next Project"); then the black slides up over the
+  // The right arrow (and the white title, lab.js) opens the next project at once: it opens looking just like
+  // the black end you left (black, its name in white, the right arrow); then the black slides up over the
   // title (which stays where it is), uncovering the new page (the bar at the top, the title), and
   // only then do the texts under the title type themselves out (type-texts.js waits introTypingWait).
   const END_KEY = "fromProjectEnd";
   const UP_HOLD = 250;   // ms the black stays before it slides up
   const UP_TIME = 700;   // ms it takes to slide up
-  const nextLabel = document.querySelector(".lab-next-label");
-  if (nextLabel) nextLabel.addEventListener("click", (event) => {
-    if (event.defaultPrevented || REDUCED) return;
-    event.preventDefault();
-    try { sessionStorage.setItem(END_KEY, String(Date.now())); } catch (e) {}
-    window.location.href = nextLabel.href;
-  });
+  function nextFromEnd(href) {
+    if (!REDUCED) { try { sessionStorage.setItem(END_KEY, String(Date.now())); } catch (e) {} }
+    window.location.href = href;
+  }
+  window.pageChange.nextFromEnd = nextFromEnd;
+  // Is the black end of a project page (with the next project's name) on most of the screen?
+  function atBlackEnd() {
+    const end = document.querySelector(".lab-footer");
+    return !!end && end.getBoundingClientRect().top < window.innerHeight / 2;
+  }
 
   function cameFromEnd() {
     try {
@@ -172,8 +177,7 @@
     document.body.appendChild(black);
     window.introTypingWait = UP_HOLD + UP_TIME + 150;
 
-    // on it: this project's name in white, exactly over the page's own title (drawn from its own shapes),
-    // and "Next Project" where it was
+    // on it: this project's name in white, exactly over the page's own title (drawn from its own shapes)
     const phone = document.documentElement.classList.contains("is-phone-portrait");
     function dress() {
       const pieces = [...document.querySelectorAll("#lab-first > .lab-piece:not(.lab-piece-white)")];
@@ -187,12 +191,16 @@
           black.appendChild(copy);
         });
       }
-      const label = document.createElement("span");
-      label.className = "project-arrive-label";
-      label.textContent = "Next Project";
-      black.appendChild(label);
+      // the right arrow, white, where this page has it (it stayed on the black end before)
+      const arrow = document.querySelector(".project-arrow-next img");
+      if (arrow) {
+        const b = arrow.getBoundingClientRect(), copy = arrow.cloneNode(true);
+        copy.className = "project-arrive-arrow";
+        copy.style.cssText = `left:${b.left}px; top:${b.top}px; width:${b.width}px; height:${b.height}px`;
+        black.appendChild(copy);
+      }
       // then the black slides up over the title: its edge rises from the bottom of the screen to the top,
-      // and the title and "Next Project" stay where they are (where the black has gone, the page shows)
+      // and the title and the arrow stay where they are (where the black has gone, the page shows)
       black.animate([{ clipPath: "inset(0 0 0% 0)" }, { clipPath: "inset(0 0 100% 0)" }],
         { duration: UP_TIME, delay: UP_HOLD, easing: EASE, fill: "forwards" })
         .finished.then(() => black.remove());

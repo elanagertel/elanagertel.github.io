@@ -97,6 +97,31 @@
     menu.appendChild(el);
     return typed(el, link.words);
   });
+  // The email address: a tap copies it (it does not open the mail app) and "  /  copied" types itself out
+  // after it (like the big version, Figma: Frame 218, Variant2); it goes away when the menu closes
+  const mailLink = menu.querySelector('a[href^="mailto:"]');
+  let copiedText = null, copiedTimer = null;
+  if (mailLink) mailLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    const address = mailLink.href.replace("mailto:", "");
+    if (window.copyText) window.copyText(address);
+    else if (navigator.clipboard) navigator.clipboard.writeText(address).catch(() => {});
+    // (tapped again: it types itself out again)
+    if (!copiedText) {
+      copiedText = document.createElement("span");
+      copiedText.className = "phone-menu-copied";
+      mailLink.appendChild(copiedText);
+    }
+    clearInterval(copiedTimer);
+    const words = "  /  copied";
+    let shown = 0;
+    copiedText.textContent = "";
+    copiedTimer = setInterval(() => {
+      shown++;
+      if (copiedText) copiedText.textContent = words.slice(0, shown);
+      if (shown >= words.length || !copiedText) clearInterval(copiedTimer);
+    }, 30);
+  });
 
   const name = document.createElement("a");
   name.className = "phone-name";
@@ -119,6 +144,7 @@
       // (all three together, once the dark layer has slid in)
       menuTexts.forEach((t, i) => (i < 3 ? t.show() : t.type(30, 350)));
     } else {
+      if (copiedText) { copiedText.remove(); copiedText = null; }
       menuTexts.forEach((t) => t.clear());
       setTimeout(() => { if (!open) menu.hidden = true; }, reduced ? 0 : 450);
     }
@@ -216,40 +242,8 @@
     window.addEventListener("resize", centreTitle);
 
     // ----- The counter -----
-    // On the first screen: this project's number ("1  /" and "/  05"), part of the first screen, so it
-    // scrolls up and away with the title. Then the pictures' counter ("1  /  11", fold-count.js) comes up
-    // with the first picture and stays at its place (right under the arrows) while you scroll on.
-    const now = document.querySelector(".fold-count-now"), total = document.querySelector(".fold-count-total");
-    if (now && total) {
-      [[now, "phone-first-count-now"], [total, "phone-first-count-total"]].forEach(([counter, cls]) => {
-        const copy = document.createElement("p");
-        copy.className = "phone-first-count " + cls;
-        copy.setAttribute("aria-hidden", "true");
-        // (fold-count.js gives this project's number; the left one has its slash after it: "1  /")
-        copy.textContent = (counter.dataset.project || "") + (counter === now ? "  /" : "");
-        lab.appendChild(copy);
-      });
-      const firstPicture = () => {
-        const tops = [...lab.querySelectorAll(".lab-media")].map((m) => m.getBoundingClientRect().top);
-        return tops.length ? Math.min(...tops) : null;
-      };
-      function placeCounter() {
-        const stick = window.innerHeight * 0.5 + 65 * window.innerWidth / 393;   // (right under the arrows)
-        const pictureTop = firstPicture();
-        // it comes up level with the first picture's top, and stops at its place; at the end the black
-        // part pushes it up and away (so it never lies over the white title)
-        const end = lab.querySelector(".lab-footer");
-        const endTop = end ? end.getBoundingClientRect().top : Infinity;
-        const y = Math.min(pictureTop === null ? stick : Math.max(stick, pictureTop), endTop - 40);
-        [now, total].forEach((counter) => {
-          counter.style.top = y + "px";
-          counter.style.visibility = pictureTop === null ? "hidden" : "";   // (a page without pictures: none)
-        });
-      }
-      placeCounter();
-      window.addEventListener("scroll", placeCounter, { passive: true });
-      window.addEventListener("resize", placeCounter);
-    }
+    // This project's number ("1  /" and "/  05", fold-count.js) stays on the screen, right under the arrows,
+    // the whole way down the page (styles.css); at the end the black end covers it (lab.js)
 
     // At the end: the white title goes into the black end (it lies still there, in white)
     const footer = lab.querySelector(".lab-footer");

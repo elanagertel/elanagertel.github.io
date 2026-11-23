@@ -33,6 +33,11 @@
     return { line, box, words, shown: 0 };
   });
   contact.after(list);
+  // with a mouse, the cursor turns into a small blob over each contact line (cursor.js)
+  lines.forEach(({ line }) => {
+    line.addEventListener("mouseenter", () => { if (!byFinger() && window.squareCursor) window.squareCursor.organic(true, { small: true }); });
+    line.addEventListener("mouseleave", () => { if (window.squareCursor) window.squareCursor.organic(false); });
+  });
 
   // Types (open) or erases (closed) all the lines together, one letter each step
   let open = false, linesTimer = null, leaveTimer = null;
@@ -77,6 +82,48 @@
   contact.addEventListener("blur", () => { if (!byFinger()) leaveSoon(); });
   list.addEventListener("mouseenter", () => { if (!byFinger()) clearTimeout(leaveTimer); });
   list.addEventListener("mouseleave", () => { if (!byFinger()) leaveSoon(); });
+
+  // ----- The email address: a click copies it (it does not open the mail app) and "  /  copied" types
+  // itself out after it, on the same line (Figma: Frame 218, Variant2: "gertel.elana@gmail.com  /  copied").
+  // It erases with the rest when the details close. -----
+  const COPIED = "  /  copied";
+  const mail = lines.find((l) => l.line.href.startsWith("mailto:"));
+  if (mail) {
+    const address = mail.words;
+    mail.line.addEventListener("click", (event) => {
+      event.preventDefault();
+      copyText(address);
+      // (clicked again: "  /  copied" goes and types itself out again)
+      mail.words = address + COPIED;   // (step() types up to the new end)
+      mail.shown = Math.min(mail.shown, address.length);
+      mail.box.textContent = mail.words.slice(0, mail.shown);
+      mail.line.classList.remove("is-done");
+      clearInterval(linesTimer);
+      linesTimer = setInterval(step, PER_LETTER);
+    });
+    // once everything is erased, the line is the address again for next time
+    contact.addEventListener("contact-closing", () => { setTimeout(function back() {
+      if (open) return;
+      if (mail.shown === 0) mail.words = address; else setTimeout(back, 100);
+    }, 100); });
+  }
+  // (a hidden text box copies on older browsers)
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).catch(() => copyOld(text)); return; }
+    copyOld(text);
+  }
+  function copyOld(text) {
+    const box = document.createElement("textarea");
+    box.value = text;
+    box.setAttribute("readonly", "");
+    box.style.position = "fixed";
+    box.style.opacity = "0";
+    document.body.appendChild(box);
+    box.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    box.remove();
+  }
+  window.copyText = copyText;   // (the phone menu uses it too, phone.js)
 
   // ----- A finger (phones): a tap on "contact me" opens or closes the details;
   //       a tap anywhere else, or a few seconds without a tap, closes them -----

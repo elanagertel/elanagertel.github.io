@@ -53,7 +53,7 @@
   src: url("fonts/SimplerPro-Regular.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: block;   /* no flash of a stand-in font while it loads */
 }
 
 /* ===== Font: TheBasics by Hagilda (stored in fonts/), used on the home page ===== */
@@ -62,7 +62,7 @@
   src: url("fonts/TheBasics-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: block;   /* no flash of a stand-in font while it loads */
 }
 
 /* ===== Base: remove default spacing so the page fills exactly one screen ===== */
@@ -854,7 +854,7 @@ a.flow-photo:focus-visible {
 .site-nav-item {
   position: absolute;
   left: calc(var(--x) * var(--u));
-  top: calc(19 * var(--u));
+  top: calc(20.5 * var(--u));   /* (Figma: Home at x 328.5, About Me at 593, Contact me at 985.5) */
   margin: 0;
   font-family: var(--font-nav);
   font-size: max(9px, calc(12 * var(--u)));
@@ -866,12 +866,16 @@ a.flow-photo:focus-visible {
 }
 
 .site-nav-about {
-  top: calc(20 * var(--u));  /* (Figma: one pixel lower) */
+  top: calc(20 * var(--u));  /* (Figma: About Me at y 20, Contact me 20.5, Home 21) */
+}
+
+.site-nav-home {
+  top: calc(21 * var(--u));
 }
 
 .site-nav-name {
-  left: auto;
-  right: calc(65 * var(--u));
+  left: calc(65 * var(--u));   /* on the left (Figma: x 65, y 16.5) */
+  top: calc(16.5 * var(--u));
   font-size: max(11px, calc(17 * var(--u)));   /* the name is bigger (Figma: 17) */
   font-style: italic;
 }
@@ -956,26 +960,14 @@ a.flow-photo:focus-visible {
   grid-area: 1 / 1;
 }
 
-/* Project pages (big screens): this project's number beside the title is part of the first screen and
-   scrolls up with the texts (fold-count.js puts a copy in the page); the counter that stays in place
-   is hidden until the pictures come */
-.fold-count.fold-count-first {
-  position: absolute;
-}
-
-.fold-count.is-first-hidden {
-  visibility: hidden;
-}
-
 /* ----- Project pages: the arrows to the previous and the next project, on the first screen -----
-   (Figma frame 83: a triangle 44 wide and 88 tall from y 451.5, the left one's tip at x 66, the right
-   one's tip at x 1374). They scroll away with the first screen. The right one points right; the left
-   one is the same shape, mirrored. */
+   (Figma "Israeli" Cactus, Component 5: a triangle 21.9 wide and 43.8 tall from y 490, both lined up; the
+   left one's tip at x 87.1, the right one's tip at x 1352.9). They scroll away with the first screen. The right one points right; the left one is the same shape, mirrored. */
 .project-arrow {
-  position: absolute;
+  position: fixed;   /* (it stays on the screen the whole way down the page; the black end covers it, lab.js) */
   z-index: 2;
-  top: calc(50vh - 60.5 * var(--u));   /* y 451.5 of 1024 */
-  width: calc(44.02 * var(--u));       /* 44 × 88 */
+  top: calc(50vh - 22 * var(--u));     /* y 490 of 1024 */
+  width: calc(21.92 * var(--u));       /* 21.9 × 43.8 */
   cursor: pointer;
 }
 
@@ -983,15 +975,29 @@ a.flow-photo:focus-visible {
   display: block;
   width: 100%;
   height: auto;
+  filter: brightness(0) invert(1);   /* pure white, on "exclusion" (below): dark on the page, white over the black end */
+}
+
+/* The arrows blend like the bar at the top: dark on the page, white over black. At the end only the right
+   one stays (lab.js covers the left one), so it shows white on the black end and leads to the next project;
+   while the next project opens under the same black, a white copy of it stays on the black (page-change.js) */
+.project-arrow {
+  mix-blend-mode: exclusion;
+}
+
+/* (the copy of the right arrow on the black while the next project opens, page-change.js) */
+.project-arrive-arrow {
+  position: absolute;
+  filter: brightness(0) invert(1);
 }
 
 .project-arrow-prev {
-  left: calc(66 * var(--u));
+  left: calc(87.1 * var(--u));
   scale: -1 1;   /* mirrored: points left */
 }
 
 .project-arrow-next {
-  right: calc(66 * var(--u));
+  right: calc(87.1 * var(--u));
 }
 
 /* Home page: while a project's title is being built, its arrows slide in from the sides (home.js) to
@@ -1087,15 +1093,14 @@ body.has-blob-cursor * {
   animation: none;
 }
 
-/* The contact details (Figma: Frame 218, Variant2): three lines starting 131 to the
-   right of "Contact me" (x 196, the grid's 2nd column), at its height. Each line is a link with its own
+/* The contact details (Figma: Frame 218, Variant2): three lines 132 to the right of "Contact me", level with it. Each line is a link with its own
    blinking bar (contact.js) */
 .flow-contact-lines {
   --u: calc(100vw / 1440);
   position: fixed;
   z-index: 9;
-  left: calc(196 * var(--u));
-  top: calc(19 * var(--u));   /* level with "Contact me" */
+  left: calc(1117.5 * var(--u));   /* 132 to the right of "Contact me", level with it (Figma Frame 218, Variant2) */
+  top: calc(20.5 * var(--u));
   display: flex;
   flex-direction: column;
   mix-blend-mode: exclusion; /* the whole box blends (white: black on white, white on black) */
@@ -2115,8 +2120,8 @@ body.lab-page {
   }
 
   .flow-contact-lines {
-    left: max(calc(196 * var(--u)), calc(65 * var(--u) + 90px));
-    top: calc(19 * var(--u) - 4px);
+    left: max(calc(1117.5 * var(--u)), calc(985.5 * var(--u) + 90px));   /* (after "Contact me", which is bigger here) */
+    top: calc(20.5 * var(--u) - 4px);
   }
 
   /* ----- Home page: the number and name of a picture (shown after a tap) ----- */
@@ -2670,7 +2675,7 @@ body.lab-page {
 
 /* the arrows to the other projects: under the title, on the margins (Figma: y 50% + 20, 20.3 × 40.6) */
 .is-phone-portrait .lab > .project-arrow {
-  position: absolute;
+  position: fixed;   /* (it stays on the screen the whole way down the page) */
   grid-area: auto;   /* (placed from the page's edge, not inside the grid's 18px margin) */
   top: calc(50svh + 20 * var(--p));
   width: var(--phone-arrow-w);
@@ -2689,25 +2694,6 @@ body.lab-page {
   font-size: 12px;   /* (like the numbers beside the pictures on the home page) */
   font-style: italic;
 }
-
-/* The project's number on the first screen ("1  /" and "/  05", phone.js): in the same place, but part of
-   the first screen, so it scrolls away with it (the counter above then counts the pictures) */
-.phone-first-count {
-  position: absolute !important;
-  grid-area: auto !important;   /* (placed from the page's edge, not inside the grid's 18px margin) */
-  top: calc(50svh + 65 * var(--p)) !important;
-  margin: 0;
-  font-family: var(--font-nav);
-  font-size: 12px;
-  font-style: italic;
-  line-height: 1.24;
-  white-space: pre;
-  color: var(--color-nav-blend);
-  mix-blend-mode: exclusion;
-}
-
-.phone-first-count-now { left: 17px !important; }
-.phone-first-count-total { right: var(--phone-margin) !important; left: auto !important; }
 
 .is-phone-portrait.phone-project .fold-count-now {
   left: 17px;

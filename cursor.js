@@ -33,11 +33,13 @@
   // the blob's own shape: soft bumps, each swelling and shrinking at its own pace and slowly drifting
   // around the blob, so it never holds one shape (a new set every time it turns into a blob)
   let bumps = [];
-  function newShape() {
+  let blobSize = 1;         // 1 = the big blob (on title letters); smaller = the small blob (on the contact lines)
+  const SMALL_BLOB = 0.4;   // the small blob: much smaller than the square, with gentler bumps
+  function newShape(small) {
     bumps = Array.from({ length: BUMPS }, (_, k) => ({
       angle: (k / BUMPS) * Math.PI * 2 + (Math.random() - 0.5),
       drift: (Math.random() < 0.5 ? -1 : 1) * (0.0004 + Math.random() * 0.0007),   // radians per ms
-      size: 0.16 + Math.random() * 0.3,
+      size: (0.16 + Math.random() * 0.3) * (small ? 0.6 : 1),
       speed: 0.002 + Math.random() * 0.003,
       phase: Math.random() * Math.PI * 2,
       width: 2 + Math.random() * 3,   // how wide the bump is (bigger = narrower)
@@ -64,7 +66,7 @@
     for (let i = 0; i < POINTS; i++) {
       const a = (i / POINTS) * Math.PI * 2 + Math.PI / 4;   // (a point on each corner of the square)
       const square = h / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
-      const blob = h * 1.05 * blobRadius(a, time);
+      const blob = h * 1.05 * blobSize * blobRadius(a, time);
       const r = square + (blob - square) * e;
       // stretch: longer along the movement, a little thinner across it (only as a blob)
       const s = stretch * e;
@@ -104,6 +106,20 @@
   }
   shape.setAttribute("d", outline(0, 0, 0, 0));
 
+  // Going to another page: the new page shows the square right where the mouse was (it remembers it),
+  // so the cursor never disappears between pages until the mouse moves again
+  const SAVED = "cursorAt";
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(SAVED) || "null");
+    if (saved && Date.now() - saved.at < 10000) {
+      mouse = [saved.x, saved.y]; pos = [...mouse]; place();
+      cursor.classList.add("is-on");
+    }
+  } catch (e) {}
+  window.addEventListener("pagehide", () => {
+    try { sessionStorage.setItem(SAVED, JSON.stringify({ x: mouse[0], y: mouse[1], at: Date.now() })); } catch (e) {}
+  });
+
   document.addEventListener("mousemove", (event) => {
     mouse = [event.clientX, event.clientY];
     if (!running) { pos = [...mouse]; place(); }   // (the square: right on the mouse)
@@ -114,9 +130,10 @@
   window.addEventListener("resize", () => { if (!running) shape.setAttribute("d", outline(0, 0, 0, 0)); });
 
   window.squareCursor = {
-    // true: ooze into a blob (with a letter turning organic); false: back into the square
-    organic(on) {
-      if (on && t === 0) newShape();
+    // true: ooze into a blob (with a letter turning organic); false: back into the square.
+    // { small: true }: a small blob (over the contact lines)
+    organic(on, options = {}) {
+      if (on && t === 0) { newShape(options.small); blobSize = options.small ? SMALL_BLOB : 1; }
       target = on ? 1 : 0;
       if (!running) { running = true; requestAnimationFrame(frame); }
     },
