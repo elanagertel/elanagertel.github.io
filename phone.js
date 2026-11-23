@@ -480,10 +480,10 @@
   // ----- Tapping a picture: the pieces puzzle into the project's title, then the project page opens -----
   // The title is built exactly where the project page shows it (Figma "iPhone 16 - 7": across the width,
   // its middle 37.5% + 15.3 down the screen, its letters 52.51 wide), so the page opens with it in place.
-  // Each place in the title is taken by the nearest piece. First all the pieces scatter over the screen
-  // (one straight slide each) while the pictures slide out; then each title piece goes on into its place
-  // in two straight slides (across, then up or down). Pieces that are not needed leave through the
-  // nearest side, and if the title needs more pieces than there are, the others come in from the sides.
+  // Each place in the title is taken by the nearest piece. First the letters spread where they stand (like
+  // the big version when the mouse is on a picture) while the pictures slide out; then each title piece goes
+  // on into its place in two straight slides (across, then up or down). Pieces that are not needed leave
+  // through the nearest side, and if the title needs more pieces than there are, the others come in from the sides.
   const TITLE_FILES = {
     "memory-lab.html": "lab-organic.js",
     "israeli-cactus.html": "cactus-title.js",
@@ -541,7 +541,7 @@
       sources.push({ piece, scale: l.scale, x: r.left + r.width / 2, y: r.top + r.height / 2, used: false });
     }));
     const order = targets.map((t, i) => i).sort(() => Math.random() - 0.5);
-    const from = [];
+    const from = [], fromScale = [];
     order.forEach((i) => {
       const t = targets[i], tx = t.x + t.w / 2, ty = t.y + t.h / 2;
       let best = null, bestD = Infinity;
@@ -550,20 +550,22 @@
         const d = Math.hypot(src.x - tx, src.y - ty);
         if (d < bestD) { bestD = d; best = src; }
       });
-      if (best) { best.used = true; from[i] = [best.x, best.y]; best.piece.style.visibility = "hidden"; }
+      if (best) { best.used = true; from[i] = [best.x, best.y]; fromScale[i] = best.scale; best.piece.style.visibility = "hidden"; }
       else from[i] = [tx < W / 2 ? -60 : W + 60, ty];   // (more pieces than there are: from the side)
     });
 
-    // First every piece scatters: one straight slide (across, or up or down) to a place somewhere on the
-    // screen (pieces waiting outside the screen come in), the pieces setting off on a few beats.
-    // Then the title's pieces go on from there into the title, in two more slides (across, then up or
-    // down); the pieces that are not needed leave through the nearest side.
+    // First the letters spread, like the big version when the mouse is on a picture: every piece of the
+    // letters on the screen makes one short straight slide (one or two pieces' width, across or up or
+    // down), all at once. Then, after a moment, the title's pieces go on from there into the title in two
+    // more slides (across, then up or down), setting off on a few beats (pieces waiting outside the screen
+    // come straight in); the pieces that are not needed leave through the nearest side.
+    const SPREAD_TIME = 450, SPREAD_HOLD = 150;   // ms (the big version's spread takes 450)
     const BEAT = 110, BEATS = 4;
-    const somewhere = (lo, hi) => lo + Math.random() * (hi - lo);
-    function scatterFrom([x, y]) {
-      const outX = x < 0 || x > W, outY = y < 0 || y > H;
-      const across = outX || (!outY && Math.random() < 0.5);
-      return across ? [somewhere(W * 0.08, W * 0.92), y] : [x, somewhere(H * 0.12, H * 0.88)];
+    function spreadFrom([x, y], scale) {
+      if (x < 0 || x > W || y < 0 || y > H) return [x, y];   // (outside the screen: it does not spread)
+      const cell = LETTER * p * (scale || 1) / 2;             // one piece's width
+      const step = (Math.random() < 0.5 ? -1 : 1) * cell * (Math.random() < 0.5 ? 1 : 2);
+      return Math.random() < 0.5 ? [x + step, y] : [x, y + step];
     }
 
     // the title's pieces, in a layer over the screen, each starting where its piece was
@@ -583,22 +585,34 @@
       svg.style.height = t.h + "px";
       layer.appendChild(svg);
       const cx = t.x + t.w / 2, cy = t.y + t.h / 2;
-      const [sx, sy] = scatterFrom(from[i]);
-      const move = ([x, y]) => ({ transform: `translate(${x - cx}px, ${y - cy}px)`, easing: EASE });
+      const [sx, sy] = spreadFrom(from[i], fromScale[i]);
       const delay = Math.floor(Math.random() * BEATS) * BEAT;
-      svg.animate([move(from[i]), move([sx, sy]), move([cx, sy]), move([cx, cy])],
-        { duration: 3 * SLIDE, delay, fill: "backwards" });
-      end = Math.max(end, delay + 3 * SLIDE);
+      const total = SPREAD_TIME + SPREAD_HOLD + delay + 2 * SLIDE;
+      const at = (ms) => ms / total;
+      const move = ([x, y], offset) => ({ transform: `translate(${x - cx}px, ${y - cy}px)`, offset, easing: EASE });
+      svg.animate([
+        move(from[i], 0),
+        move([sx, sy], at(SPREAD_TIME)),                                   // the spread
+        move([sx, sy], at(SPREAD_TIME + SPREAD_HOLD + delay)),             // (a moment, then it sets off)
+        move([cx, sy], at(SPREAD_TIME + SPREAD_HOLD + delay + SLIDE)),     // across
+        move([cx, cy], 1),                                                 // up or down, into the title
+      ], { duration: total, fill: "backwards" });
+      end = Math.max(end, total);
     });
 
-    // the pieces that are not needed scatter too, then leave through the nearest side
+    // the pieces that are not needed spread too, then leave through the nearest side
     sources.filter((src) => !src.used).forEach((src) => {
-      const [sx, sy] = scatterFrom([src.x, src.y]);
+      const [sx, sy] = spreadFrom([src.x, src.y], src.scale);
       const out = sx < W / 2 ? -(sx + 80) : (W - sx + 80);
-      const local = (dx, dy) => ({ translate: `${dx / src.scale}px ${dy / src.scale}px`, easing: EASE });
       const delay = Math.floor(Math.random() * BEATS) * BEAT;
-      src.piece.animate([local(0, 0), local(sx - src.x, sy - src.y), local(sx - src.x + out, sy - src.y)],
-        { duration: 2 * SLIDE, delay, fill: "forwards" });
+      const total = SPREAD_TIME + SPREAD_HOLD + delay + SLIDE;
+      const local = (dx, dy, ms) => ({ translate: `${dx / src.scale}px ${dy / src.scale}px`, offset: ms / total, easing: EASE });
+      src.piece.animate([
+        local(0, 0, 0),
+        local(sx - src.x, sy - src.y, SPREAD_TIME),
+        local(sx - src.x, sy - src.y, SPREAD_TIME + SPREAD_HOLD + delay),
+        local(sx - src.x + out, sy - src.y, total),
+      ], { duration: total, fill: "forwards" });
     });
     // the finished title stays a moment, then the project page opens (with the title in the same place)
     await wait(end + 250);
