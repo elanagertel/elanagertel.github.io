@@ -330,12 +330,12 @@
   // past the edges (size = their Figma size). The last four are extra copies that only wait outside the
   // screen (they are not in the name; their pieces help build the project titles).
   const LETTERS = [
-    { file: "phone-e1", row: 0, col: 0, at: [159, 126], size: 74 },
-    { file: "phone-l1", row: 0, col: 1, at: [39, 316], size: 74 },
-    { file: "phone-a1", row: 0, col: 2, at: [284, 322], size: 74 },
-    { file: "phone-n",  row: 0, col: 3, at: [163, 527], size: 74 },
-    { file: "phone-a2", row: 0, col: 4, at: [39, 716], size: 74 },
-    { file: "phone-g",  row: 1, col: 0, at: [278, 716], size: 74 },
+    { file: "phone-e1", row: 0, col: 0, at: [160, 126], size: 74 },
+    { file: "phone-l1", row: 0, col: 1, at: [40, 323], size: 74 },
+    { file: "phone-a1", row: 0, col: 2, at: [279, 324], size: 74 },
+    { file: "phone-n",  row: 0, col: 3, at: [160, 521], size: 74 },
+    { file: "phone-a2", row: 0, col: 4, at: [39, 718], size: 74 },
+    { file: "phone-g",  row: 1, col: 0, at: [280, 718], size: 74 },
     { file: "phone-e2", row: 1, col: 1, at: [429.8, 496.07], size: 56.99 },
     { file: "phone-r",  row: 1, col: 2, at: [139, 858.31], size: 74 },
     { file: "phone-t",  row: 1, col: 3, at: [-96.1, 560.91], size: 74 },
@@ -477,57 +477,65 @@
 
   document.body.appendChild(home);
 
-  // ----- Scrolling the page: the big letters run away (like the big version, where the mouse pushes a big
-  // letter away like a magnet and the letters and pictures in its way are pushed along) -----
-  // As soon as you scroll, every big letter on the screen runs one step aside, in one quick straight slide:
-  // to the right while you scroll down, to the left while you scroll up. Everything after it in its row
-  // (the pictures with their numbers and names, other letters) is pushed along the same step. Once you
-  // stop scrolling, everything glides straight back home together.
-  const RUN_STEP = 46, RUN_TIME = 300, RUN_BACK = 400, RUN_STOP = 220;   // Figma phone px, ms
-  const RUN_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";   // (the big version's magnet push)
-  let running = 0, stopTimer = null, lastTop = 0;
-  const movers = () => letters.map((l) => l.el).concat(pictures.map((ph) => ph.item));
-  function runAway(direction) {   // direction: 1 = right, -1 = left, 0 = back home
-    running = direction;
-    if (!direction) {
-      movers().concat(pictures.flatMap((ph) => ph.textEls)).forEach((el) => {
-        if (!el.style.translate) return;
-        el.style.transition = `translate ${RUN_BACK}ms cubic-bezier(0.33, 1, 0.68, 1)`;   // quick start, soft stop
-        el.style.translate = "";
+  // ----- Scrolling the page: a letter moves and pushes the others round the grid (Figma "iPhone 16 - 12"
+  // → "iPhone 16 - 14") -----
+  // The page is a grid of 3 columns and 4 rows; each place holds a picture (with its number and name) or a
+  // big letter. Each step of scrolling turns one group of two rows one place round, like a sliding puzzle:
+  // the letter on the left of the lower row moves up, and pushes everything round in a ring (top row to the
+  // right, the right side down, the lower row to the left). The steps take turns: the top two rows, then
+  // the bottom two rows, then the top again… Scrolling up turns them back, one step at a time.
+  const COLS = [76, 197, 317], ROWS = [163, 361, 557, 755];   // the places' middles (Figma phone px)
+  const RING = [[0, 0], [0, 1], [0, 2], [1, 2], [1, 1], [1, 0]];   // [row, column] in a group, going round
+  const byFile = (file) => letters.find((l) => l.file === file && !l.extra);
+  const byNumber = (n) => pictures.find((ph) => ph.pr.number === n);
+  // each group: what stands in each place of the ring at the start (Figma "iPhone 16 - 12")
+  const GROUPS = [
+    { top: 0, ring: [byNumber(1), byFile("phone-e1"), byNumber(2), byFile("phone-a1"), byNumber(3), byFile("phone-l1")] },
+    { top: 2, ring: [byNumber(4), byFile("phone-n"), byNumber(5), byFile("phone-g"), byNumber(6), byFile("phone-a2")] },
+  ];
+  const STEP_TIME = 550;   // ms (a straight slide, like the shapes everywhere)
+  let steps = 0;           // how many steps the grid has turned (0 = as at the start)
+  function placeGrid() {
+    GROUPS.forEach((group, g) => {
+      const turns = g === 0 ? Math.ceil(steps / 2) : Math.floor(steps / 2);   // (the groups take turns)
+      group.ring.forEach((thing, home) => {
+        if (!thing) return;
+        const [r0, c0] = RING[home], [r1, c1] = RING[(home + turns) % RING.length];
+        const dx = (COLS[c1] - COLS[c0]) * p, dy = (ROWS[group.top + r1] - ROWS[group.top + r0]) * p;
+        const els = thing.el ? [thing.el] : [thing.item, ...thing.textEls];   // (a picture with its number and name)
+        els.forEach((el) => {
+          el.style.transition = `translate ${STEP_TIME}ms ${EASE}`;
+          el.style.translate = dx || dy ? `${dx}px ${dy}px` : "";
+        });
+        if (thing.item) thing.gridMove = [dx, dy];
       });
-      return;
-    }
-    const H = window.innerHeight, W = window.innerWidth;
-    const boxes = new Map(movers().map((el) => [el, el.getBoundingClientRect()]));
-    const pushed = new Set();
-    letters.forEach((l) => {
-      const r = l.pieces.map((piece) => shapeIn(piece).getBoundingClientRect())
-        .reduce((a, b) => ({ left: Math.min(a.left, b.left), right: Math.max(a.right, b.right),
-                             top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) }));
-      if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W) return;   // (only letters on the screen)
-      pushed.add(l.el);
-      // the rest of its row on the side it runs to
-      boxes.forEach((b, el) => {
-        const middle = (b.top + b.bottom) / 2;
-        if (middle < r.top - 20 || middle > r.bottom + 20) return;
-        if (direction > 0 ? b.left >= r.left : b.right <= r.right) pushed.add(el);
-      });
-    });
-    // (a picture's number and name go with it)
-    pictures.forEach((ph) => { if (pushed.has(ph.item)) ph.textEls.forEach((el) => pushed.add(el)); });
-    pushed.forEach((el) => {
-      el.style.transition = `translate ${RUN_TIME}ms ${RUN_EASE}`;
-      el.style.translate = `${direction * RUN_STEP * p}px 0`;
     });
   }
-  home.addEventListener("scroll", () => {
+  // one step for every stretch of scrolling (a swipe up = scrolling down = a step on; down = back)
+  const STEP_SCROLL = 70;   // px of finger or wheel movement for one step
+  let gathered = 0, lastStep = 0;
+  function scrolled(amount) {
     if (!home.classList.contains("is-done") || leaving) return;   // (not during the opening or going to a project)
-    const direction = home.scrollTop >= lastTop ? 1 : -1;
-    lastTop = home.scrollTop;
-    if (running !== direction) runAway(direction);
-    clearTimeout(stopTimer);
-    stopTimer = setTimeout(() => runAway(0), RUN_STOP);
+    gathered += amount;
+    const now = performance.now();
+    if (Math.abs(gathered) < STEP_SCROLL || now - lastStep < STEP_TIME * 0.6) return;
+    const step = gathered > 0 ? 1 : -1;
+    gathered = 0;
+    if (steps + step < 0) return;   // (back at the start: it stays)
+    steps += step;
+    lastStep = now;
+    placeGrid();
+  }
+  let touchY = null;
+  home.addEventListener("touchstart", (event) => { touchY = event.touches[0].clientY; gathered = 0; }, { passive: true });
+  home.addEventListener("touchmove", (event) => {
+    if (touchY === null) return;
+    const y = event.touches[0].clientY;
+    scrolled(touchY - y);
+    touchY = y;
   }, { passive: true });
+  home.addEventListener("touchend", () => { touchY = null; }, { passive: true });
+  home.addEventListener("wheel", (event) => scrolled(event.deltaY), { passive: true });
 
   let leaving = false;
 
@@ -566,7 +574,8 @@
     // the pictures slide out to their sides and their numbers and names go away (while the letters scatter)
     pictures.forEach((ph) => {
       ph.texts.forEach((t) => t.clear());
-      ph.item.animate([{ translate: "0 0" }, { translate: ph.outside + "px 0" }],
+      const [gx, gy] = ph.gridMove || [0, 0];   // (where scrolling has moved it in the grid)
+      ph.item.animate([{ translate: `${gx}px ${gy}px` }, { translate: `${gx + ph.outside}px ${gy}px` }],
         { duration: SLIDE, easing: EASE, fill: "forwards" });
     });
 
