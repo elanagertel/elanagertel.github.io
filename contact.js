@@ -33,10 +33,10 @@
     return { line, box, words, shown: 0 };
   });
   contact.after(list);
-  // with a mouse, the cursor turns into a small blob over each contact line (cursor.js)
+  // with a mouse, the cursor turns into a smaller square over each contact line (cursor.js)
   lines.forEach(({ line }) => {
-    line.addEventListener("mouseenter", () => { if (!byFinger() && window.squareCursor) window.squareCursor.organic(true, { small: true }); });
-    line.addEventListener("mouseleave", () => { if (window.squareCursor) window.squareCursor.organic(false); });
+    line.addEventListener("mouseenter", () => { if (!byFinger() && window.squareCursor) window.squareCursor.small(true); });
+    line.addEventListener("mouseleave", () => { if (window.squareCursor) window.squareCursor.small(false); });
   });
 
   // Types (open) or erases (closed) all the lines together, one letter each step

@@ -2613,11 +2613,10 @@ body.lab-page {
      stays 40px above the arrows. */
   --tu: calc(52.513 / 126.225 * var(--p));
   --phone-arrow-w: calc(20.28 * var(--p));
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--phone-margin);
-  row-gap: 0;
-  align-items: start;
+  /* one column (not a grid: in a grid each part could only stay in place inside its own row) */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   height: auto;
   padding: 0 var(--phone-margin);
   overflow: clip;
@@ -2650,8 +2649,10 @@ body.lab-page {
 
 .is-phone-portrait .lab-first {
   --u: var(--tu);
-  position: absolute;
-  top: calc(44% - var(--title-cy, 512) * var(--u));
+  position: fixed;   /* (the title stays where it is: the short texts scroll out behind it, like the big
+                        version, and the pictures slide up over it) */
+  z-index: 2;
+  top: calc(44svh - var(--title-cy, 512) * var(--u));
   left: calc(50% - var(--title-cx, 720) * var(--u));
   width: calc(1440 * var(--u));
   height: calc(1024 * var(--u));
@@ -2709,6 +2710,7 @@ body.lab-page {
    phone.js gives each its place (--px, --py, Figma phone px) */
 .is-phone-portrait .lab > .lab-intro {
   position: absolute;
+  z-index: 1;   /* (behind the title, which stays in place) */
   grid-area: auto;   /* (placed from the page's edge, not inside the grid's 18px margin) */
   left: calc(var(--px) * var(--p));
   /* the group of texts stands where Figma has it on the screen (the year's top at 607 of 852), and the
@@ -2736,18 +2738,51 @@ body.lab-page {
 
 
 
-/* Pictures and videos: the whole width between the margins, in their own shape */
-.is-phone-portrait .lab > .lab-track {
+/* (the page itself scrolls, not the body: so the pictures can stay in place while it scrolls) */
+.is-phone-portrait body.lab-page {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+/* ----- Scrolling past the first screen (Figma "iPhone 16 - 15") -----
+   The title stays where it is while the short texts under it scroll out at the top; then the first
+   picture (or video, or row of pictures) slides up over the title and stays in place at the top (y 198,
+   in a box 358 × 225, above the arrows). The story paragraphs keep scrolling, behind the pictures. The
+   next picture comes in under the paragraphs, slides up over the one before, and stays there in its turn
+   (like the big version).
+   (phone.js marks each part with what comes before it: .phone-after-media / .phone-after-text) */
+.is-phone-portrait .lab > .lab-track,
+.is-phone-portrait .lab > .lab-side-track {
+  position: sticky;
+  top: calc(50svh - 228 * var(--p));   /* (y 198 of 852: the arrows' top is at 50% + 20) */
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(225 * var(--p));
   margin-top: 56px;
 }
 
+/* a picture after another picture: it comes in from under the arrows */
+.is-phone-portrait .lab > .phone-after-media:is(.lab-track, .lab-side-track) {
+  margin-top: calc(162 * var(--p));
+}
+
+/* each picture in its own shape (phone.js sizes it: a horizontal one covers the title, a vertical one is
+   as tall as the room between the name and the arrows) */
 .is-phone-portrait .lab-media {
   position: static;
-  width: 100%;
+  width: min(100%, calc(225 * var(--p) * var(--w) / var(--h)));
   height: auto;
   aspect-ratio: calc(var(--w) / var(--h));
   margin: 0;
   object-fit: cover;
+}
+
+/* (a picture with see-through parts, like the book's spreads, still hides the title behind it) */
+.is-phone-portrait .lab > .lab-track .lab-media,
+.is-phone-portrait .lab > .lab-side-track .lab-side {
+  background-color: var(--color-background);
 }
 
 /* the book spreads reach from edge to edge of the screen, like on the big screen */
@@ -2756,11 +2791,21 @@ body.lab-page {
   margin-right: calc(-1 * var(--phone-margin));
 }
 
-/* The story paragraphs: 16px, line height 160% (Figma), between the pictures */
+/* The story paragraphs: 16px, line height 160% (Figma), under the pictures; one empty line between two
+   paragraphs, and the first one under a picture starts at y 585 (Figma "iPhone 16 - 15") */
 .is-phone-portrait .lab > .lab-text-track {
   display: block;
+  z-index: 1;
   margin-top: 56px;
   mix-blend-mode: normal;
+}
+
+.is-phone-portrait .lab > .lab-text-track.phone-after-media {
+  margin-top: calc(162 * var(--p));
+}
+
+.is-phone-portrait .lab > .lab-text-track.phone-after-text {
+  margin-top: 1.6em;
 }
 
 .is-phone-portrait .lab-text {
@@ -2772,11 +2817,7 @@ body.lab-page {
   color: var(--color-text);
 }
 
-/* the pictures beside a paragraph: two side by side */
-.is-phone-portrait .lab > .lab-side-track {
-  display: block;
-  margin-top: 56px;
-}
+/* the pictures beside a paragraph: side by side, in one row (in the same box as the other pictures) */
 
 /* (all of them in one row, the same height: each one is as wide as its shape needs, phone.js gives it
    its share of the row from its proportions) */
@@ -2804,7 +2845,14 @@ body.lab-page {
   justify-content: center;
   height: 100svh;   /* (the whole screen at the end, like the big version) */
   margin: 96px calc(-1 * var(--phone-margin)) 0;
+  z-index: 4;   /* (it slides up over the pictures that stay in place) */
   background-color: #000000;
+}
+
+/* (on a page with pictures: after the last paragraph the pictures scroll out (phone.js) and the title shows
+   on its own for a moment before the black end comes in) */
+.is-phone-portrait .lab.phone-has-media > .lab-footer {
+  margin-top: calc(130svh + 225 * var(--p));
 }
 
 /* "Next Project" at the bottom right of the black end (like the big version, where it lies under the
@@ -2815,7 +2863,21 @@ body.lab-page {
 
 /* Opening the next project from the black end: the new page starts under the same black, with its name
    in white and "Next Project"; then the black slides up and away (page-change.js) */
+/* Arriving from another page (the script at the top of each page): the things that will slide in stay
+   hidden until page-change.js has put them outside the screen (big screens; phones lay out on their own) */
+html.is-arriving:not(.is-phone-portrait) :is(.flow-piece, .flow-photo, .flow-name, .flow-year, .lab-piece, .lab-intro, .lab-media, .lab-text, .lab-info, .lab-footer-text, .about-piece, .about-photo, .about-text, .about-bio) {
+  visibility: hidden;
+}
+/* Arriving from the black end of a project: all black until the black layer below is on the page */
+html.from-end {
+  background-color: #000000;
+}
+html.from-end body {
+  visibility: hidden;
+}
+
 .project-arrive {
+  visibility: visible;
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -2863,6 +2925,11 @@ body.lab-page {
   top: auto;
   bottom: 24px;
   font-size: 12px;
+}
+
+/* (the name stays still while the black comes up and uncovers it, lab.js: what is outside the black is cut off) */
+.is-phone-portrait .lab > .lab-footer {
+  overflow: clip;
 }
 
 .is-phone-portrait .lab-footer .lab-footer-title {

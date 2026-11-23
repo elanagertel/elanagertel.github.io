@@ -182,6 +182,32 @@
     root.classList.add("is-phone-portrait");
     parts.sort((a, b) => a.y - b.y).forEach((part, i) => { part.el.style.order = 10 + i; });
 
+    // Scrolling past the first screen (Figma "iPhone 16 - 15"): each picture slides up (the first one over
+    // the title) and stays in place at the top, the paragraphs scroll on behind it, and the next picture
+    // slides up over it (styles.css).
+    // Each part is marked with what comes before it, so the distances are right (a paragraph right under a
+    // picture starts at y 585; two paragraphs: one empty line between them).
+    const isMedia = (el) => el.matches(".lab-track, .lab-side-track");
+    parts.forEach((part, i) => {
+      if (i === 0) return;
+      part.el.classList.add(isMedia(parts[i - 1].el) ? "phone-after-media" : "phone-after-text");
+    });
+    // At the end: once the last paragraph has scrolled out (behind the pictures), the pictures let go and
+    // scroll out too, so the title shows again; then the black end comes in over everything
+    const media = parts.map((part) => part.el).filter(isMedia);
+    const last = parts.length ? parts[parts.length - 1].el : null;
+    if (media.length && last && !isMedia(last)) {
+      lab.classList.add("phone-has-media");   // (more room before the black end, styles.css)
+      const letGo = () => {
+        const inPlace = parseFloat(getComputedStyle(media[media.length - 1]).top) || 0;   // (the last picture's place)
+        const past = Math.min(0, last.getBoundingClientRect().bottom - inPlace);
+        media.forEach((el) => { el.style.translate = past ? `0 ${past}px` : ""; });
+      };
+      window.addEventListener("scroll", letGo, { passive: true });
+      window.addEventListener("resize", letGo);
+      letGo();
+    }
+
     // The short texts, on the first screen (Figma "iPhone 16 - 7"): the school at the top left, its bottom
     // level with the year's bottom, and the year beside it (x 200, y 607, 12); under them the project's name and the technique side by side
     // (y 628); and the brief and the solution lower down (y 734 and 759). The school and the year are 12;
@@ -229,7 +255,8 @@
       first.style.translate = "";
       const shapes = [...first.querySelectorAll(".lab-piece")].map((el) => el.getBoundingClientRect());
       if (!shapes.length) return;
-      const box = first.parentElement.getBoundingClientRect();
+      // (the title stays on the screen while the page scrolls: measured on the screen itself)
+      const box = { left: 0, top: 0, width: window.innerWidth, height: first.parentElement.offsetHeight };
       const midX = (Math.min(...shapes.map((r) => r.left)) + Math.max(...shapes.map((r) => r.right))) / 2;
       const midY = (Math.min(...shapes.map((r) => r.top)) + Math.max(...shapes.map((r) => r.bottom))) / 2;
       // its middle: 37.5% + 15.3 down the screen (Figma "iPhone 16 - 7"), or higher for a tall title,
@@ -238,6 +265,48 @@
       const pp = window.innerWidth / 393;
       const wanted = Math.min(box.height * 0.375 + 15.3 * pp, box.height * 0.5 + 20 * pp - 40 - height / 2);
       first.style.translate = `${box.left + box.width / 2 - midX}px ${box.top + wanted - midY}px`;
+      sizePictures();
+    }
+
+    // The pictures' size and place, by their shape (they slide up over the title and stay there, all of them
+    // centred on the same spot: the title's middle):
+    // - a horizontal one covers all the title (at least as wide as the room between the margins, and tall
+    //   enough to hide the title);
+    // - a vertical one is as tall as the room allows: from under the name down as far below the middle.
+    const ratioOf = (el) => {
+      const [a, b] = getComputedStyle(el).aspectRatio.replace("auto", "").split("/").map(parseFloat);
+      return a && b ? a / b : a || 1;
+    };
+    function sizePictures() {
+      const shapes = [...first.querySelectorAll(".lab-piece")].map((el) => el.getBoundingClientRect());
+      if (!shapes.length) return;
+      const pp = window.innerWidth / 393;
+      const titleTop = Math.min(...shapes.map((r) => r.top)), titleBottom = Math.max(...shapes.map((r) => r.bottom));
+      const titleMid = (titleTop + titleBottom) / 2, titleTall = titleBottom - titleTop + 8 * pp;   // (a little to spare)
+      const wide = 358 * pp;                                        // the room between the margins
+      const roomTop = 86 * pp;   // (just under the name)
+      lab.querySelectorAll(":scope > .lab-track, :scope > .lab-side-track").forEach((track) => {
+        const pics = track.matches(".lab-side-track") ? [...track.querySelectorAll(".lab-side img")] : [track.querySelector(".lab-media")];
+        if (!pics[0]) return;
+        // (a row of pictures: as wide as all of them side by side, 8 apart)
+        const ratio = pics.reduce((sum, el) => sum + ratioOf(el), 0) + (pics.length - 1) * 8 * pp / (225 * pp);
+        let w, h, top;
+        if (ratio >= 1) {
+          w = Math.min(window.innerWidth, Math.max(wide, titleTall * ratio));
+          h = w / ratio;
+          top = titleMid - h / 2;
+        } else {
+          // (centred on the title's middle too, as tall as the room above that middle allows)
+          h = 2 * (titleMid - roomTop);
+          w = Math.min(wide, h * ratio);
+          h = w / ratio;
+          top = titleMid - h / 2;
+        }
+        track.style.top = `${top}px`;
+        track.style.height = `${h}px`;
+        const holder = pics.length > 1 ? track.querySelector(".lab-side") : pics[0];
+        holder.style.width = `${w}px`;
+      });
     }
     requestAnimationFrame(centreTitle);
     window.addEventListener("resize", centreTitle);
@@ -583,12 +652,17 @@
     let title;
     try { title = await readTitle(href); } catch (e) { location.href = href; return; }
     const shapes = await Promise.all(title.pieces.map(([number]) => shapeOf(number)));
-    // the pictures slide out to their sides and their numbers and names go away (while the letters scatter)
+    // First the letters spread and stop for a moment (the pictures stay); then the pictures slide out to
+    // their sides (their numbers and names go away) with the pieces that are not needed; and only then do
+    // the title's pieces write out the project's name
+    const SPREAD_TIME = 450, SPREAD_HOLD = 300;   // ms (the big version's spread takes 450)
+    const OUT_AT = SPREAD_TIME + SPREAD_HOLD;     // when the pictures leave
+    const BUILD_AT = OUT_AT + SLIDE;              // when the title starts (once they are out)
     pictures.forEach((ph) => {
-      ph.texts.forEach((t) => t.clear());
+      setTimeout(() => ph.texts.forEach((t) => t.clear()), OUT_AT);
       const [gx, gy] = ph.gridMove || [0, 0];   // (where scrolling has moved it in the grid)
       ph.item.animate([{ translate: `${gx}px ${gy}px` }, { translate: `${gx + ph.outside}px ${gy}px` }],
-        { duration: SLIDE, easing: EASE, fill: "forwards" });
+        { duration: SLIDE, delay: OUT_AT, easing: EASE, fill: "both" });
     });
 
     // where each title piece goes on the screen (as the project page draws it)
@@ -629,12 +703,11 @@
       else from[i] = [tx < W / 2 ? -60 : W + 60, ty];   // (more pieces than there are: from the side)
     });
 
-    // First the letters spread, like the big version when the mouse is on a picture: every piece of the
-    // letters on the screen makes one short straight slide (one or two pieces' width, across or up or
-    // down), all at once. Then, after a moment, the title's pieces go on from there into the title in two
-    // more slides (across, then up or down), setting off on a few beats (pieces waiting outside the screen
-    // come straight in); the pieces that are not needed leave through the nearest side.
-    const SPREAD_TIME = 450, SPREAD_HOLD = 150;   // ms (the big version's spread takes 450)
+    // The spread is like the big version when the mouse is on a picture: every piece of the letters on the
+    // screen makes one short straight slide (one or two pieces' width, across or up or down), all at once.
+    // Then, after a moment, the pieces that are not needed leave through the nearest side (with the
+    // pictures), and once they are out the title's pieces go on into the title in two more slides (across,
+    // then up or down), setting off on a few beats (pieces waiting outside the screen come straight in).
     const BEAT = 110, BEATS = 4;
     function spreadFrom([x, y], scale) {
       if (x < 0 || x > W || y < 0 || y > H) return [x, y];   // (outside the screen: it does not spread)
@@ -662,14 +735,14 @@
       const cx = t.x + t.w / 2, cy = t.y + t.h / 2;
       const [sx, sy] = spreadFrom(from[i], fromScale[i]);
       const delay = Math.floor(Math.random() * BEATS) * BEAT;
-      const total = SPREAD_TIME + SPREAD_HOLD + delay + 2 * SLIDE;
+      const total = BUILD_AT + delay + 2 * SLIDE;
       const at = (ms) => ms / total;
       const move = ([x, y], offset) => ({ transform: `translate(${x - cx}px, ${y - cy}px)`, offset, easing: EASE });
       svg.animate([
         move(from[i], 0),
         move([sx, sy], at(SPREAD_TIME)),                                   // the spread
-        move([sx, sy], at(SPREAD_TIME + SPREAD_HOLD + delay)),             // (a moment, then it sets off)
-        move([cx, sy], at(SPREAD_TIME + SPREAD_HOLD + delay + SLIDE)),     // across
+        move([sx, sy], at(BUILD_AT + delay)),                              // (it waits while the pictures leave)
+        move([cx, sy], at(BUILD_AT + delay + SLIDE)),                      // across
         move([cx, cy], 1),                                                 // up or down, into the title
       ], { duration: total, fill: "backwards" });
       end = Math.max(end, total);
@@ -679,13 +752,12 @@
     sources.filter((src) => !src.used).forEach((src) => {
       const [sx, sy] = spreadFrom([src.x, src.y], src.scale);
       const out = sx < W / 2 ? -(sx + 80) : (W - sx + 80);
-      const delay = Math.floor(Math.random() * BEATS) * BEAT;
-      const total = SPREAD_TIME + SPREAD_HOLD + delay + SLIDE;
+      const total = OUT_AT + SLIDE;
       const local = (dx, dy, ms) => ({ translate: `${dx / src.scale}px ${dy / src.scale}px`, offset: ms / total, easing: EASE });
       src.piece.animate([
         local(0, 0, 0),
         local(sx - src.x, sy - src.y, SPREAD_TIME),
-        local(sx - src.x, sy - src.y, SPREAD_TIME + SPREAD_HOLD + delay),
+        local(sx - src.x, sy - src.y, OUT_AT),                             // (with the pictures)
         local(sx - src.x + out, sy - src.y, total),
       ], { duration: total, fill: "forwards" });
     });

@@ -62,14 +62,20 @@
     el.style.translate = `${to[0]}px ${to[1]}px`;
   }
 
+  // (the script at the top of the page hid what slides in, or made the screen black: show the page again)
+  const arrived = () => document.documentElement.classList.remove("is-arriving");
+  const arrivedFromEnd = () => document.documentElement.classList.remove("from-end");
+
   window.pageChange = {
     // Did we just come here from another page by sliding out? (only asked once)
     cameBack() {
       try {
         const saved = JSON.parse(sessionStorage.getItem(KEY) || "null");
         sessionStorage.removeItem(KEY);
-        return !REDUCED && !!saved && saved.page === PAGE && Date.now() - saved.at < 10000;
-      } catch (e) { return false; }
+        const yes = !REDUCED && !!saved && saved.page === PAGE && Date.now() - saved.at < 10000;
+        if (!yes) arrived();
+        return yes;
+      } catch (e) { arrived(); return false; }
     },
     // The things on the screen slide in from the nearest edge; done() once they are in
     slideIn(elements, done) {
@@ -77,6 +83,7 @@
       // first put them outside the screen at once (so the page never shows them in place first)...
       const starts = shown.map((el) => [el, wayOut(el), delayOf(el)]);
       starts.forEach(([el, from]) => { el.style.transition = "none"; el.style.translate = `${from[0]}px ${from[1]}px`; });
+      arrived();   // (now they are outside the screen, they can be shown)
       // ...then, once the page is really on the screen, let them slide in
       requestAnimationFrame(() => requestAnimationFrame(() => {
         starts.forEach(([el, from, delay]) => slide(el, from, [0, 0], delay));
@@ -166,8 +173,10 @@
     try {
       const at = Number(sessionStorage.getItem(END_KEY) || 0);
       sessionStorage.removeItem(END_KEY);
-      return !REDUCED && Date.now() - at < 10000;
-    } catch (e) { return false; }
+      const yes = !REDUCED && Date.now() - at < 10000;
+      if (!yes) arrivedFromEnd();
+      return yes;
+    } catch (e) { arrivedFromEnd(); return false; }
   }
   if (PAGE === "project" && cameFromEnd()) {
     // the black, right away (so the page never shows without it)
@@ -175,6 +184,7 @@
     black.className = "project-arrive";
     black.setAttribute("aria-hidden", "true");
     document.body.appendChild(black);
+    arrivedFromEnd();   // (the black layer covers the page now)
     window.introTypingWait = UP_HOLD + UP_TIME + 150;
 
     // on it: this project's name in white, exactly over the page's own title (drawn from its own shapes)

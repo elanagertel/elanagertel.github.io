@@ -483,14 +483,28 @@ if (footerTitle && !nextPage) {
     const shapes = [...footerTitle.querySelectorAll(".lab-piece-white")];
     if (!end || !shapes.length) return;
     footerTitle.style.transform = "";
+    footerTitle.style.top = "";
     const boxes = shapes.map((el) => el.getBoundingClientRect()), e = end.getBoundingClientRect();
     const left = Math.min(...boxes.map((b) => b.left)), right = Math.max(...boxes.map((b) => b.right));
     const top = Math.min(...boxes.map((b) => b.top)), bottom = Math.max(...boxes.map((b) => b.bottom));
     const H = e.height, pp = window.innerWidth / 393;
     const wanted = Math.min(H * 0.375 + 15.3 * pp, H * 0.5 + 20 * pp - 40 - (bottom - top) / 2);
     footerTitle.style.transform = `translate(${window.innerWidth / 2 - (left + right) / 2}px, ${e.top + wanted - (top + bottom) / 2}px)`;
+    revealEndTitle();
   }
-  if (upright) window.addEventListener("resize", placeEndTitle);
+  // While the black end comes up, the name does not come up with it: it stays still where it will be
+  // (as if it were already there under the page) and the black uncovers it as it rises, like the big
+  // version (the black end cuts off what is outside it, styles.css)
+  function revealEndTitle() {
+    const end = document.querySelector(".lab-footer");
+    if (!end) return;
+    const rise = Math.max(0, end.getBoundingClientRect().top);   // (how far the black still has to come up)
+    footerTitle.style.top = rise ? `${-rise}px` : "";
+  }
+  if (upright) {
+    window.addEventListener("resize", placeEndTitle);
+    window.addEventListener("scroll", revealEndTitle, { passive: true });
+  }
 
   // (the white title, and the right arrow that stays on the screen, lead to the next project)
 }

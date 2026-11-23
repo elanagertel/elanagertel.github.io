@@ -33,13 +33,11 @@
   // the blob's own shape: soft bumps, each swelling and shrinking at its own pace and slowly drifting
   // around the blob, so it never holds one shape (a new set every time it turns into a blob)
   let bumps = [];
-  let blobSize = 1;         // 1 = the big blob (on title letters); smaller = the small blob (on the contact lines)
-  const SMALL_BLOB = 0.4;   // the small blob: much smaller than the square, with gentler bumps
-  function newShape(small) {
+  function newShape() {
     bumps = Array.from({ length: BUMPS }, (_, k) => ({
       angle: (k / BUMPS) * Math.PI * 2 + (Math.random() - 0.5),
       drift: (Math.random() < 0.5 ? -1 : 1) * (0.0004 + Math.random() * 0.0007),   // radians per ms
-      size: (0.16 + Math.random() * 0.3) * (small ? 0.6 : 1),
+      size: 0.16 + Math.random() * 0.3,
       speed: 0.002 + Math.random() * 0.003,
       phase: Math.random() * Math.PI * 2,
       width: 2 + Math.random() * 3,   // how wide the bump is (bigger = narrower)
@@ -66,7 +64,7 @@
     for (let i = 0; i < POINTS; i++) {
       const a = (i / POINTS) * Math.PI * 2 + Math.PI / 4;   // (a point on each corner of the square)
       const square = h / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
-      const blob = h * 1.05 * blobSize * blobRadius(a, time);
+      const blob = h * 1.05 * blobRadius(a, time);
       const r = square + (blob - square) * e;
       // stretch: longer along the movement, a little thinner across it (only as a blob)
       const s = stretch * e;
@@ -129,11 +127,17 @@
   document.documentElement.addEventListener("mouseleave", () => cursor.classList.remove("is-on"));
   window.addEventListener("resize", () => { if (!running) shape.setAttribute("d", outline(0, 0, 0, 0)); });
 
+  // A smaller square (over the contact details): the same square, shrunk round its middle
+  const SMALL_SQUARE = 0.5;   // its size, compared with the normal square
+  shape.style.transformOrigin = `${BOX / 2}px ${BOX / 2}px`;
+  shape.style.transition = reduced ? "none" : "scale 250ms cubic-bezier(0.65, 0, 0.35, 1)";
+
   window.squareCursor = {
-    // true: ooze into a blob (with a letter turning organic); false: back into the square.
-    // { small: true }: a small blob (over the contact lines)
-    organic(on, options = {}) {
-      if (on && t === 0) { newShape(options.small); blobSize = options.small ? SMALL_BLOB : 1; }
+    // true: shrink into the smaller square; false: back to the normal size
+    small(on) { shape.style.scale = on ? String(SMALL_SQUARE) : ""; },
+    // true: ooze into a blob (with a letter turning organic); false: back into the square
+    organic(on) {
+      if (on && t === 0) newShape();
       target = on ? 1 : 0;
       if (!running) { running = true; requestAnimationFrame(frame); }
     },
