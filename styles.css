@@ -2413,14 +2413,14 @@ body.lab-page {
   text-decoration: none;
 }
 
-/* (Figma, from the top: "Home  /" at y 77, "About Me  /" at y 143, "Contact me  /" at y 208,
-   and its details from y 269, rows 1.82 apart) */
-.phone-menu-home { top: 77px; left: 17px; }
-.phone-menu-about { top: 143px; }
-.phone-menu-contact { top: 208px; }
-.phone-menu-line { top: 269px; left: 17px; }
-.phone-menu-line + .phone-menu-line { top: calc(269px + 1.82em); }
-.phone-menu-line + .phone-menu-line + .phone-menu-line { top: calc(269px + 2 * 1.82em); }
+/* (Figma, from the top: "Home  /" at y 143, "About Me  /" at y 209, "Contact me  /" at y 274,
+   and its details from y 335, rows 1.82 apart) */
+.phone-menu-home { top: 143px; left: 17px; }
+.phone-menu-about { top: 209px; }
+.phone-menu-contact { top: 274px; }
+.phone-menu-line { top: 335px; left: 17px; }
+.phone-menu-line + .phone-menu-line { top: calc(335px + 1.82em); }
+.phone-menu-line + .phone-menu-line + .phone-menu-line { top: calc(335px + 2 * 1.82em); }
 
 .phone-menu-item.is-here {
   font-style: italic;
@@ -2446,10 +2446,8 @@ body.lab-page {
   text-decoration: none;
 }
 
+/* While the menu is open the name stays where it is (Figma "iPhone 16 - 5": x 17, y 32), white */
 .phone-menu-open .phone-name {
-  left: calc(314.5px - 0.5 * var(--name-w, 112px));
-  top: auto;
-  bottom: 32px;
   color: var(--phone-menu-text);
   mix-blend-mode: normal;
 }

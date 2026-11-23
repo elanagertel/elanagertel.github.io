@@ -110,7 +110,10 @@
     if (!copiedText) {
       copiedText = document.createElement("span");
       copiedText.className = "phone-menu-copied";
-      mailLink.appendChild(copiedText);
+      // (inside the typed line, right after the address, so it sits on the same line)
+      const live = mailLink.querySelector(".phone-live");
+      const bar = live && live.querySelector(".phone-bar");
+      if (live) live.insertBefore(copiedText, bar); else mailLink.appendChild(copiedText);
     }
     clearInterval(copiedTimer);
     const words = "  /  copied";
@@ -129,8 +132,6 @@
   name.textContent = "ELANA GERTEL";
 
   document.body.append(menu, button, name);
-  // (its width, so it can be centred where Figma has it while the menu is open)
-  document.fonts.ready.then(() => name.style.setProperty("--name-w", name.offsetWidth + "px"));
 
   let open = false;
   function setMenu(value) {
@@ -474,35 +475,52 @@
   // ----- Scrolling the page: a letter moves and pushes the others round the grid (Figma "iPhone 16 - 12"
   // → "iPhone 16 - 14") -----
   // The page is a grid of 3 columns and 4 rows; each place holds a picture (with its number and name) or a
-  // big letter. Each step of scrolling turns one group of two rows one place round, like a sliding puzzle:
-  // the letter on the left of the lower row moves up, and pushes everything round in a ring (top row to the
-  // right, the right side down, the lower row to the left). The steps take turns: the top two rows, then
-  // the bottom two rows, then the top again… Scrolling up turns them back, one step at a time.
+  // big letter. Each step of scrolling turns one part of the grid one place round, like a sliding puzzle:
+  // a letter moves and pushes everything in that part round in a ring. The part changes from step to step
+  // (the top, the middle, the bottom, small squares of four places in different spots…), so the whole grid
+  // keeps shifting, not only in two halves. Scrolling up turns them back, one step at a time.
   const COLS = [76, 197, 317], ROWS = [163, 361, 557, 755];   // the places' middles (Figma phone px)
-  const RING = [[0, 0], [0, 1], [0, 2], [1, 2], [1, 1], [1, 0]];   // [row, column] in a group, going round
   const byFile = (file) => letters.find((l) => l.file === file && !l.extra);
   const byNumber = (n) => pictures.find((ph) => ph.pr.number === n);
-  // each group: what stands in each place of the ring at the start (Figma "iPhone 16 - 12")
-  const GROUPS = [
-    { top: 0, ring: [byNumber(1), byFile("phone-e1"), byNumber(2), byFile("phone-a1"), byNumber(3), byFile("phone-l1")] },
-    { top: 2, ring: [byNumber(4), byFile("phone-n"), byNumber(5), byFile("phone-g"), byNumber(6), byFile("phone-a2")] },
+  // what stands in each place at the start (Figma "iPhone 16 - 12"), row by row: place = row * 3 + column
+  const START = [
+    byNumber(1), byFile("phone-e1"), byNumber(2),
+    byFile("phone-l1"), byNumber(3), byFile("phone-a1"),
+    byNumber(4), byFile("phone-n"), byNumber(5),
+    byFile("phone-a2"), byNumber(6), byFile("phone-g"),
   ];
+  const cell = (row, col) => row * 3 + col;
+  // a ring of two whole rows (from the row "top" down), going round: top row to the right, then back
+  const band = (top) => [cell(top, 0), cell(top, 1), cell(top, 2), cell(top + 1, 2), cell(top + 1, 1), cell(top + 1, 0)];
+  // a small ring of four places (a square of 2 × 2, its top-left place at row, col)
+  const square = (row, col) => [cell(row, col), cell(row, col + 1), cell(row + 1, col + 1), cell(row + 1, col)];
+  // the parts that turn, one per step, in this order (then the order starts again)
+  const TURNS = [band(0), band(1), band(2), square(1, 0), square(0, 1), band(1), square(2, 1), square(1, 1), square(0, 0), square(2, 0)];
+  // where everything stands after some steps: each step moves what is in each place of its ring one place on
+  function placesAfter(count) {
+    const places = START.slice();
+    for (let k = 0; k < count; k++) {
+      const ring = TURNS[k % TURNS.length];
+      const last = places[ring[ring.length - 1]];
+      for (let i = ring.length - 1; i > 0; i--) places[ring[i]] = places[ring[i - 1]];
+      places[ring[0]] = last;
+    }
+    return places;
+  }
   const STEP_TIME = 550;   // ms (a straight slide, like the shapes everywhere)
   let steps = 0;           // how many steps the grid has turned (0 = as at the start)
   function placeGrid() {
-    GROUPS.forEach((group, g) => {
-      const turns = g === 0 ? Math.ceil(steps / 2) : Math.floor(steps / 2);   // (the groups take turns)
-      group.ring.forEach((thing, home) => {
-        if (!thing) return;
-        const [r0, c0] = RING[home], [r1, c1] = RING[(home + turns) % RING.length];
-        const dx = (COLS[c1] - COLS[c0]) * p, dy = (ROWS[group.top + r1] - ROWS[group.top + r0]) * p;
-        const els = thing.el ? [thing.el] : [thing.item, ...thing.textEls];   // (a picture with its number and name)
-        els.forEach((el) => {
-          el.style.transition = `translate ${STEP_TIME}ms ${EASE}`;
-          el.style.translate = dx || dy ? `${dx}px ${dy}px` : "";
-        });
-        if (thing.item) thing.gridMove = [dx, dy];
+    const places = placesAfter(steps);
+    places.forEach((thing, place) => {
+      if (!thing) return;
+      const home = START.indexOf(thing);
+      const dx = (COLS[place % 3] - COLS[home % 3]) * p, dy = (ROWS[Math.floor(place / 3)] - ROWS[Math.floor(home / 3)]) * p;
+      const els = thing.el ? [thing.el] : [thing.item, ...thing.textEls];   // (a picture with its number and name)
+      els.forEach((el) => {
+        el.style.transition = `translate ${STEP_TIME}ms ${EASE}`;
+        el.style.translate = dx || dy ? `${dx}px ${dy}px` : "";
       });
+      if (thing.item) thing.gridMove = [dx, dy];
     });
   }
   // one step for every stretch of scrolling (a swipe up = scrolling down = a step on; down = back)
