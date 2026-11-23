@@ -652,12 +652,14 @@
     let title;
     try { title = await readTitle(href); } catch (e) { location.href = href; return; }
     const shapes = await Promise.all(title.pieces.map(([number]) => shapeOf(number)));
-    // First the letters spread and stop for a moment (the pictures stay); then the pictures slide out to
-    // their sides (their numbers and names go away) with the pieces that are not needed; and only then do
-    // the title's pieces write out the project's name
-    const SPREAD_TIME = 450, SPREAD_HOLD = 300;   // ms (the big version's spread takes 450)
-    const OUT_AT = SPREAD_TIME + SPREAD_HOLD;     // when the pictures leave
-    const BUILD_AT = OUT_AT + SLIDE;              // when the title starts (once they are out)
+    // First the letters spread a little, like the big version when the mouse is on a picture (the pictures
+    // stay, and no piece touches them); then the pieces go straight on into the title, while the pictures
+    // slide out to their sides (their numbers and names go away) with the pieces that are not needed
+    const SPREAD_TIME = 450;      // ms (the big version's spread takes 450)
+    const OUT_AT = SPREAD_TIME;   // when the pictures leave
+    const BUILD_AT = SPREAD_TIME; // when the pieces set off into the title
+    // (where the pictures are: the spread keeps clear of them; it may touch their numbers and names)
+    const keepClear = pictures.map((ph) => ph.item.getBoundingClientRect());
     pictures.forEach((ph) => {
       setTimeout(() => ph.texts.forEach((t) => t.clear()), OUT_AT);
       const [gx, gy] = ph.gridMove || [0, 0];   // (where scrolling has moved it in the grid)
@@ -685,10 +687,17 @@
 
     // the pieces on the screen now, and the nearest one for each place in the title
     const sources = [];
-    letters.forEach((l) => l.pieces.forEach((piece) => {
-      const r = shapeIn(piece).getBoundingClientRect();
-      sources.push({ piece, scale: l.scale, x: r.left + r.width / 2, y: r.top + r.height / 2, used: false });
-    }));
+    letters.forEach((l) => {
+      const mine = l.pieces.map((piece) => {
+        const r = shapeIn(piece).getBoundingClientRect();
+        return { piece, scale: l.scale, x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, used: false };
+      });
+      // (the middle of its letter: the pieces spread away from it)
+      const mx = mine.reduce((sum, src) => sum + src.x, 0) / (mine.length || 1);
+      const my = mine.reduce((sum, src) => sum + src.y, 0) / (mine.length || 1);
+      mine.forEach((src) => { src.mid = [mx, my]; sources.push(src); });
+    });
+    planSpread();
     const order = targets.map((t, i) => i).sort(() => Math.random() - 0.5);
     const from = [], fromScale = [];
     order.forEach((i) => {
@@ -699,7 +708,7 @@
         const d = Math.hypot(src.x - tx, src.y - ty);
         if (d < bestD) { bestD = d; best = src; }
       });
-      if (best) { best.used = true; from[i] = [best.x, best.y]; fromScale[i] = best.scale; best.piece.style.visibility = "hidden"; }
+      if (best) { best.used = true; from[i] = [best.x, best.y]; fromScale[i] = best; }
       else from[i] = [tx < W / 2 ? -60 : W + 60, ty];   // (more pieces than there are: from the side)
     });
 
@@ -709,12 +718,45 @@
     // pictures), and once they are out the title's pieces go on into the title in two more slides (across,
     // then up or down), setting off on a few beats (pieces waiting outside the screen come straight in).
     const BEAT = 110, BEATS = 4;
-    function spreadFrom([x, y], scale) {
-      if (x < 0 || x > W || y < 0 || y > H) return [x, y];   // (outside the screen: it does not spread)
-      const cell = LETTER * p * (scale || 1) / 2;             // one piece's width
-      const step = (Math.random() < 0.5 ? -1 : 1) * cell * (Math.random() < 0.5 ? 1 : 2);
-      return Math.random() < 0.5 ? [x + step, y] : [x, y + step];
+    // The spread, like the big version when the mouse is on a picture: in each letter one or two pieces
+    // slide one or two pieces' width (straight across, or up or down) into an empty spot next to the letter,
+    // so the letter turns into a new shape on the same grid; each piece that moved still touches another
+    // piece of its letter (at a side or a corner), none lies on a picture or on another piece, and all of
+    // them stay on the screen. (Worked out once for all the pieces, before anything moves.)
+    function planSpread() {
+      const box = (src, [nx, ny]) => [nx - src.w / 2, ny - src.h / 2, nx + src.w / 2, ny + src.h / 2];
+      const apart = (a, b, gap) => a[2] <= b[0] - gap || a[0] >= b[2] + gap || a[3] <= b[1] - gap || a[1] >= b[3] + gap;
+      const touch = (a, b) => !apart(a, b, 0.5);   // (side by side, or corner to corner)
+      sources.forEach((src) => { src.spread = [src.x, src.y]; });
+      const spotOf = (o) => box(o, o.spread);
+      const free = (b, self) => b[0] >= 0 && b[1] >= 0 && b[2] <= W && b[3] <= H
+        && keepClear.every((k) => apart(b, [k.left, k.top, k.right, k.bottom], 4))
+        && sources.every((o) => o === self || (apart(b, box(o, [o.x, o.y]), -0.5) && apart(b, spotOf(o), -0.5)));
+      const shuffle = (list) => list.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((v) => v[1]);
+      // the letters' pieces, letter by letter (the pieces of one letter share its middle)
+      const byLetter = new Map();
+      sources.forEach((src) => {
+        const key = src.mid.join();
+        if (!byLetter.has(key)) byLetter.set(key, []);
+        byLetter.get(key).push(src);
+      });
+      shuffle([...byLetter.values()]).forEach((mine) => {
+        const onScreen = mine.filter((src) => src.x >= 0 && src.x <= W && src.y >= 0 && src.y <= H);
+        if (onScreen.length < 2) return;
+        const moving = shuffle(onScreen).slice(0, Math.random() < 0.5 ? 1 : 2);
+        moving.forEach((src) => {
+          const cell = LETTER * p * (src.scale || 1) / 2;   // one piece's width
+          const ways = shuffle([[1, 0], [-1, 0], [0, 1], [0, -1]]).flatMap(([dx, dy]) =>
+            shuffle([1, 2]).map((n) => [src.x + dx * n * cell, src.y + dy * n * cell]));
+          const ok = ways.find((at) => {
+            const b = box(src, at);
+            return free(b, src) && mine.some((o) => o !== src && touch(b, spotOf(o)));
+          });
+          if (ok) src.spread = ok;
+        });
+      });
     }
+    const spreadFrom = (at, src) => (src && src.spread ? src.spread : at);
 
     // the title's pieces, in a layer over the screen, each starting where its piece was
     const layer = document.createElement("div");
@@ -737,20 +779,50 @@
       const delay = Math.floor(Math.random() * BEATS) * BEAT;
       const total = BUILD_AT + delay + 2 * SLIDE;
       const at = (ms) => ms / total;
-      const move = ([x, y], offset) => ({ transform: `translate(${x - cx}px, ${y - cy}px)`, offset, easing: EASE });
-      svg.animate([
-        move(from[i], 0),
-        move([sx, sy], at(SPREAD_TIME)),                                   // the spread
-        move([sx, sy], at(BUILD_AT + delay)),                              // (it waits while the pictures leave)
-        move([cx, sy], at(BUILD_AT + delay + SLIDE)),                      // across
-        move([cx, cy], 1),                                                 // up or down, into the title
-      ], { duration: total, fill: "backwards" });
+      const src = fromScale[i];
+      if (!src) {
+        // (a piece from outside the screen: the title's own piece comes straight in)
+        const move = ([x, y], offset) => ({ transform: `translate(${x - cx}px, ${y - cy}px)`, offset, easing: EASE });
+        svg.animate([
+          move(from[i], 0),
+          move(from[i], at(BUILD_AT + delay)),
+          move([cx, from[i][1]], at(BUILD_AT + delay + SLIDE)),            // across
+          move([cx, cy], 1),                                               // up or down, into the title
+        ], { duration: total, fill: "backwards" });
+        end = Math.max(end, total);
+        return;
+      }
+      // A letter's piece goes the whole way in its own shape (a copy of it, over the screen): the spread,
+      // then across, then up or down into its place, slowly shrinking to the title's size the whole way; only once it
+      // is there does it turn into the title's piece, in the same spot (so nothing jumps on the way)
+      const own = shapeIn(src.piece), frame = own.getBBox();
+      const copy = document.createElementNS(SVG_NS, "svg");
+      copy.setAttribute("class", "phone-title-piece");
+      copy.setAttribute("viewBox", `${frame.x} ${frame.y} ${frame.width} ${frame.height}`);
+      copy.setAttribute("preserveAspectRatio", "none");
+      const path = own.cloneNode(true);
+      path.removeAttribute("transform");   // (the G's small square: its box is measured without its shift)
+      copy.appendChild(path);
+      Object.assign(copy.style, { left: src.x - src.w / 2 + "px", top: src.y - src.h / 2 + "px", width: src.w + "px", height: src.h + "px" });
+      layer.appendChild(copy);
+      src.piece.style.visibility = "hidden";
+      svg.style.visibility = "hidden";
+      const size = Math.min(t.w / src.w, t.h / src.h);   // (its size in the title)
+      const step = ([x, y], offset, k = 1) => ({ transform: `translate(${x - src.x}px, ${y - src.y}px) scale(${k})`, offset, easing: EASE });
+      copy.animate([
+        step([src.x, src.y], 0),
+        step([sx, sy], at(SPREAD_TIME)),                                   // the spread
+        step([sx, sy], at(BUILD_AT + delay)),                              // (it sets off on its beat)
+        step([cx, sy], at(BUILD_AT + delay + SLIDE), (1 + size) / 2),      // across (half way to its size)
+        step([cx, cy], 1, size),                                           // up or down, into the title
+      ], { duration: total, fill: "forwards" });
+      setTimeout(() => { svg.style.visibility = ""; copy.remove(); }, total);
       end = Math.max(end, total);
     });
 
     // the pieces that are not needed spread too, then leave through the nearest side
     sources.filter((src) => !src.used).forEach((src) => {
-      const [sx, sy] = spreadFrom([src.x, src.y], src.scale);
+      const [sx, sy] = spreadFrom([src.x, src.y], src);
       const out = sx < W / 2 ? -(sx + 80) : (W - sx + 80);
       const total = OUT_AT + SLIDE;
       const local = (dx, dy, ms) => ({ translate: `${dx / src.scale}px ${dy / src.scale}px`, offset: ms / total, easing: EASE });
