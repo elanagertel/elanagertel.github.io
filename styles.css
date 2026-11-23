@@ -2713,10 +2713,15 @@ body.lab-page {
 }
 
 /* the school (two lines) stands on the same line as the year: its bottom is level with the year's bottom
-   (the year: 12, line height 124%, at y 607) */
+   (the year: 8.26, line height 124%, at y 611) */
 .is-phone-portrait .lab > .lab-intro.phone-intro-school {
-  top: calc(607 / 852 * 100svh + 12px * 1.24);   /* (the year's bottom) */
+  top: calc(607 / 852 * 100svh + 4 * var(--p) + 8.256px * 1.24);   /* (the year's bottom: its top at 611) */
   translate: 0 -100%;
+}
+
+/* the year is small (Figma "iPhone 16 - 7": 8.26) */
+.is-phone-portrait .lab > .lab-intro.phone-intro-year {
+  font-size: 8.256px;
 }
 
 
@@ -2870,6 +2875,13 @@ body.lab-page {
 
 /* The paragraph at the end (Figma: Helvetica 16, line height 160%, 457 wide, its left edge on VISION's,
    198 under the words' top): on the phone it starts on the left margin and is as wide as the screen allows */
+/* the small texts ("come scroll with me :)..", "my name is..", …): 16 on the phone (Figma "iPhone 16 - 8"),
+   each 19 high, its bottom on the words' bottom line (about.js) */
+.is-phone-portrait .about-text {
+  font-size: 16px;
+  line-height: 19px;
+}
+
 .is-phone-portrait .about-bio {
   left: var(--phone-margin);
   right: auto;

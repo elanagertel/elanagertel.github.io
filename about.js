@@ -46,8 +46,8 @@ const SCROLL_PER_PIXEL = 3;   // how many pixels you scroll for the page to move
 // ----- Where everything lies on the strip (Figma pixels): as in Frame 184, HI starting in the middle of the screen -----
 const START_X = ON_PHONE ? 18 * PHONE_SCALE : 593.46 / ABOUT_SCALE;   // where HI starts (Figma "Desktop - 5": x 593.46; phone: 18)
 // On the phone (Figma "iPhone 16 - 8") the words and texts lie a little further apart: their x there
-const PHONE_WORD_X = [18, 623.8, 1137.77, 1507.65, 2221.77];    // HI, ELANA, VISUAL, DESIGNER, VISION
-const PHONE_TEXT_X = [110.39, 325.46, 1004, 2037.69];           // come scroll…, my name is.., and I am a…, and creator of…
+const PHONE_WORD_X = [18, 691.8, 1205.77, 1575.65, 2319.76];    // HI, ELANA, VISUAL, DESIGNER, VISION
+const PHONE_TEXT_X = [110.39, 363.46, 1072, 2105.69];           // come scroll…, my name is.., and I am a…, and creator of…
 const WORD_STRIP_X = ABOUT_WORDS.map((w, k) => ON_PHONE ? START_X + (PHONE_WORD_X[k] - 18) * PHONE_SCALE : START_X + w.x);
 
 // The page has moved all the way once the last word (VISION) stands in the middle of the screen
@@ -59,14 +59,16 @@ let TOTAL_MOVE = VISION_PLACE;
 // Each small text belongs to the word before it (it shows up once that word is built)
 const TEXT_APPEAR = 185;       // how far you scroll while a small text is typed (it is done within this)
 const SCREEN_MIDDLE = SCREEN_W / 2;   // the middle of the screen
-const LETTER_WIDTH = 7.4;      // about how wide one letter of a small text is (about units), to find its middle
+const LETTER_WIDTH = ON_PHONE ? 8.6 * PHONE_SCALE : 7.4;   // about how wide one letter of a small text is (about units; on a phone they are 16 px), to find its middle
 const WORD_AFTER_TEXT = 40;    // how far the page moves after a small text has appeared, before the next word starts
 // Where the words' middle is on the screen (part of its height): the middle; on a phone a little higher
 // (Figma "iPhone 16 - 8": the words' top at y 364.84 of 852, so their middle at 393.41)
 const WORDS_AT = ON_PHONE ? 393.41 / 852 : 0.5;
 const TEXTS = ABOUT_TEXTS.map((t, k) => ({
   ...t,
-  y: t.bottom ? WORD_Y + 135.86 - 13.2 * 1.16 : WORD_Y,   // on the top line, or with its bottom on the words' bottom line
+  // on the top line, or with its bottom on the words' bottom line (on a phone all of them, 16 px, 19 high:
+  // Figma "iPhone 16 - 8")
+  y: ON_PHONE ? WORD_Y + 135.86 - 19 * PHONE_SCALE : t.bottom ? WORD_Y + 135.86 - 13.2 * 1.16 : WORD_Y,
   stripX: ON_PHONE ? START_X + (PHONE_TEXT_X[k] - 18) * PHONE_SCALE : START_X + t.x,
   after: ABOUT_WORDS.reduce((last, w, j) => (w.x < t.x ? j : last), 0),
 }));
