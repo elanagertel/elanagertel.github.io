@@ -389,8 +389,17 @@ function setUpMorph(white, organicLetters) {
       letter.leaveTimer = setTimeout(() => goTo(letter, 0), wait);
     }
     // (a tap on a phone also sends mouseenter/mouseleave: then they do nothing, the tap is handled below)
-    area.addEventListener("mouseenter", (event) => { if (!byFinger()) oozeFrom(event); });
-    area.addEventListener("mouseleave", () => { if (!byFinger()) oozeBackSoon(STAY_TIME); });
+    // (the square cursor turns organic with the letter, and back into the square when the mouse leaves: cursor.js)
+    area.addEventListener("mouseenter", (event) => {
+      if (byFinger()) return;
+      oozeFrom(event);
+      if (window.squareCursor) window.squareCursor.organic(true);
+    });
+    area.addEventListener("mouseleave", () => {
+      if (byFinger()) return;
+      oozeBackSoon(STAY_TIME);
+      if (window.squareCursor) window.squareCursor.organic(false);
+    });
     area.addEventListener("click", (event) => {
       // the white title at the end (the next project's name) opens the next project, also with a finger
       if (white && nextPage) {

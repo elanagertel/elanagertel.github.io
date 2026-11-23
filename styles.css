@@ -1025,33 +1025,30 @@ a.flow-photo:focus-visible {
    it: the light page shows dark (#252525), a dark letter shows the page's colour (#f8f9f4).
    (invert, then contrast and brightness: x → 1 − x, then moved up by 0.118, so 0.973 ↔ 0.145) */
 /* The cursor on every page (cursor.js; Figma: a square 31 × 31, one piece): white on "exclusion", so dark on
-   the light page and light over dark things; its middle on the mouse. The normal arrow hides. */
+   the light page and light over dark things; its middle on the mouse. cursor.js draws its shape: the square,
+   or the liquid blob it oozes into over an organic letter. The normal arrow hides. */
 .has-square-cursor,
 .has-square-cursor * {
   cursor: none !important;
 }
 
 .square-cursor {
-  --size: calc(31 * 100vw / 1440);
   position: fixed;
   z-index: 3000;   /* over everything, also the black that slides away between projects */
-  left: calc(var(--size) / -2);
-  top: calc(var(--size) / -2);
-  width: var(--size);
-  height: var(--size);
-  background-color: #ffffff;
+  left: 0;
+  top: 0;
+  overflow: visible;
   mix-blend-mode: exclusion;
   pointer-events: none;
   opacity: 0;
 }
 
-.square-cursor.is-on {
-  opacity: 1;
+.square-cursor path {
+  fill: #ffffff;
 }
 
-/* on the home page the liquid blob takes its place while the mouse pushes a big letter (home-cursor.js) */
-body.has-blob-cursor .square-cursor {
-  opacity: 0;
+.square-cursor.is-on {
+  opacity: 1;
 }
 
 .blob-cursor {

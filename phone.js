@@ -475,6 +475,34 @@
 
   document.body.appendChild(home);
 
+  // ----- Scrolling the page: the letters spread (like the big version when the mouse is on a picture) -----
+  // As soon as you scroll, every piece of the letters on the screen makes one short straight slide (one or
+  // two pieces' width, across or up or down), all at once; once you stop scrolling, they glide straight
+  // back home together. Every new scroll spreads them a new way.
+  const SPREAD_OUT = 450, SPREAD_BACK = 400, SPREAD_STOP = 220;   // ms (the big version: 450 out, 400 back)
+  let spread = false, stopTimer = null;
+  function spreadLetters(on) {
+    spread = on;
+    letters.forEach((l) => l.pieces.forEach((piece) => {
+      if (on) {
+        const r = shapeIn(piece).getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight || r.right < 0 || r.left > window.innerWidth) return;
+        const step = (Math.random() < 0.5 ? -1 : 1) * (LETTER * p / 2) * (Math.random() < 0.5 ? 1 : 2);
+        piece.style.transition = `translate ${SPREAD_OUT}ms ${EASE}`;
+        piece.style.translate = Math.random() < 0.5 ? `${step}px 0` : `0 ${step}px`;
+      } else if (piece.style.translate) {
+        piece.style.transition = `translate ${SPREAD_BACK}ms cubic-bezier(0.33, 1, 0.68, 1)`;   // quick start, soft stop
+        piece.style.translate = "";
+      }
+    }));
+  }
+  home.addEventListener("scroll", () => {
+    if (!home.classList.contains("is-done") || leaving) return;   // (not during the opening or going to a project)
+    if (!spread) spreadLetters(true);
+    clearTimeout(stopTimer);
+    stopTimer = setTimeout(() => spreadLetters(false), SPREAD_STOP);
+  }, { passive: true });
+
   let leaving = false;
 
   // ----- Tapping a picture: the pieces puzzle into the project's title, then the project page opens -----
