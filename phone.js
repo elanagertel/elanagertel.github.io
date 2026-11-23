@@ -343,6 +343,8 @@
         const dx = (0.5 - (part[0] + part[2] / 2)) * fullW, dy = (0.5 - (part[1] + part[3] / 2)) * fullH;
         holder.style.translate = dx || dy ? `${dx}px ${dy}px` : "";
       });
+      // (the pictures' numbers follow their pictures: they are placed again, fold-count.js)
+      window.dispatchEvent(new Event("pictures-sized"));
     }
     requestAnimationFrame(centreTitle);
     window.addEventListener("resize", centreTitle);

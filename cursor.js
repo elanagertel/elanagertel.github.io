@@ -118,11 +118,24 @@
     try { sessionStorage.setItem(SAVED, JSON.stringify({ x: mouse[0], y: mouse[1], at: Date.now() })); } catch (e) {}
   });
 
+  // When the mouse is not used for a moment, the cursor goes away; it comes back as soon as it moves
+  const IDLE = 2500;   // ms
+  let idleTimer = null;
+  const awake = () => {
+    cursor.classList.add("is-on");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => cursor.classList.remove("is-on"), IDLE);
+  };
+  if (cursor.classList.contains("is-on")) awake();   // (shown where the mouse was on the page before)
+
   document.addEventListener("mousemove", (event) => {
+    // (scrolling can send a "move" with the mouse still in the same spot: that does not wake it)
+    const still = event.clientX === mouse[0] && event.clientY === mouse[1];
     mouse = [event.clientX, event.clientY];
     if (!running) { pos = [...mouse]; place(); }   // (the square: right on the mouse)
-    cursor.classList.add("is-on");
+    if (!still) awake();
   });
+  document.addEventListener("mousedown", awake);
   // it hides while the mouse is outside the window
   document.documentElement.addEventListener("mouseleave", () => cursor.classList.remove("is-on"));
   window.addEventListener("resize", () => { if (!running) shape.setAttribute("d", outline(0, 0, 0, 0)); });

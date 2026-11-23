@@ -960,6 +960,49 @@ a.flow-photo:focus-visible {
   grid-area: 1 / 1;
 }
 
+/* ----- The pictures' numbers (fold-count.js; Figma "the memory lab": "1  /  04", Helvetica Oblique 15.5,
+   #211b1e, at x 1196, its top level with the picture's top): each one comes up with its picture, stays while the picture stays, and is
+   pushed out through the top by the next one ----- */
+.lab > .picture-count-track {
+  z-index: 5;
+  pointer-events: none;
+}
+
+.picture-count {
+  position: sticky;
+  width: max-content;
+  margin: 0 0 0 calc(1196 * var(--u));
+  font-family: var(--font-nav);
+  font-size: calc(15.5 * var(--u));
+  font-style: italic;
+  line-height: 1.24;
+  white-space: pre;
+  color: var(--color-text);
+}
+
+/* (on the phone: on the right margin, just under the picture, like the project's number: 12, italic) */
+.is-phone-portrait .lab > .picture-count-track {
+  margin: 0;
+  z-index: 4;                 /* (over the picture's corner...) */
+  mix-blend-mode: exclusion;  /* (...in "exclusion", so it shows on the picture too) */
+}
+
+.is-phone-portrait .picture-count {
+  color: var(--color-nav-blend);
+}
+
+.is-phone-portrait .picture-count {
+  margin: 0 var(--phone-margin) 0 auto;
+  font-size: 12px;
+}
+
+/* (while the numbers' places are measured, nothing is stuck in place: everything lies where the page has it) */
+.is-phone-portrait .is-measuring-numbers > .lab-track,
+.is-phone-portrait .is-measuring-numbers > .lab-side-track {
+  position: relative !important;
+  top: auto !important;
+}
+
 /* ----- Project pages: the arrows to the previous and the next project, on the first screen -----
    (Figma "Israeli" Cactus, Component 5: a triangle 21.9 wide and 43.8 tall from y 490, both lined up; the
    left one's tip at x 87.1, the right one's tip at x 1352.9). They scroll away with the first screen. The right one points right; the left one is the same shape, mirrored. */
@@ -1047,6 +1090,7 @@ a.flow-photo:focus-visible {
   mix-blend-mode: exclusion;
   pointer-events: none;
   opacity: 0;
+  transition: opacity 300ms ease;   /* (it fades away when the mouse is not used for a moment) */
 }
 
 .square-cursor path {
@@ -1647,8 +1691,8 @@ body.lab-page {
   top: var(--top);
 }
 
-/* Like in Figma, the title lies OVER the front cover and inverts what is under it ("exclusion"):
-   black on the white page, white on the black cover. The other spreads still lie over the title.
+/* The title inverts what is under it ("exclusion"): black on the white page. The spreads, the front cover
+   too, lie over the title.
    The title's shapes are black, so invert(1) first makes them white, then "difference" blends them.
    Over the black end this already turns the title white, so the white copy is not needed here. */
 .cactus .lab-first {
@@ -1662,9 +1706,9 @@ body.lab-page {
   filter: invert(1);
 }
 
-/* The front cover: under the title (the other spreads are on layer 3, over it) */
+/* The front cover: over the title, like the other spreads (the title does not show over it) */
 .cactus .cactus-under-title {
-  z-index: 1;
+  z-index: 3;
 }
 
 /* ----- The story paragraphs (Figma: Averia Serif Libre 12, line height 148%, letter spacing 8%; a column 170 wide
