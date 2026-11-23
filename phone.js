@@ -192,15 +192,15 @@
       if (i === 0) return;
       part.el.classList.add(isMedia(parts[i - 1].el) ? "phone-after-media" : "phone-after-text");
     });
-    // At the end: once the last paragraph has scrolled out (behind the pictures), the pictures let go and
-    // scroll out too, so the title shows again; then the black end comes in over everything
+    // At the end: once the last paragraph has scrolled out, the pictures let go and scroll out too (all
+    // together), so the title shows again; then the black end comes in over it, revealing the next title
     const media = parts.map((part) => part.el).filter(isMedia);
     const last = parts.length ? parts[parts.length - 1].el : null;
     if (media.length && last && !isMedia(last)) {
       lab.classList.add("phone-has-media");   // (more room before the black end, styles.css)
       const letGo = () => {
-        const inPlace = parseFloat(getComputedStyle(media[media.length - 1]).top) || 0;   // (the last picture's place)
-        const past = Math.min(0, last.getBoundingClientRect().bottom - inPlace);
+        // (once the last paragraph's bottom has passed the top of the screen, they move up with the page)
+        const past = Math.min(0, last.getBoundingClientRect().bottom);
         media.forEach((el) => { el.style.translate = past ? `0 ${past}px` : ""; });
       };
       window.addEventListener("scroll", letGo, { passive: true });
@@ -277,6 +277,33 @@
       const [a, b] = getComputedStyle(el).aspectRatio.replace("auto", "").split("/").map(parseFloat);
       return a && b ? a / b : a || 1;
     };
+    // The part of a picture that is not see-through (the book's spreads have empty space around the book):
+    // [left, top, width, height] as parts of the whole picture (0–1), measured once it has loaded
+    const seen = new Map();
+    function visiblePart(img) {
+      if (seen.has(img)) return seen.get(img);
+      seen.set(img, [0, 0, 1, 1]);
+      if (img.tagName !== "IMG") return seen.get(img);
+      const measure = () => {
+        try {
+          const W = 120, H = Math.max(1, Math.round(W * img.naturalHeight / img.naturalWidth));
+          const canvas = document.createElement("canvas");
+          canvas.width = W; canvas.height = H;
+          const pen = canvas.getContext("2d", { willReadFrequently: true });
+          pen.drawImage(img, 0, 0, W, H);
+          const data = pen.getImageData(0, 0, W, H).data;
+          let x0 = W, y0 = H, x1 = -1, y1 = -1;
+          for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+            if (data[(y * W + x) * 4 + 3] > 20) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+          }
+          if (x1 >= x0 && y1 >= y0) seen.set(img, [x0 / W, y0 / H, (x1 - x0 + 1) / W, (y1 - y0 + 1) / H]);
+          sizePictures();
+        } catch (e) {}
+      };
+      if (img.complete && img.naturalWidth) measure(); else img.addEventListener("load", measure, { once: true });
+      if (img.loading === "lazy") img.loading = "eager";   // (so it can be measured before it comes up)
+      return seen.get(img);
+    }
     function sizePictures() {
       const shapes = [...first.querySelectorAll(".lab-piece")].map((el) => el.getBoundingClientRect());
       if (!shapes.length) return;
@@ -288,9 +315,12 @@
       lab.querySelectorAll(":scope > .lab-track, :scope > .lab-side-track").forEach((track) => {
         const pics = track.matches(".lab-side-track") ? [...track.querySelectorAll(".lab-side img")] : [track.querySelector(".lab-media")];
         if (!pics[0]) return;
-        // (a row of pictures: as wide as all of them side by side, 8 apart)
-        const ratio = pics.reduce((sum, el) => sum + ratioOf(el), 0) + (pics.length - 1) * 8 * pp / (225 * pp);
-        let w, h, top;
+        // (one picture: what is seen of it, without its see-through edges; a row of pictures: as wide as
+        // all of them side by side, 8 apart)
+        const part = pics.length === 1 ? visiblePart(pics[0]) : [0, 0, 1, 1];
+        const ratio = pics.length === 1 ? ratioOf(pics[0]) * part[2] / part[3]
+          : pics.reduce((sum, el) => sum + ratioOf(el), 0) + (pics.length - 1) * 8 * pp / (225 * pp);
+        let w, h, top;   // (the size of what is seen)
         if (ratio >= 1) {
           w = Math.min(window.innerWidth, Math.max(wide, titleTall * ratio));
           h = w / ratio;
@@ -305,7 +335,13 @@
         track.style.top = `${top}px`;
         track.style.height = `${h}px`;
         const holder = pics.length > 1 ? track.querySelector(".lab-side") : pics[0];
-        holder.style.width = `${w}px`;
+        // the whole picture is bigger than what is seen, and moved so what is seen fills the spot
+        const fullW = w / part[2], fullH = h / part[3];
+        holder.style.width = `${fullW}px`;
+        holder.style.maxWidth = "none";
+        holder.style.flex = "none";
+        const dx = (0.5 - (part[0] + part[2] / 2)) * fullW, dy = (0.5 - (part[1] + part[3] / 2)) * fullH;
+        holder.style.translate = dx || dy ? `${dx}px ${dy}px` : "";
       });
     }
     requestAnimationFrame(centreTitle);
@@ -781,12 +817,15 @@
       const at = (ms) => ms / total;
       const src = fromScale[i];
       if (!src) {
-        // (a piece from outside the screen: the title's own piece comes straight in)
-        const move = ([x, y], offset) => ({ transform: `translate(${x - cx}px, ${y - cy}px)`, offset, easing: EASE });
+        // (a piece from outside the screen: the title's own piece comes straight in, as big as the home
+        // page's letters' pieces at first, and slowly shrinking to the title's size, like the others)
+        const homeScale = sources.length ? sources.map((o) => o.scale).sort((a, b) => a - b)[sources.length >> 1] : 1;
+        const big = LETTER * homeScale / 52.513;   // (a home page letter's piece / a title letter's piece)
+        const move = ([x, y], offset, k = 1) => ({ transform: `translate(${x - cx}px, ${y - cy}px) scale(${k})`, offset, easing: EASE });
         svg.animate([
-          move(from[i], 0),
-          move(from[i], at(BUILD_AT + delay)),
-          move([cx, from[i][1]], at(BUILD_AT + delay + SLIDE)),            // across
+          move(from[i], 0, big),
+          move(from[i], at(BUILD_AT + delay), big),
+          move([cx, from[i][1]], at(BUILD_AT + delay + SLIDE), (1 + big) / 2),   // across (half way to its size)
           move([cx, cy], 1),                                               // up or down, into the title
         ], { duration: total, fill: "backwards" });
         end = Math.max(end, total);

@@ -1767,24 +1767,21 @@ body.lab-page {
 
 /* ===================================================================
    israeli-movie-archive.html — "Israeli Movie Archive" (Figma frame "Israeli Movie Archive", Frame 93)
-   How the page scrolls:
-   1. The black end comes up first, with no text: where it passes, the title turns white.
-   2. Once the screen is all black, the video slides up over it and stops in the middle of the screen.
-   3. While the video stays in the middle, the story box (white text) comes up from the bottom, sticks
-      there for a while, and then scrolls up and out of the top.
-   4. Only then the video scrolls up and out.
-   5. Only then the closing texts come up on the black.
+   How the page scrolls (like the other project pages):
+   1. The video slides up over the title and stops in the middle of the screen.
+   2. While it stays there, each paragraph comes up from the bottom, sticks there for a while, and is
+      pushed up and out of the top by the next one.
+   3. Then the video scrolls up and out, the title shows again, and the black end comes up over it,
+      revealing the next project's title.
    =================================================================== */
 .archive {
   --title-below-mid: 208.16;   /* how far the title reaches below its middle (Figma pixels; the texts under it stay lower) */
   --title-h: 415.84;   /* every piece on the site is one size: 63.11 per cell */
   --title-top: 303.73;
   --pile-h: 585;   /* the video */
-  /* 1. The black starts right under the first screen, so it comes up as soon as you scroll */
-  --end: calc(100vh + var(--intro-out, 0px));   /* (after the texts on the first screen have scrolled out) */
-  /* 2. The video starts coming in once the black fills the screen (after one screen of scrolling),
-     40 later like in Figma */
-  --a-video: calc(var(--end) + 100vh + 40 * var(--u));
+  /* 1. The video comes up over the title once the texts on the first screen have scrolled out (like the
+     first picture of the other pages), and stops in the middle of the screen */
+  --a-video: calc(100vh + var(--intro-out, 0px));
   /* 3. The story's first paragraph comes up from the bottom of the screen once the video has stopped
      in the middle (plus 40). Each paragraph sticks at the bottom of the screen for --a-text-hold of
      scrolling, then the next one comes up and pushes it up and out.
@@ -1797,14 +1794,9 @@ body.lab-page {
   --a-p3: calc(var(--a-p2) + 124.32 * var(--u) + var(--a-text-hold));
   --a-p4: calc(var(--a-p3) + 177.6 * var(--u) + var(--a-text-hold));
   --a-text-next: calc(var(--a-p4) + 88.8 * var(--u) + var(--a-text-hold));
-  /* 4. The video lets go (its middle in the middle of the screen) once the last paragraph has left the top,
-     plus a short pause (250) */
+  /* 4. Once the last paragraph has left the top (plus a short pause, 250), the video lets go and scrolls
+     out; then the black end comes up over the title (the shared rule) */
   --stack-end: calc(var(--a-text-next) + 250 * var(--u) + 50vh);
-  /* 5. The page ends once the video has left the screen, plus a short pause (the shared rule):
-     the closing texts lie at the bottom of the black, so they come up last */
-  --page-end: calc(var(--stack-end) + var(--pile-h) / 2 * var(--u) + 100vh + 250 * var(--u));
-  --footer-h: max(calc(var(--page-end) - var(--end)),
-                  calc(50vh + (var(--title-mid) + 339 - var(--title-top)) * var(--u)));
 }
 
 /* The video: as wide as the title under it (Figma x 260, 932 × 585). Drawn 1% larger, so the
@@ -2178,10 +2170,6 @@ body.lab-page {
     margin-left: calc((var(--w) * var(--u) - var(--media-w)) / 2);
   }
 
-  /* the pile still lets go all at once (each track ends half its picture's screen height under --stack-end) */
-  .lab-invert .lab-track {
-    bottom: calc(100% - var(--stack-end) - var(--media-h) / 2);
-  }
 
   /* The end of the page. On a short screen the title (in the middle) leaves too little room under it
      for the texts on the black. So the black end is a little longer (--phone-end-extra), and for that
@@ -2194,10 +2182,10 @@ body.lab-page {
     --footer-title-bottom: calc(var(--footer-h) - var(--phone-end-extra) - 50vh + var(--title-bottom-below-middle));
   }
 
-  .archive {
-    --footer-h: calc(max(calc(var(--page-end) - var(--end)),
-                         calc(50vh + (var(--title-mid) + 339 - var(--title-top)) * var(--u)))
-                     + var(--phone-end-extra));
+
+  /* the pile still lets go all at once (each track ends half its picture's screen height under --stack-end) */
+  .lab-invert .lab-track {
+    bottom: calc(100% - var(--stack-end) - var(--media-h) / 2);
   }
 
   /* the first screen lets go of the middle of the screen --phone-end-extra before the end of the page */
@@ -2710,7 +2698,9 @@ body.lab-page {
    phone.js gives each its place (--px, --py, Figma phone px) */
 .is-phone-portrait .lab > .lab-intro {
   position: absolute;
-  z-index: 1;   /* (behind the title, which stays in place) */
+  z-index: 3;                 /* over the title, which stays in place, as they scroll up and out... */
+  mix-blend-mode: exclusion;  /* ...in "exclusion": dark on the page, light over the title's shapes */
+  color: var(--color-nav-blend);
   grid-area: auto;   /* (placed from the page's edge, not inside the grid's 18px margin) */
   left: calc(var(--px) * var(--p));
   /* the group of texts stands where Figma has it on the screen (the year's top at 607 of 852), and the
@@ -2747,7 +2737,7 @@ body.lab-page {
 /* ----- Scrolling past the first screen (Figma "iPhone 16 - 15") -----
    The title stays where it is while the short texts under it scroll out at the top; then the first
    picture (or video, or row of pictures) slides up over the title and stays in place at the top (y 198,
-   in a box 358 × 225, above the arrows). The story paragraphs keep scrolling, behind the pictures. The
+   in a box 358 × 225, above the arrows). The story paragraphs keep scrolling, over the pictures (in "exclusion"). The
    next picture comes in under the paragraphs, slides up over the one before, and stays there in its turn
    (like the big version).
    (phone.js marks each part with what comes before it: .phone-after-media / .phone-after-text) */
@@ -2779,12 +2769,6 @@ body.lab-page {
   object-fit: cover;
 }
 
-/* (a picture with see-through parts, like the book's spreads, still hides the title behind it) */
-.is-phone-portrait .lab > .lab-track .lab-media,
-.is-phone-portrait .lab > .lab-side-track .lab-side {
-  background-color: var(--color-background);
-}
-
 /* the book spreads reach from edge to edge of the screen, like on the big screen */
 .is-phone-portrait .lab > .cactus-track {
   margin-left: calc(-1 * var(--phone-margin));
@@ -2795,9 +2779,9 @@ body.lab-page {
    paragraphs, and the first one under a picture starts at y 585 (Figma "iPhone 16 - 15") */
 .is-phone-portrait .lab > .lab-text-track {
   display: block;
-  z-index: 1;
+  z-index: 4;                 /* over the pictures that stay in place... */
   margin-top: 56px;
-  mix-blend-mode: normal;
+  mix-blend-mode: exclusion;  /* ...in "exclusion", like the big version: dark on the page, light over a picture */
 }
 
 .is-phone-portrait .lab > .lab-text-track.phone-after-media {
@@ -2805,16 +2789,16 @@ body.lab-page {
 }
 
 .is-phone-portrait .lab > .lab-text-track.phone-after-text {
-  margin-top: 1.6em;
+  margin-top: 1.6em;   /* (one empty line between two paragraphs) */
 }
 
 .is-phone-portrait .lab-text {
-  position: relative;
+  position: relative;   /* (it simply scrolls up and out through the top) */
   bottom: auto;
   width: auto;
   font-size: var(--phone-text);
   line-height: 1.6;
-  color: var(--color-text);
+  color: var(--color-nav-blend);   /* (with the "exclusion": #211b1e on the page) */
 }
 
 /* the pictures beside a paragraph: side by side, in one row (in the same box as the other pictures) */
@@ -2845,7 +2829,7 @@ body.lab-page {
   justify-content: center;
   height: 100svh;   /* (the whole screen at the end, like the big version) */
   margin: 96px calc(-1 * var(--phone-margin)) 0;
-  z-index: 4;   /* (it slides up over the pictures that stay in place) */
+  z-index: 5;   /* (it slides up over the pictures that stay in place, and over the paragraphs) */
   background-color: #000000;
 }
 

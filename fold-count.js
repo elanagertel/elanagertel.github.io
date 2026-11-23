@@ -62,3 +62,50 @@
   show(now, String(number || 0), true, false);
   show(total, "/  " + twoDigits(PROJECTS.length), true, false);
 })();
+
+// ===== While scrolling down: the arrows and the numbers leave through the sides =====
+// They stay while the short texts under the title scroll out; then, as the page goes on scrolling, the left
+// arrow and number slide out through the left edge and the right ones through the right edge (straight
+// across, along with the scrolling). When the black end comes up at the bottom of the page, the right arrow
+// slides back in (it stays on the black end, to go to the next project). Big screens and phones alike.
+(function () {
+  const left = [".project-arrow-prev", ".fold-count-now"].map((s) => document.querySelector(s)).filter(Boolean);
+  const right = [".project-arrow-next", ".fold-count-total"].map((s) => document.querySelector(s)).filter(Boolean);
+  const nextArrow = document.querySelector(".project-arrow-next");
+  if (!left.length && !right.length) return;
+  const OUT_SCROLL = 260;   // px of scrolling for them to slide all the way out
+  let start = 0;            // where the short texts have scrolled out (px down the page)
+
+  // where the short texts under the title end (their bottom, down the page), and how far each one has to
+  // go to be just outside its edge (measured in its place, not moved)
+  const away = new Map();
+  function measure() {
+    const texts = [...document.querySelectorAll(".lab-intro")];
+    start = texts.length ? Math.max(...texts.map((el) => el.getBoundingClientRect().bottom + window.scrollY)) : window.innerHeight;
+    [...left, ...right].forEach((el) => {
+      const was = el.style.translate;
+      el.style.translate = "";
+      const r = el.getBoundingClientRect();
+      away.set(el, left.includes(el) ? -(r.right + 10) : window.innerWidth - r.left + 10);
+      el.style.translate = was;
+    });
+    place();
+  }
+  function place() {
+    const out = Math.min(1, Math.max(0, (window.scrollY - start) / OUT_SCROLL));   // 0 = in place, 1 = out
+    // (the black end coming up: the right arrow slides back in, over the last screen's worth of scrolling)
+    const end = document.querySelector(".lab-footer");
+    const endTop = end ? end.getBoundingClientRect().top : Infinity;
+    const back = Math.min(1, Math.max(0, 1 - endTop / window.innerHeight));
+    [...left, ...right].forEach((el) => {
+      const k = el === nextArrow ? out * (1 - back) : out;
+      // (while they follow the scrolling, their own slide (styles.css) is off, so they keep up exactly)
+      el.style.transitionProperty = out > 0 ? "none" : "";
+      el.style.translate = k ? `${(away.get(el) || 0) * k}px 0` : "";
+    });
+  }
+  window.addEventListener("scroll", place, { passive: true });
+  window.addEventListener("resize", measure);
+  window.addEventListener("load", measure);
+  measure();
+})();
