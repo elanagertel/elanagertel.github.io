@@ -1,0 +1,49 @@
+{
+  "memory-lab": {
+    "title": "The Memory Lab",
+    "page": "memory-lab.html",
+    "videos": [
+      {
+        "url": "https://youtu.be/wCXQx7RoUyg",
+        "ratio": "16:9",
+        "title": "The Memory Lab: the soufflé animation",
+        "zoom": 1.04
+      },
+      {
+        "url": "https://youtu.be/TL8pCNSxEPM",
+        "ratio": "16:9",
+        "title": "The Memory Lab: the beads animation",
+        "zoom": 1.04
+      }
+    ]
+  },
+  "mea-shearim": {
+    "title": "Mea Shearim",
+    "page": "mea-shearim.html",
+    "videos": [
+      {
+        "url": "https://youtu.be/gUAwBrzJ57c",
+        "ratio": "16:9",
+        "title": "Mea Shearim",
+        "zoom": 1.04
+      },
+      {
+        "url": "https://youtu.be/AOpfubqoE4I",
+        "ratio": "4:3",
+        "title": "Mea Shearim: the dancing figure",
+        "fit": "cover"
+      }
+    ]
+  },
+  "israeli-movie-archive": {
+    "title": "Israeli Movie Archive",
+    "page": "israeli-movie-archive.html",
+    "videos": [
+      {
+        "url": "https://youtu.be/KyBWYdrf4-Y",
+        "ratio": "4:3",
+        "title": "Israeli Movie Archive: the index"
+      }
+    ]
+  }
+}

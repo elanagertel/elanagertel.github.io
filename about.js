@@ -230,8 +230,8 @@ shapes.forEach((s) => {
 const PHOTO_SCALE = 67.93 / 61.76;
 const DESIGNER = ABOUT_WORDS.findIndex((w) => w.text === "DESIGNER");
 const PHOTOS = [
-  { src: "images/about-profile.jpg", alt: "Elana Gertel", crop: "50% 63%", word: 1, dx: 1, top: 148, w: 270, h: 283 },
-  { src: "images/about-designer.jpg", alt: "Elana drawing in a sketchbook among colour swatches", crop: "50% 4%", word: DESIGNER, fromX: 783.2, top: 592, w: 314, h: 413 },
+  { src: "images/about-profile.webp", alt: "Elana Gertel", crop: "50% 63%", word: 1, dx: 1, top: 148, w: 270, h: 283 },
+  { src: "images/about-designer.webp", alt: "Elana drawing in a sketchbook among colour swatches", crop: "50% 4%", word: DESIGNER, fromX: 783.2, top: 592, w: 314, h: 413 },
 ].map((p) => {
   // a photo that spans the end of its word (from fromX to the word's end): its width in about units, and
   // its height keeping the photo's shape

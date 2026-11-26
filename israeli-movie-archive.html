@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Comme:wght@400&family=Crimson+Text:ital,wght@0,400;1,400&display=block">
-  <link rel="stylesheet" href="styles.css?v=20261205a">
+  <link rel="stylesheet" href="styles.css?v=20261127e">
   <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts) -->
   <link rel="expect" href="#page-ready" blocking="render">
   <!-- The texts that type themselves out stay hidden until type-texts.js is ready to type them
@@ -27,7 +27,28 @@
       try {
         var slide = JSON.parse(sessionStorage.getItem("slideInPage") || "null");
         var end = Number(sessionStorage.getItem("fromProjectEnd") || 0);
-        if (end && now - end < 10000) root.classList.add("from-end");
+        if (end && now - end < 10000) {
+          root.classList.add("from-end");
+          // the white title and arrow the page before handed over: on a black layer at once (page-change.js
+          // takes over a moment later, with this page's own copies in the same places)
+          var handed = JSON.parse(sessionStorage.getItem("endTitle") || "null");
+          if (handed) {
+            var layer = document.createElement("div");
+            layer.className = "project-arrive project-arrive-early";
+            var put = function (item, cls) {
+              var holder = document.createElement("div");
+              holder.innerHTML = item.html;
+              var el = holder.firstElementChild;
+              if (!el) return;
+              el.setAttribute("class", cls);
+              el.style.cssText = "left:" + item.box[0] + "px;top:" + item.box[1] + "px;width:" + item.box[2] + "px;height:" + item.box[3] + "px";
+              layer.appendChild(el);
+            };
+            handed.pieces.forEach(function (p) { put(p, "project-arrive-piece"); });
+            if (handed.arrow) put(handed.arrow, "project-arrive-arrow");
+            root.appendChild(layer);
+          }
+        }
         else if (slide && now - slide.at < 10000) root.classList.add("is-arriving");
       } catch (e) {}
       setTimeout(function () { root.classList.remove("from-end", "is-arriving"); }, 3000);
@@ -40,7 +61,7 @@
        "ISRAELI MOVIE ARCHIVE" (top, and white at the bottom); archive-title.js says where they go. -->
   <!-- data-organic-picture: the project's picture from the home page. It only shows inside the title's
        letters while they are organic (hovered), like Figma's picture on "Lighten" (lab.js) -->
-  <main class="lab lab-invert archive" id="lab" data-organic-picture="images/cover-archive.jpg">
+  <main class="lab lab-invert archive" id="lab" data-organic-picture="images/cover-archive.webp">
     <h1 class="visually-hidden">Israeli Movie Archive</h1>
 
     <!-- The first screen (the title) stays in place until the end of the page. First the black end comes up
@@ -97,8 +118,8 @@ Indesign Typography</p>
          the middle of the screen. It plays by itself, silent and on a loop. Until the file
          images/archive-video.mp4 is there, its still (the poster) shows instead. -->
     <div class="lab-track archive-track">
-      <video class="lab-media" src="images/archive-video.mp4" poster="images/archive-video.jpg"
-             autoplay muted loop playsinline aria-label="Israeli Movie Archive: the index screen over beach footage"></video>
+      <!-- The video (YouTube): its link is in projects.json; youtube.js puts the player here -->
+      <div class="lab-media lab-youtube" data-video="1"></div>
     </div>
 
     <!-- The story (Figma: the text in Frame 93, x 65, 167 wide, Averia Serif Libre 12), in four paragraphs:
@@ -127,13 +148,14 @@ Indesign Typography</p>
   <!-- The title (its shapes and organic letters) first, then the code that draws it -->
   <!-- Phones: the rotate prompt and the tap effects (first, so the other scripts can use them) -->
   <script src="mobile.js?v=20261125a"></script>
-  <script src="phone.js?v=20261204u"></script>
+  <script src="phone.js?v=20261127a"></script>
   <script src="pieces.js?v=20261111a"></script>
   <script src="archive-title.js?v=20261113e"></script>
-  <script src="lab.js?v=20261204a"></script>
+  <script src="lab.js?v=20261126a"></script>
   <script src="contact.js?v=20261204a"></script>
-  <script src="fold-count.js?v=20261204g"></script>
-  <script src="page-change.js?v=20261204a"></script>
+  <script src="fold-count.js?v=20261127a"></script>
+  <script src="youtube.js?v=20261126h"></script>
+  <script src="page-change.js?v=20261127b"></script>
   <!-- The cursor: a small square piece on "exclusion" (computers with a mouse) -->
   <script src="cursor.js?v=20261205c"></script>
   <script src="type-texts.js?v=20261201c"></script>

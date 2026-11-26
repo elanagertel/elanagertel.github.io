@@ -27,7 +27,9 @@ const STEP_STARTS = [0, FLOW_STEP_ENDS[0] + STEP_PAUSE];
 // [Figma pixels left of the picture, Figma pixels above its bottom] (its baseline is on the picture's bottom edge) (Figma: frame "MacBook Pro 16' - 80"). The number also shows in the counter.
 const ITEMS = [
   // pictures
-  { type: "photo", kind: "house",   alt: "Double Families", number: 5, caption: "The Double\nFamily", numberAt: [32.54, 19.55], at: [[1705.7, 761.42], [1705.7, 761.42], [1045.38, 600.52]] },
+  // (Figma "MacBook Pro 16 - 80", Nov 2026: Mea Shearim took The Double Family's place, number 5)
+  { type: "photo", kind: "mea",     alt: "Mea Shearim", number: 5, caption: "Mea\nShearim", numberAt: [40.54, 12.55], at: [[1705.7, 761.42], [1705.7, 761.42], [1054.42, 634.16]],
+    link: "mea-shearim.html" },   // opens the project page (no planned title moves yet: it opens right away)
   { type: "photo", kind: "cactus",  alt: "The Israeli Cactus", number: 4, caption: "The Israeli\nCactus", numberAt: [41.54, 11.55], at: [[-434.18, 937.87], [-434.18, 937.87], [350.27, 635.81]],
     link: "israeli-cactus.html", toTitle: "cactus" },   // opens the project page (moves: to-cactus-moves.js)
   { type: "photo", kind: "mind",    alt: "The Memory Lab",  number: 1, caption: "The Memory\nLab", numberAt: [39.54, 11.55], at: [[-391.4, 425.62], [-238.76, 389.96], [490.36, 327.82]],
@@ -61,14 +63,15 @@ const ITEMS = [
 
 // Which picture file each kind of picture uses
 const PHOTO_FILES = {
-  "house": "gallery-house.png?v=2",   // ?v=2: the new picture, without its background (Figma, Nov 2026)
-  "brain": "gallery-brain.png",
-  "archive": "gallery-archive.jpg",   // the new picture (Figma "לפיגמה ץץץ"): the Israeli Movie Archive
-  "mind": "gallery-brain.png",   // the same brain picture, cropped differently
-  "cactus": "gallery-cactus.png",
-  "sense": "gallery-sense.jpg",
-  "water-a": "gallery-watercolor.png",
-  "water-b": "gallery-watercolor.png?v=2",   // ?v=2: the poster without its background (Figma, Nov 2026)
+  "mea": "gallery-mea.webp",   // Mea Shearim (Figma "Untitled_Artwork 214")
+  "house": "gallery-house.webp?v=2",   // ?v=2: the new picture, without its background (Figma, Nov 2026)
+  "brain": "gallery-brain.webp",
+  "archive": "gallery-archive.webp",   // the new picture (Figma "לפיגמה ץץץ"): the Israeli Movie Archive
+  "mind": "gallery-brain.webp",   // the same brain picture, cropped differently
+  "cactus": "gallery-cactus.webp",
+  "sense": "gallery-sense.webp",
+  "water-a": "gallery-watercolor.webp",
+  "water-b": "gallery-watercolor.webp?v=2",   // ?v=2: the poster without its background (Figma, Nov 2026)
 };
 
 const flow = document.getElementById("flow");

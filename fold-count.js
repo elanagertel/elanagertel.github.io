@@ -10,7 +10,7 @@
     "sense.html",                    // 2  Sense Shopping
     "israeli-movie-archive.html",    // 3  The Israeli Movie Archive
     "israeli-cactus.html",           // 4  The Israeli Cactus
-    null,                            // 5  The Double Family
+    "mea-shearim.html",              // 5  Mea Shearim (The Double Family is not numbered any more)
   ];
   const twoDigits = (n) => String(n).padStart(2, "0");
   const page = location.pathname.split("/").pop() || "";
@@ -108,120 +108,4 @@
   window.addEventListener("resize", measure);
   window.addEventListener("load", measure);
   measure();
-})();
-
-// ===== The pictures' numbers (Figma "the memory lab": "1  /  04", Helvetica Oblique 15.5) =====
-// Each picture has its number (which picture it is, out of the project's pictures). The number comes up
-// with its picture and stays in its place while the picture stays in the middle of the screen; when the
-// next picture comes up with its own number, the new number pushes the old one out through the top.
-// It stands right beside its picture, its top level with the picture's top. The last one leaves with the
-// pictures. (Phones: where there is no room beside a picture, on the right margin over its corner, in "exclusion".)
-(function () {
-  const lab = document.getElementById("lab");
-  if (!lab) return;
-  const twoDigits = (n) => String(n).padStart(2, "0");
-  let built = [];
-
-  // The part of a picture that is seen (pictures with see-through edges, like the book's spreads):
-  // [left, top, width, height] as parts of the whole picture (0–1), measured once it has loaded
-  const seen = new Map();
-  let again = null;
-  function visiblePart(img) {
-    if (!img || img.tagName !== "IMG") return [0, 0, 1, 1];
-    if (seen.has(img)) return seen.get(img);
-    seen.set(img, [0, 0, 1, 1]);
-    const measure = () => {
-      try {
-        const W = 120, H = Math.max(1, Math.round(W * img.naturalHeight / img.naturalWidth));
-        const canvas = document.createElement("canvas");
-        canvas.width = W; canvas.height = H;
-        const pen = canvas.getContext("2d", { willReadFrequently: true });
-        pen.drawImage(img, 0, 0, W, H);
-        const data = pen.getImageData(0, 0, W, H).data;
-        let x0 = W, y0 = H, x1 = -1, y1 = -1;
-        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-          if (data[(y * W + x) * 4 + 3] > 20) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-        }
-        if (x1 >= x0 && y1 >= y0) {
-          seen.set(img, [x0 / W, y0 / H, (x1 - x0 + 1) / W, (y1 - y0 + 1) / H]);
-          clearTimeout(again); again = setTimeout(build, 100);   // (place the numbers again)
-        }
-      } catch (e) {}
-    };
-    if (img.complete && img.naturalWidth) measure(); else img.addEventListener("load", measure, { once: true });
-    return seen.get(img);
-  }
-
-  function build() {
-    built.forEach((el) => el.remove());
-    built = [];
-    const phone = document.documentElement.classList.contains("is-phone-portrait");
-    // measured as they lie on the page (not stuck in place while scrolling)
-    lab.classList.add("is-measuring-numbers");
-    const tracks = [...lab.querySelectorAll(":scope > .lab-track, :scope > .lab-side-track")]
-      .map((track) => {
-        const media = track.querySelector(".lab-media, .lab-side") || track;
-        return { track, media, top: track.offsetTop, bottom: track.offsetTop + track.offsetHeight };
-      })
-      .sort((a, b) => a.top - b.top);
-    lab.classList.remove("is-measuring-numbers");
-    if (!tracks.length) return;
-
-    const u = window.innerWidth / 1440, h = window.innerHeight;
-    const numberH = phone ? 16 : 19 * u;
-    const places = tracks.map((t) => {
-      // where the picture stays on the screen (the top of what is seen of it), and where its number stays
-      // (on the phone the track already is what is seen of the picture, phone.js)
-      const part = phone ? [0, 0, 1, 1] : visiblePart(t.media);
-      if (phone) visiblePart(t.media);
-      const mediaH = phone ? t.track.offsetHeight : t.media.offsetHeight;
-      const pinTop = (phone ? parseFloat(t.track.style.top) || 0 : parseFloat(getComputedStyle(t.media).top) || 0) + part[1] * mediaH;
-      const spot = pinTop;   // (its top level with the picture's top)
-      // the number comes up with its picture: it reaches its spot when the picture reaches its own
-      const shift = part[1] * mediaH;   // (how far down the picture what is seen begins)
-      const start = t.top + shift;
-      return { ...t, spot, start, mediaH, pinTop, shift };
-    });
-    // when the pile of pictures leaves (the last number leaves with it)
-    const last = places[places.length - 1];
-    let leave;
-    if (phone) {
-      const texts = [...lab.querySelectorAll(":scope > .lab-text-track")];
-      const lastText = texts.length ? Math.max(...texts.map((el) => el.offsetTop + el.offsetHeight)) : last.bottom;
-      leave = lastText + last.spot + numberH;
-    } else {
-      leave = last.bottom - last.mediaH + last.shift + numberH;
-    }
-
-    places.forEach((p, i) => {
-      const end = i + 1 < places.length ? places[i + 1].start - 2 : leave;
-      const track = document.createElement("div");
-      track.className = "picture-count-track";
-      track.setAttribute("aria-hidden", "true");
-      track.style.cssText = `position:absolute; left:0; width:100%; top:${p.start}px; height:${Math.max(numberH, end - p.start)}px;`;
-      const number = document.createElement("p");
-      number.className = "picture-count";
-      number.textContent = `${i + 1}  /  ${twoDigits(places.length)}`;
-      number.style.top = `${p.spot}px`;
-      track.appendChild(number);
-      lab.appendChild(track);
-      built.push(track);
-      // right beside the picture: just past its right edge (on a phone, if there is no room there, on the
-      // right margin)
-      const labLeft = lab.getBoundingClientRect().left;
-      const box = p.media.getBoundingClientRect(), shown = visiblePart(p.media);
-      const right = box.left + (shown[0] + shown[2]) * box.width - labLeft;   // (the right edge of what is seen)
-      const gap = phone ? 6 : 24 * u;
-      const roomEnd = window.innerWidth - labLeft - (phone ? 18 : 0);
-      const x = Math.min(right + gap, roomEnd - number.offsetWidth);
-      number.style.marginLeft = `${x}px`;
-      number.style.marginRight = "0";
-    });
-  }
-  // (once the page is laid out; the phone sizes its pictures a moment later)
-  window.addEventListener("load", () => { build(); setTimeout(build, 400); });
-  // (the phone sizes its pictures again once they have loaded, phone.js)
-  window.addEventListener("pictures-sized", () => { clearTimeout(again); again = setTimeout(build, 50); });
-  let wait = null;
-  window.addEventListener("resize", () => { clearTimeout(wait); wait = setTimeout(build, 200); });
 })();

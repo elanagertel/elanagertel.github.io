@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Crimson+Text:ital,wght@0,400;1,400&display=block">
-  <link rel="stylesheet" href="styles.css?v=20261205a">
+  <link rel="stylesheet" href="styles.css?v=20261127e">
   <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts),
        so coming from the home page the title is simply there, without blinking -->
   <link rel="expect" href="#page-ready" blocking="render">
@@ -28,7 +28,28 @@
       try {
         var slide = JSON.parse(sessionStorage.getItem("slideInPage") || "null");
         var end = Number(sessionStorage.getItem("fromProjectEnd") || 0);
-        if (end && now - end < 10000) root.classList.add("from-end");
+        if (end && now - end < 10000) {
+          root.classList.add("from-end");
+          // the white title and arrow the page before handed over: on a black layer at once (page-change.js
+          // takes over a moment later, with this page's own copies in the same places)
+          var handed = JSON.parse(sessionStorage.getItem("endTitle") || "null");
+          if (handed) {
+            var layer = document.createElement("div");
+            layer.className = "project-arrive project-arrive-early";
+            var put = function (item, cls) {
+              var holder = document.createElement("div");
+              holder.innerHTML = item.html;
+              var el = holder.firstElementChild;
+              if (!el) return;
+              el.setAttribute("class", cls);
+              el.style.cssText = "left:" + item.box[0] + "px;top:" + item.box[1] + "px;width:" + item.box[2] + "px;height:" + item.box[3] + "px";
+              layer.appendChild(el);
+            };
+            handed.pieces.forEach(function (p) { put(p, "project-arrive-piece"); });
+            if (handed.arrow) put(handed.arrow, "project-arrive-arrow");
+            root.appendChild(layer);
+          }
+        }
         else if (slide && now - slide.at < 10000) root.classList.add("is-arriving");
       } catch (e) {}
       setTimeout(function () { root.classList.remove("from-end", "is-arriving"); }, 3000);
@@ -42,7 +63,7 @@
        from below, and the title turns white where it passes. -->
   <!-- data-organic-picture: the project's picture from the home page. It only shows inside the title's
        letters while they are organic (hovered), like Figma's picture on "Lighten" (lab.js) -->
-  <main class="lab lab-invert sense" id="lab" data-organic-picture="images/cover-sense.jpg">
+  <main class="lab lab-invert sense" id="lab" data-organic-picture="images/cover-sense.webp">
     <h1 class="visually-hidden">Sense</h1>
 
     <!-- The first screen (the title) stays in place until the end of the page. lab.js puts the title shapes in it. -->
@@ -101,13 +122,13 @@ Indesign Typography</p>
   <!-- The title (its shapes and organic letters) first, then the code that draws it -->
   <!-- Phones: the rotate prompt and the tap effects (first, so the other scripts can use them) -->
   <script src="mobile.js?v=20261125a"></script>
-  <script src="phone.js?v=20261204u"></script>
+  <script src="phone.js?v=20261127a"></script>
   <script src="pieces.js?v=20261108h"></script>
   <script src="sense-title.js?v=20261113e"></script>
-  <script src="lab.js?v=20261204a"></script>
+  <script src="lab.js?v=20261126a"></script>
   <script src="contact.js?v=20261204a"></script>
-  <script src="fold-count.js?v=20261204g"></script>
-  <script src="page-change.js?v=20261204a"></script>
+  <script src="fold-count.js?v=20261127a"></script>
+  <script src="page-change.js?v=20261127b"></script>
   <!-- The cursor: a small square piece on "exclusion" (computers with a mouse) -->
   <script src="cursor.js?v=20261205c"></script>
   <script src="type-texts.js?v=20261201c"></script>

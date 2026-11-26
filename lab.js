@@ -442,7 +442,8 @@ const NEXT_PROJECT = {
   "memory-lab.html": ["sense.html", "sense-title.js"],
   "sense.html": ["israeli-movie-archive.html", "archive-title.js"],
   "israeli-movie-archive.html": ["israeli-cactus.html", "cactus-title.js"],
-  "israeli-cactus.html": ["memory-lab.html", "lab-organic.js"],
+  "israeli-cactus.html": ["mea-shearim.html", "mea-title.js"],
+  "mea-shearim.html": ["memory-lab.html", "lab-organic.js"],
 };
 const thisPage = location.pathname.split("/").pop() || "";
 const [nextPage, nextTitleFile] = NEXT_PROJECT[thisPage] || [null, null];

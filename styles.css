@@ -687,6 +687,19 @@ a.flow-photo:focus-visible {
 
 /* The picture windows: Figma sizes (Component 2) / 0.9351, in home units */
 /* House picture (Double Families, both copies): window 140 × 164 in Figma (its new borders) */
+/* Mea Shearim (Figma: 127 × 125) */
+.photo-mea {
+  width: calc(135.81 * var(--u));
+  height: calc(133.67 * var(--u));
+}
+
+.photo-mea img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .photo-house {
   width: calc(149.72 * var(--u));
   height: calc(175.38 * var(--u));
@@ -958,49 +971,6 @@ a.flow-photo:focus-visible {
 
 .fold-count-text {
   grid-area: 1 / 1;
-}
-
-/* ----- The pictures' numbers (fold-count.js; Figma "the memory lab": "1  /  04", Helvetica Oblique 15.5,
-   #211b1e, at x 1196, its top level with the picture's top): each one comes up with its picture, stays while the picture stays, and is
-   pushed out through the top by the next one ----- */
-.lab > .picture-count-track {
-  z-index: 5;
-  pointer-events: none;
-}
-
-.picture-count {
-  position: sticky;
-  width: max-content;
-  margin: 0 0 0 calc(1196 * var(--u));
-  font-family: var(--font-nav);
-  font-size: calc(15.5 * var(--u));
-  font-style: italic;
-  line-height: 1.24;
-  white-space: pre;
-  color: var(--color-text);
-}
-
-/* (on the phone: on the right margin, just under the picture, like the project's number: 12, italic) */
-.is-phone-portrait .lab > .picture-count-track {
-  margin: 0;
-  z-index: 4;                 /* (over the picture's corner...) */
-  mix-blend-mode: exclusion;  /* (...in "exclusion", so it shows on the picture too) */
-}
-
-.is-phone-portrait .picture-count {
-  color: var(--color-nav-blend);
-}
-
-.is-phone-portrait .picture-count {
-  margin: 0 var(--phone-margin) 0 auto;
-  font-size: 12px;
-}
-
-/* (while the numbers' places are measured, nothing is stuck in place: everything lies where the page has it) */
-.is-phone-portrait .is-measuring-numbers > .lab-track,
-.is-phone-portrait .is-measuring-numbers > .lab-side-track {
-  position: relative !important;
-  top: auto !important;
 }
 
 /* ----- Project pages: the arrows to the previous and the next project, on the first screen -----
@@ -1642,6 +1612,45 @@ body.lab-page {
   transform: scale(1.01);
 }
 
+/* The YouTube players (youtube.js, links in projects.json): they fill their place exactly */
+/* (no colour of its own: at its edges, where it is drawn a hair bigger or smaller, nothing dark can show;
+   the still covers it until the player plays) */
+.lab-youtube {
+  background-color: transparent;
+}
+
+.lab-youtube-frame {
+  display: block;
+  background-color: transparent;
+  color-scheme: normal;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;   /* (the mouse does not reach it: YouTube's title and buttons never show) */
+}
+
+/* The still over the player until it really plays (youtube.js), then it fades away */
+.lab-youtube-still {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.lab-youtube-still.is-gone {
+  opacity: 0;
+}
+
+/* (on the phone the video's box is not sticky itself: it holds the still in place) */
+.is-phone-portrait .lab-youtube {
+  position: relative;
+}
+
+/* (it keeps the place's own position: sticky like the pictures, so it stays in the middle of the screen) */
+.lab-youtube {
+  overflow: hidden;
+}
+
 /* ===================================================================
    israeli-cactus.html — differences from The Memory Lab
    (Figma frame "'Israeli' Cactus": first screen 1024 tall, then 11 book spreads, then the black end)
@@ -1822,7 +1831,7 @@ body.lab-page {
   --title-below-mid: 208.16;   /* how far the title reaches below its middle (Figma pixels; the texts under it stay lower) */
   --title-h: 415.84;   /* every piece on the site is one size: 63.11 per cell */
   --title-top: 303.73;
-  --pile-h: 585;   /* the video */
+  --pile-h: 699;   /* the video (932 wide, 4:3) */
   /* 1. The video comes up over the title once the texts on the first screen have scrolled out (like the
      first picture of the other pages), and stops in the middle of the screen */
   --a-video: calc(100vh + var(--intro-out, 0px));
@@ -1831,7 +1840,7 @@ body.lab-page {
      scrolling, then the next one comes up and pushes it up and out.
      --a-p1 … --a-p4: where each paragraph's place starts; each place is the paragraph's height
      (Figma pixels: 9, 7, 10 and 5 lines of 17.76, as they wrap on the page) plus the hold. */
-  --a-text: calc(var(--a-video) + 50vh + (585 / 2 + 40) * var(--u));
+  --a-text: calc(var(--a-video) + 50vh + (699 / 2 + 40) * var(--u));
   --a-text-hold: 50vh;
   --a-p1: var(--a-text);
   --a-p2: calc(var(--a-p1) + 159.84 * var(--u) + var(--a-text-hold));
@@ -1843,13 +1852,13 @@ body.lab-page {
   --stack-end: calc(var(--a-text-next) + 250 * var(--u) + 50vh);
 }
 
-/* The video: as wide as the title under it (Figma x 260, 932 × 585). Drawn 1% larger, so the
-   title's edges never peek out next to it as a thin black line. */
+/* The video: as wide as the title under it (Figma x 260, 932 wide); its height follows its proportion
+   (youtube.js: 4:3). Drawn 1% larger, so the title's edges never peek out next to it as a thin black line. */
 .archive-track {
   left: calc(260 * var(--u));
   top: var(--a-video);
   --w: 932;
-  --h: 585;
+  --h: 699;
 }
 
 .archive-track .lab-media {
@@ -1867,6 +1876,112 @@ body.lab-page {
   --end: calc(100vh + var(--intro-out, 0px));   /* (after the texts on the first screen have scrolled out) */
   --title-h: 126.23;   /* every piece on the site is one size: 63.11 per cell */
   --title-top: 448.75;
+}
+
+/* ===================================================================
+   mea-shearim.html — "Mea Shearim" (Figma frame "Mahshuf"): the title, the video and the black end.
+   How the page scrolls (like the other project pages):
+   1. The video slides up over the title and stays in the middle of the screen for a screen of scrolling.
+   2. Then it scrolls up and out, the title shows again, and the black end comes up over it,
+      revealing the next project's name.
+   =================================================================== */
+.mea {
+  --title-below-mid: 167.07;   /* how far the title reaches below its middle (Figma pixels; the texts under it stay lower) */
+  --title-h: 302.59;           /* (two rows; the R's tail reaches half a cell lower) */
+  --title-top: 376.48;
+  --pile-h: 540;               /* the video (960 wide, 16:9) */
+  /* 1. The video comes up over the title once the texts on the first screen have scrolled out */
+  --m-video: calc(100vh + var(--intro-out, 0px));
+  /* where the page has scrolled when the video stops in the middle of the screen */
+  --m-stuck: calc(var(--m-video) - 50vh + var(--pile-h) / 2 * var(--u));
+  /* 2. While it stays, the three pictures on the right come up one after the other (every --m-step), and stay;
+     it lets go a while after the last one (its middle: where it stopped, plus the stay, plus half its height) */
+  --m-step: 25vh;
+  /* (the pictures only start coming in from the bottom of the screen once the video has stopped: the last one
+     is in place a screen and two steps later; then they all stay a while) */
+  --stack-end: calc(var(--m-stuck) + 100vh + 2 * var(--m-step) + 344.7 * var(--u) + 40vh + 50vh);
+  /* the column of pictures: 746 tall in Figma (170, 201 and 263, 56 apart), here 150/202 of that (to make
+     room for the bigger video), its middle in the middle of the screen */
+  --m-col-top: calc(50vh - 270 * var(--u));   /* (as tall as the video, 540: level with its top and bottom) */
+}
+
+/* The pictures on the right (Figma Frame 222: 202 wide, tops 0, 226 and 483 in the column; here 150 wide).
+   Each has its own track: it scrolls up from the bottom and sticks at its place (--at, its top on the screen)
+   once the page has scrolled to its turn (--n: 0, 1, 2); all of them let go together, when the video does. */
+.mea-side-track {
+  position: absolute;
+  z-index: 4;
+  left: calc(1272 * var(--u));   /* (72 after the video, to the frame's edge like in Figma: x 1421) */
+  width: calc(150 * var(--u));
+  --at: calc(var(--m-col-top) + var(--y) * var(--u));
+  /* (it comes in at the bottom of the screen once the video has stopped, plus its turn: --n steps) */
+  top: calc(var(--m-stuck) + 100vh + var(--n) * var(--m-step) + var(--y) * var(--u));
+  /* (it ends where it must, so it leaves exactly when the video lets go: then the page has scrolled to
+     --stack-end minus half a screen) */
+  height: calc(var(--stack-end) - 50vh + var(--at) + var(--h) * var(--u) - (var(--m-stuck) + 100vh + var(--n) * var(--m-step) + var(--y) * var(--u)));
+  pointer-events: none;
+}
+
+.mea-side-track img {
+  position: sticky;
+  top: var(--at);
+  display: block;
+  width: 100%;
+  height: calc(var(--h) * var(--u));
+  object-fit: cover;
+}
+
+/* (the first one is a box with the animation in it, youtube.js) */
+.mea-side-track .mea-side-box {
+  position: sticky;
+  top: var(--at);
+  overflow: hidden;
+  width: 100%;
+  height: calc(var(--h) * var(--u));
+}
+
+.lab-youtube-frame.is-cover {
+  position: absolute;
+  max-width: none;
+}
+
+.is-phone-portrait .mea-side-track .mea-side-box {
+  position: relative;
+  top: auto;
+  height: auto;
+  aspect-ratio: 202 / 170;
+}
+
+/* (Figma's sizes, 202 wide, scaled to 150: × 0.7426; the gaps between them, 34.6, make the column exactly as
+   tall as the video: the top picture level with its top, the bottom one with its bottom) */
+.mea-side-1 { --n: 0; --y: 0;     --h: 126.2; }
+.mea-side-2 { --n: 1; --y: 160.8; --h: 149.3; }
+.mea-side-3 { --n: 2; --y: 344.7; --h: 195.3; }
+
+/* On the phone: after the video, one under the other on the right, as wide as half the screen */
+.is-phone-portrait .lab > .mea-side-track {
+  position: relative;
+  order: 950;
+  left: auto;
+  top: auto;
+  width: 55%;
+  height: auto;
+  margin: 24px 0 0 auto;
+}
+
+.is-phone-portrait .mea-side-track img {
+  position: static;
+  height: auto;
+}
+
+/* The video: in the middle of the page (x 240 to 1200, 960 wide), with the same gap (72) to the column of
+   small pictures; its height follows its proportion (youtube.js) */
+.mea-track {
+  z-index: 3;
+  left: calc(240 * var(--u));
+  top: var(--m-video);
+  --w: 960;
+  --h: 540;
 }
 
 /* Visitors who asked their device for less motion: the hover moves happen without sliding */
@@ -2902,6 +3017,11 @@ html.from-end {
 }
 html.from-end body {
   visibility: hidden;
+}
+
+/* (the early black layer, from the top of the page: it lies on the page itself, over everything) */
+.project-arrive-early {
+  z-index: 3000;
 }
 
 .project-arrive {

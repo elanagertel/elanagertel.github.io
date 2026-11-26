@@ -343,8 +343,6 @@
         const dx = (0.5 - (part[0] + part[2] / 2)) * fullW, dy = (0.5 - (part[1] + part[3] / 2)) * fullH;
         holder.style.translate = dx || dy ? `${dx}px ${dy}px` : "";
       });
-      // (the pictures' numbers follow their pictures: they are placed again, fold-count.js)
-      window.dispatchEvent(new Event("pictures-sized"));
     }
     requestAnimationFrame(centreTitle);
     window.addEventListener("resize", centreTitle);
@@ -452,17 +450,18 @@
   // width, height] of the picture, in % of the window, from Figma's crop), the number above it ("1  /")
   // and the name under it (both Helvetica Oblique 12, at their Figma places).
   const PICTURES = [
-    { file: "gallery-brain.png", at: [18, 102], size: [117, 122], crop: [-1.86, -32.04, 101.86, 143.37],
+    { file: "gallery-brain.webp", at: [18, 102], size: [117, 122], crop: [-1.86, -32.04, 101.86, 143.37],
       number: 1, numberAt: [18, 81], name: "The Memory Lab", nameAt: [16, 230], href: "memory-lab.html" },
-    { file: "gallery-sense.jpg", at: [258, 102], size: [117, 122], crop: [-5.3, 0, 107.61, 101.89],
+    { file: "gallery-sense.webp", at: [258, 102], size: [117, 122], crop: [-5.3, 0, 107.61, 101.89],
       number: 2, numberAt: [258, 81], name: "Sense Shopping", nameAt: [257, 230], href: "sense.html" },
-    { file: "gallery-archive.jpg", at: [138, 300], size: [117, 122], crop: [-25.64, -3.59, 166.45, 103.59],
+    { file: "gallery-archive.webp", at: [138, 300], size: [117, 122], crop: [-25.64, -3.59, 166.45, 103.59],
       number: 3, numberAt: [137, 279], name: "Israeli Movie Archive", nameAt: [138, 428], href: "israeli-movie-archive.html" },
-    { file: "gallery-cactus.png", at: [18, 496], size: [116, 123], crop: [-2.7, -49.29, 107.13, 149.5],
+    { file: "gallery-cactus.webp", at: [18, 496], size: [116, 123], crop: [-2.7, -49.29, 107.13, 149.5],
       number: 4, numberAt: [18, 475], name: "The Israeli Cactus", nameAt: [16, 625], href: "israeli-cactus.html" },
-    { file: "gallery-house.png?v=2", at: [253, 478], size: [126, 148], crop: [-0.01, -6.59, 99.99, 111.53],
-      number: 5, numberAt: [258, 475], name: "The Double Family", nameAt: [256, 625], href: null },
-    { file: "gallery-watercolor.png?v=2", at: [138, 694], size: [117, 122], crop: [-3.02, -38.91, 120, 162.76],
+    // (Mea Shearim took The Double Family's place, like on the big screen: Figma "MacBook Pro 16 - 80")
+    { file: "gallery-mea.webp", at: [258, 496], size: [117, 115], crop: [0, 0, 100, 100],
+      number: 5, numberAt: [258, 475], name: "Mea Shearim", nameAt: [256, 618], href: "mea-shearim.html" },
+    { file: "gallery-watercolor.webp?v=2", at: [138, 694], size: [117, 122], crop: [-3.02, -38.91, 120, 162.76],
       number: 6, numberAt: [139, 672], name: "Shintana", nameAt: [137, 821], href: null },
   ];
   const PAGE_H = 852;   // the page's height (Figma frame 12; the letters below it stay hidden)
@@ -670,6 +669,7 @@
     "israeli-cactus.html": "cactus-title.js",
     "israeli-movie-archive.html": "archive-title.js",
     "sense.html": "sense-title.js",
+    "mea-shearim.html": "mea-title.js",
   };
   const shapeFiles = {};
   function shapeOf(number) {   // a title piece's outline (images/flow-piece-NN.svg)

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mea Shearim — Elana Gertel</title>
+  <!-- The icon in the browser tab: a black square on white -->
+  <link rel="icon" href="favicon.svg?v=3" type="image/svg+xml">
+  <!-- Fonts from Google Fonts: Averia Serif Libre (the names' hover texts and contact Me), Crimson Text (the small texts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Crimson+Text:ital,wght@0,400;1,400&display=block">
+  <link rel="stylesheet" href="styles.css?v=20261127e">
+  <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts),
+       so coming from the home page the title is simply there, without blinking -->
+  <link rel="expect" href="#page-ready" blocking="render">
+  <!-- The texts that type themselves out stay hidden until type-texts.js is ready to type them
+       (Safari on the iPhone shows the page before the scripts have run: without this the full texts
+       would show for a moment, then vanish and type, like a blink). -->
+  <script>document.documentElement.classList.add("will-type");</script>
+  <!-- Coming from another page: what is going to slide in stays hidden from the very first moment, and
+       coming from the black end of a project the screen stays black (some browsers, like Safari, show the
+       page before its scripts have run: without this it shows for a moment, like a blink). page-change.js
+       takes it away once things are ready (and, just in case, it goes away by itself after 3 seconds). -->
+  <script>
+    (function () {
+      var root = document.documentElement, now = Date.now();
+      try {
+        var slide = JSON.parse(sessionStorage.getItem("slideInPage") || "null");
+        var end = Number(sessionStorage.getItem("fromProjectEnd") || 0);
+        if (end && now - end < 10000) {
+          root.classList.add("from-end");
+          // the white title and arrow the page before handed over: on a black layer at once (page-change.js
+          // takes over a moment later, with this page's own copies in the same places)
+          var handed = JSON.parse(sessionStorage.getItem("endTitle") || "null");
+          if (handed) {
+            var layer = document.createElement("div");
+            layer.className = "project-arrive project-arrive-early";
+            var put = function (item, cls) {
+              var holder = document.createElement("div");
+              holder.innerHTML = item.html;
+              var el = holder.firstElementChild;
+              if (!el) return;
+              el.setAttribute("class", cls);
+              el.style.cssText = "left:" + item.box[0] + "px;top:" + item.box[1] + "px;width:" + item.box[2] + "px;height:" + item.box[3] + "px";
+              layer.appendChild(el);
+            };
+            handed.pieces.forEach(function (p) { put(p, "project-arrive-piece"); });
+            if (handed.arrow) put(handed.arrow, "project-arrive-arrow");
+            root.appendChild(layer);
+          }
+        }
+        else if (slide && now - slide.at < 10000) root.classList.add("is-arriving");
+      } catch (e) {}
+      setTimeout(function () { root.classList.remove("from-end", "is-arriving"); }, 3000);
+    })();
+  </script>
+</head>
+<body class="lab-page">
+  <!-- Project page "Mea Shearim", built from Figma frame "Mahshuf". Like the other project pages: lab.js
+       adds the black shapes that spell "MEA SHEARIM" (mea-title.js says where they go); the video slides up
+       over the title and stays in the middle of the screen, then scrolls away, and the black end comes up,
+       showing the next project's name. -->
+  <main class="lab lab-invert mea" id="lab">
+    <h1 class="visually-hidden">Mea Shearim</h1>
+
+    <!-- The first screen (the title) stays in place until the end of the page. lab.js puts the title shapes in it. -->
+    <div class="lab-first-track">
+      <div class="lab-first" id="lab-first">
+        <!-- Clicking the first screen scrolls down to the video -->
+        <button class="lab-first-screen" id="lab-first-screen" type="button" aria-label="Scroll down"></button>
+
+        <!-- The white title: lies exactly on the black one, but only shows over the black end,
+             so the title turns white where the black end passes (lab.js puts the shapes in it) -->
+        <div class="lab-white" id="lab-white">
+          <div class="lab-footer-title" id="lab-footer-title"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Under the title on the first screen (Figma: frame "Mahshuf", Helvetica 15.5). --y: the Figma y in a
+         1024-high screen, --w: the width. They type themselves out (type-texts.js) and scroll away with the
+         page. (Figma still has placeholder texts here, apart from the name.) -->
+    <p class="lab-intro lab-intro-bold lab-intro-italic" style="--x: 65; --y: 877; --w: 145">Mea Shearim&nbsp; /</p>
+    <p class="lab-intro" style="--x: 329; --y: 847; --w: 118">2025</p>
+    <p class="lab-intro" style="--x: 328; --y: 881; --w: 188">Bezalel -
+Academy of Art and Design
+Science Illustration -
+Amit Trainin</p>
+    <p class="lab-intro lab-intro-bold" style="--x: 591; --y: 877; --w: 113">Illustrated Art
+InDesign</p>
+    <p class="lab-intro" style="--x: 986; --y: 850; --w: 351">This will be the the brief</p>
+    <p class="lab-intro lab-intro-bold" style="--x: 986; --y: 877; --w: 351">This will be the solution</p>
+
+    <!-- The bar at the top, on every page, fixed while scrolling (Figma: "MacBook Pro 16' - 83", y 19).
+         Hovering "Contact me" types out the contact details next to it (contact.js). -->
+    <nav class="site-nav" aria-label="Site">
+      <p class="site-nav-item flow-contact" style="--x: 985.5">Contact me&nbsp; /</p>
+      <a class="site-nav-item site-nav-about" style="--x: 593" href="about.html">About Me  /</a>
+      <a class="site-nav-item site-nav-home" style="--x: 328.5" href="index.html?gallery">Home  /</a>
+      <a class="site-nav-item site-nav-name" href="index.html">ELANA GERTEL</a>
+    </nav>
+
+    <!-- The counter on both sides in the middle of the screen: this project's number out of all the
+         projects (fold-count.js) -->
+    <p class="fold-count fold-count-now" aria-hidden="true">0</p>
+    <p class="fold-count fold-count-total" aria-hidden="true">/  0</p>
+
+    <!-- On the first screen: arrows to the previous and the next project. fold-count.js sets where they lead. -->
+    <a class="project-arrow project-arrow-prev" aria-label="Previous project"><img src="images/project-arrow.svg?v=2" alt=""></a>
+    <a class="project-arrow project-arrow-next" aria-label="Next project"><img src="images/project-arrow.svg?v=2" alt=""></a>
+
+    <!-- The video (YouTube): its link is in projects.json; youtube.js puts the player here. It is as wide
+         as the title under it, in the video's own proportion. -->
+    <div class="lab-track mea-track">
+      <div class="lab-media lab-youtube" data-video="1"></div>
+    </div>
+
+    <!-- The pictures in the column on the right (Figma: frame "mea shearim", Frame 222, x 1219, 202 wide):
+         while the video stays in the middle, they scroll up one after the other, each stopping at its place
+         under the one before; they stay until the video scrolls away, and leave with it. (The first one is
+         an animation: its YouTube video plays there on a loop, youtube.js.) -->
+    <div class="mea-side-track mea-side-1">
+      <!-- the animation (YouTube, the second video in projects.json), filling its box like Figma's crop;
+           its still shows until the player is there -->
+      <div class="mea-side-box lab-youtube" data-video="2" style="background: url(images/mea-side-1.webp) center / cover"></div>
+    </div>
+    <div class="mea-side-track mea-side-2">
+      <img src="images/mea-side-2.webp" alt="A street in Mea Shearim, with colourful drawn shapes over the photo" width="606" height="603" loading="lazy">
+    </div>
+    <div class="mea-side-track mea-side-3">
+      <img src="images/mea-side-3.webp" alt="Drawn figures carrying coloured blocks of buildings" width="606" height="789" loading="lazy">
+    </div>
+
+    <!-- The black end of the page -->
+    <footer class="lab-footer">
+    </footer>
+  </main>
+
+  <!-- The title (its shapes and organic letters) first, then the code that draws it -->
+  <!-- Phones: the rotate prompt and the tap effects (first, so the other scripts can use them) -->
+  <script src="mobile.js?v=20261125a"></script>
+  <script src="phone.js?v=20261127a"></script>
+  <script src="pieces.js?v=20261108h"></script>
+  <script src="mea-title.js?v=20261126a"></script>
+  <script src="lab.js?v=20261126a"></script>
+  <script src="contact.js?v=20261204a"></script>
+  <script src="fold-count.js?v=20261127a"></script>
+  <script src="youtube.js?v=20261126h"></script>
+  <script src="page-change.js?v=20261127b"></script>
+  <!-- The cursor: a small square piece on "exclusion" (computers with a mouse) -->
+  <script src="cursor.js?v=20261205c"></script>
+  <script src="type-texts.js?v=20261201c"></script>
+  <!-- The page shows only from here on (see "page-ready" at the top): after every script, so the texts
+       under the title are already waiting to be typed and the counter has its number (nothing blinks) -->
+  <div id="page-ready"></div>
+</body>
+</html>

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,700&family=Comme:wght@400&family=Crimson+Text:ital,wght@0,400;1,400&display=block">
-  <link rel="stylesheet" href="styles.css?v=20261205a">
+  <link rel="stylesheet" href="styles.css?v=20261127e">
   <!-- Show the page only once the title is drawn (the marker "page-ready" comes after the scripts),
        so coming from the home page the title is simply there, without blinking -->
   <link rel="expect" href="#page-ready" blocking="render">
@@ -28,7 +28,28 @@
       try {
         var slide = JSON.parse(sessionStorage.getItem("slideInPage") || "null");
         var end = Number(sessionStorage.getItem("fromProjectEnd") || 0);
-        if (end && now - end < 10000) root.classList.add("from-end");
+        if (end && now - end < 10000) {
+          root.classList.add("from-end");
+          // the white title and arrow the page before handed over: on a black layer at once (page-change.js
+          // takes over a moment later, with this page's own copies in the same places)
+          var handed = JSON.parse(sessionStorage.getItem("endTitle") || "null");
+          if (handed) {
+            var layer = document.createElement("div");
+            layer.className = "project-arrive project-arrive-early";
+            var put = function (item, cls) {
+              var holder = document.createElement("div");
+              holder.innerHTML = item.html;
+              var el = holder.firstElementChild;
+              if (!el) return;
+              el.setAttribute("class", cls);
+              el.style.cssText = "left:" + item.box[0] + "px;top:" + item.box[1] + "px;width:" + item.box[2] + "px;height:" + item.box[3] + "px";
+              layer.appendChild(el);
+            };
+            handed.pieces.forEach(function (p) { put(p, "project-arrive-piece"); });
+            if (handed.arrow) put(handed.arrow, "project-arrive-arrow");
+            root.appendChild(layer);
+          }
+        }
         else if (slide && now - slide.at < 10000) root.classList.add("is-arriving");
       } catch (e) {}
       setTimeout(function () { root.classList.remove("from-end", "is-arriving"); }, 3000);
@@ -41,7 +62,7 @@
        "THE ISRAELI CACTUS" (top, and white at the bottom); cactus-title.js says where they go. -->
   <!-- data-organic-picture: the project's picture from the home page. It only shows inside the title's
        letters while they are organic (hovered), like Figma's picture on "Lighten" (lab.js) -->
-  <main class="lab lab-invert cactus" id="lab" data-organic-picture="images/cover-cactus.jpg">
+  <main class="lab lab-invert cactus" id="lab" data-organic-picture="images/cover-cactus.webp">
     <h1 class="visually-hidden">The Israeli Cactus</h1>
 
     <!-- The first screen (title and small texts) stays in place until the end of the page:
@@ -99,37 +120,37 @@ Indesign Typography</p>
          --x, --w, --h: where the spread is and how big (Figma pixels); --top: where it starts (the chain of places in styles.css, .cactus). -->
     <!-- The front cover lies under the title (the title inverts over it); the others lie over the title -->
     <div class="lab-track cactus-track cactus-under-title" style="--x: 22; --top: var(--c-cover); --w: 1395; --h: 1059">
-      <img class="lab-media" src="images/cactus-spread-01.webp" alt="The Israeli Cactus: front cover">
+      <img class="lab-media" src="images/cactus-spread-01.webp" alt="The Israeli Cactus: front cover" width="2400" height="1800" loading="lazy">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -4; --top: var(--c-fold-1); --w: 1458; --h: 1057">
-      <img class="lab-media" src="images/cactus-spread-02.webp" alt="The Israeli Cactus: spread 1" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-02.webp" alt="The Israeli Cactus: spread 1" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -4; --top: var(--c-fold-2); --w: 1458; --h: 1057">
-      <img class="lab-media" src="images/cactus-spread-03.webp" alt="The Israeli Cactus: spread 2" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-03.webp" alt="The Israeli Cactus: spread 2" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -8; --top: var(--c-fold-x); --w: 1462; --h: 1066">
-      <img class="lab-media" src="images/cactus-spread-04.webp" alt="The Israeli Cactus: spread" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-04.webp" alt="The Israeli Cactus: spread" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -4; --top: var(--c-fold-3); --w: 1458; --h: 1060">
-      <img class="lab-media" src="images/cactus-spread-10.webp" alt="The Israeli Cactus: spread 3" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-10.webp" alt="The Israeli Cactus: spread 3" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -8; --top: var(--c-fold-4); --w: 1462; --h: 1054">
-      <img class="lab-media" src="images/cactus-spread-05.webp" alt="The Israeli Cactus: spread 4" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-05.webp" alt="The Israeli Cactus: spread 4" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -8; --top: var(--c-fold-5); --w: 1462; --h: 1064">
-      <img class="lab-media" src="images/cactus-spread-06.webp" alt="The Israeli Cactus: spread 5" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-06.webp" alt="The Israeli Cactus: spread 5" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -8; --top: var(--c-fold-6); --w: 1462; --h: 1056">
-      <img class="lab-media" src="images/cactus-spread-07.webp" alt="The Israeli Cactus: spread 6" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-07.webp" alt="The Israeli Cactus: spread 6" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -4; --top: var(--c-fold-7); --w: 1458; --h: 1057">
-      <img class="lab-media" src="images/cactus-spread-08.webp" alt="The Israeli Cactus: spread 7" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-08.webp" alt="The Israeli Cactus: spread 7" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track cactus-fold" style="--x: -8; --top: var(--c-fold-8); --w: 1463; --h: 1080">
-      <img class="lab-media" src="images/cactus-spread-09.webp" alt="The Israeli Cactus: spread 8" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-09.webp" alt="The Israeli Cactus: spread 8" loading="lazy" width="2400" height="1800">
     </div>
     <div class="lab-track cactus-track" style="--x: 16; --top: var(--c-back); --w: 1407; --h: 1059">
-      <img class="lab-media" src="images/cactus-spread-11.webp" alt="The Israeli Cactus: back cover" loading="lazy">
+      <img class="lab-media" src="images/cactus-spread-11.webp" alt="The Israeli Cactus: back cover" loading="lazy" width="2400" height="1800">
     </div>
 
     <!-- The story, in paragraphs (Figma: white with "exclusion", so they show black on the white
@@ -152,9 +173,9 @@ Indesign Typography</p>
          and leave together with it: their track ends 6 before the paragraph's (where the next one starts). -->
     <div class="lab-side-track" style="--x: 1219; --top: var(--c-side); --next: calc(var(--c-text-4) - 6 * var(--u)); --bottom: 26">
       <div class="lab-side">
-        <img src="images/cactus-side-1.png" alt="Cactus pads with red fruit, colored pencil" style="aspect-ratio: 1024 / 1024" loading="lazy">
-        <img src="images/cactus-side-2.png" alt="Pink cactus fruit against a blue sky" style="aspect-ratio: 736 / 624" loading="lazy">
-        <img src="images/cactus-side-4.png" alt="Close-up of ripe cactus fruit" style="aspect-ratio: 534 / 800" loading="lazy">
+        <img src="images/cactus-side-1.webp" alt="Cactus pads with red fruit, colored pencil" style="aspect-ratio: 1024 / 1024" loading="lazy" width="1024" height="1024">
+        <img src="images/cactus-side-2.webp" alt="Pink cactus fruit against a blue sky" style="aspect-ratio: 736 / 624" loading="lazy" width="736" height="624">
+        <img src="images/cactus-side-4.webp" alt="Close-up of ripe cactus fruit" style="aspect-ratio: 534 / 800" loading="lazy" width="534" height="800">
       </div>
     </div>
     <div class="lab-text-track lab-text-last" style="--x: 19; --top: var(--c-text-4); --w: 202">
@@ -169,13 +190,13 @@ Indesign Typography</p>
   <!-- The title (its shapes and organic letters) first, then the code that draws it -->
   <!-- Phones: the rotate prompt and the tap effects (first, so the other scripts can use them) -->
   <script src="mobile.js?v=20261125a"></script>
-  <script src="phone.js?v=20261204u"></script>
+  <script src="phone.js?v=20261127a"></script>
   <script src="pieces.js?v=20261108h"></script>
   <script src="cactus-title.js?v=20261113e"></script>
-  <script src="lab.js?v=20261204a"></script>
+  <script src="lab.js?v=20261126a"></script>
   <script src="contact.js?v=20261204a"></script>
-  <script src="fold-count.js?v=20261204g"></script>
-  <script src="page-change.js?v=20261204a"></script>
+  <script src="fold-count.js?v=20261127a"></script>
+  <script src="page-change.js?v=20261127b"></script>
   <!-- The cursor: a small square piece on "exclusion" (computers with a mouse) -->
   <script src="cursor.js?v=20261205c"></script>
   <script src="type-texts.js?v=20261201c"></script>

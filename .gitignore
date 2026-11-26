@@ -2,3 +2,6 @@
 .DS_Store
 prof-*/
 .claude/
+
+# The original, full-size pictures (the site uses the smaller WebP copies in images/: tools/make-webp.mjs)
+originals/

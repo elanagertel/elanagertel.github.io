@@ -156,10 +156,23 @@
   // title (which stays where it is), uncovering the new page (the bar at the top, the title), and
   // only then do the texts under the title type themselves out (type-texts.js waits introTypingWait).
   const END_KEY = "fromProjectEnd";
-  const UP_HOLD = 250;   // ms the black stays before it slides up
+  const UP_HOLD = 0;     // ms the black stays before it slides up (none: it starts at once)
   const UP_TIME = 700;   // ms it takes to slide up
+  const HANDOVER_KEY = "endTitle";   // the white title on the black, handed over to the next page
   function nextFromEnd(href) {
-    if (!REDUCED) { try { sessionStorage.setItem(END_KEY, String(Date.now())); } catch (e) {} }
+    if (!REDUCED) {
+      try {
+        sessionStorage.setItem(END_KEY, String(Date.now()));
+        // the white title and the right arrow, exactly as they are on the screen now: the next page draws them
+        // on its black at once, so they never disappear for a moment while it gets ready
+        const shot = (el) => { const b = el.getBoundingClientRect(); return { html: el.outerHTML, box: [b.left, b.top, b.width, b.height] }; };
+        const pieces = [...document.querySelectorAll("#lab-footer-title .lab-piece-white")]
+          .filter((el) => { const b = el.getBoundingClientRect(); return b.width > 0 && b.bottom > 0 && b.top < window.innerHeight; })
+          .map(shot);
+        const arrow = document.querySelector(".project-arrow-next img");
+        sessionStorage.setItem(HANDOVER_KEY, JSON.stringify({ pieces, arrow: arrow ? shot(arrow) : null }));
+      } catch (e) {}
+    }
     window.location.href = href;
   }
   window.pageChange.nextFromEnd = nextFromEnd;
@@ -185,11 +198,36 @@
     black.setAttribute("aria-hidden", "true");
     document.body.appendChild(black);
     arrivedFromEnd();   // (the black layer covers the page now)
+    // (the early layer from the top of the page: this one is over it now, with the same title)
+    document.querySelectorAll(".project-arrive-early").forEach((el) => el.remove());
     window.introTypingWait = UP_HOLD + UP_TIME + 150;
+
+    // right away: the white title and arrow exactly as the page before left them (it handed them over);
+    // dress() puts this page's own copies there once it is laid out (in the same places)
+    const handed = document.createElement("div");
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(HANDOVER_KEY) || "null");
+      sessionStorage.removeItem(HANDOVER_KEY);
+      const put = ({ html, box }, cls) => {
+        const holder = document.createElement("div");
+        holder.innerHTML = html;
+        const el = holder.firstElementChild;
+        if (!el) return;
+        el.setAttribute("class", cls);
+        el.style.cssText = `left:${box[0]}px; top:${box[1]}px; width:${box[2]}px; height:${box[3]}px`;
+        handed.appendChild(el);
+      };
+      if (saved) {
+        saved.pieces.forEach((piece) => put(piece, "project-arrive-piece"));
+        if (saved.arrow) put(saved.arrow, "project-arrive-arrow");
+      }
+    } catch (e) {}
+    black.appendChild(handed);
 
     // on it: this project's name in white, exactly over the page's own title (drawn from its own shapes)
     const phone = document.documentElement.classList.contains("is-phone-portrait");
     function dress() {
+      handed.remove();   // (this page's own copies take their place, in the same spots)
       const pieces = [...document.querySelectorAll("#lab-first > .lab-piece:not(.lab-piece-white)")];
       const boxes = pieces.map((el) => el.getBoundingClientRect());
       if (boxes.length) {
